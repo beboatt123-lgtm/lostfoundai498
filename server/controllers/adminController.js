@@ -1,4 +1,5 @@
 const asyncHandler = require('express-async-handler');
+const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Item = require('../models/Item');
 
@@ -104,8 +105,46 @@ const updateUser = asyncHandler(async (req, res) => {
     });
 });
 
+// @desc    Create a new user (Staff/Admin)
+// @route   POST /api/admin/users
+// @access  Private/Admin
+const createUser = asyncHandler(async (req, res) => {
+    const { firstname, lastname, email, password, role } = req.body;
+
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+        res.status(400);
+        throw new Error('User already exists');
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const user = await User.create({
+        firstname,
+        lastname,
+        email,
+        password: hashedPassword,
+        role: role || 'staff'
+    });
+
+    if (user) {
+        res.status(201).json({
+            _id: user._id,
+            firstname: user.firstname,
+            lastname: user.lastname,
+            email: user.email,
+            role: user.role
+        });
+    } else {
+        res.status(400);
+        throw new Error('Invalid user data');
+    }
+});
+
 module.exports = {
     getStats,
     getAllUsers,
-    updateUser
+    updateUser,
+    createUser
 };

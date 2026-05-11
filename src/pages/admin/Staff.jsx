@@ -31,12 +31,56 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label as FormLabel } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import api from '../../lib/axios';
 
 const AdminStaff = () => {
     const [staffMembers, setStaffMembers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [addLoading, setAddLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        firstname: '',
+        lastname: '',
+        email: '',
+        password: '',
+        role: 'staff'
+    });
+
+    const handleAddStaff = async (e) => {
+        e.preventDefault();
+        setAddLoading(true);
+        try {
+            // Using existing register endpoint but we'll need to make sure 
+            // the backend can handle role assignment or we use a different admin endpoint.
+            // For now, let's use a dedicated admin endpoint.
+            await api.post('/admin/users', formData);
+            setIsDialogOpen(false);
+            setFormData({ firstname: '', lastname: '', email: '', password: '', role: 'staff' });
+            fetchStaff();
+        } catch (err) {
+            alert(err.response?.data?.message || "Failed to add staff member");
+        } finally {
+            setAddLoading(false);
+        }
+    };
 
     const fetchStaff = async () => {
         try {
@@ -94,9 +138,89 @@ const AdminStaff = () => {
                     </h2>
                     <p className="text-slate-500 mt-2 ml-1">จัดการบัญชีและกำหนดสิทธิ์การเข้าถึงระบบสำหรับเจ้าหน้าที่และแอดมิน</p>
                 </div>
-                <Button className="gap-2 bg-purple-600 hover:bg-purple-700 h-11 px-6 rounded-xl shadow-lg shadow-purple-200 font-bold transition-all active:scale-95">
-                    <UserPlus size={18} /> เพิ่มผู้ดูแลใหม่
-                </Button>
+                
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button className="gap-2 bg-purple-600 hover:bg-purple-700 h-11 px-6 rounded-xl shadow-lg shadow-purple-200 font-bold transition-all active:scale-95">
+                            <UserPlus size={18} /> เพิ่มผู้ดูแลใหม่
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px] rounded-2xl">
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                                <UserPlus className="text-purple-600" /> เพิ่มสมาชิกทีมใหม่
+                            </DialogTitle>
+                            <DialogDescription>
+                                กรอกข้อมูลเพื่อสร้างบัญชีผู้ดูแลระบบคนใหม่
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleAddStaff} className="space-y-4 py-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <FormLabel htmlFor="firstname">ชื่อ</FormLabel>
+                                    <Input 
+                                        id="firstname" 
+                                        placeholder="ชื่อจริง"
+                                        value={formData.firstname}
+                                        onChange={(e) => setFormData({...formData, firstname: e.target.value})}
+                                        required 
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <FormLabel htmlFor="lastname">นามสกุล</FormLabel>
+                                    <Input 
+                                        id="lastname" 
+                                        placeholder="นามสกุล"
+                                        value={formData.lastname}
+                                        onChange={(e) => setFormData({...formData, lastname: e.target.value})}
+                                        required 
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <FormLabel htmlFor="email">อีเมล</FormLabel>
+                                <Input 
+                                    id="email" 
+                                    type="email" 
+                                    placeholder="email@example.com"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                    required 
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <FormLabel htmlFor="password">รหัสผ่านชั่วคราว</FormLabel>
+                                <Input 
+                                    id="password" 
+                                    type="password"
+                                    value={formData.password}
+                                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                                    required 
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <FormLabel htmlFor="role">สิทธิ์การใช้งาน</FormLabel>
+                                <Select 
+                                    value={formData.role} 
+                                    onValueChange={(value) => setFormData({...formData, role: value})}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="เลือกสิทธิ์" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="staff">Staff (เจ้าหน้าที่)</SelectItem>
+                                        <SelectItem value="admin">Admin (ผู้ดูแลระบบสูงสุด)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <DialogFooter className="pt-4">
+                                <Button type="submit" disabled={addLoading} className="w-full bg-purple-600 hover:bg-purple-700 font-bold">
+                                    {addLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'สร้างบัญชีผู้ดูแล'}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
             </div>
 
             <div className="bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/40 overflow-hidden">
