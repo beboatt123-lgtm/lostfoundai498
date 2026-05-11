@@ -3,6 +3,8 @@ const bcrypt = require('bcryptjs');
 const asyncHandler = require('express-async-handler');
 const { OAuth2Client } = require('google-auth-library');
 const axios = require('axios');
+const crypto = require('crypto');
+const sendEmail = require('../utils/sendEmail');
 const User = require('../models/User');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -165,6 +167,99 @@ const googleLogin = asyncHandler(async (req, res) => {
         throw new Error(`Google authentication failed: ${error?.response?.data?.error_description || error.message}`);
     }
 });
+// @desc    Forgot Password
+// @route   POST /api/auth/forgot-password
+// @access  Public
+const forgotPassword = asyncHandler(async (req, res) => {
+    const user = await User.findOne({ email: req.body.email });
+
+    if (!user) {
+        res.status(404);
+        throw new Error('ไม่พบผู้ใช้งานที่มีอีเมลนี้ในระบบ');
+    }
+
+    // Get reset token
+    const resetToken = crypto.randomBytes(20).toString('hex');
+
+    // Hash token and set to resetPasswordToken field
+    user.resetPasswordToken = crypto
+        .createHash('sha256')
+        .update(resetToken)
+        .digest('hex');
+
+    // Set expire (10 minutes)
+    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+
+    await user.save();
+
+    // Create reset URL
+    const resetUrl = `${req.protocol}://${req.get('host')}/reset-password/${resetToken}`;
+
+    const message = `คุณได้รับอีเมลนี้เนื่องจากคุณ (หรือใครบางคน) ร้องขอการรีเซ็ตรหัสผ่าน โปรดคลิกลิงก์ด้านล่างเพื่อดำเนินการต่อ:\n\n ${resetUrl}`;
+
+    try {
+        await sendEmail({
+            email: user.email,
+            subject: 'การรีเซ็ตรหัสผ่าน - Lost & Found',
+            message,
+            html: `
+                <div style="font-family: sans-serif; padding: 20px; color: #333;">
+                    <h2>คำขอยืนยันการรีเซ็ตรหัสผ่าน</h2>
+                    <p>คุณได้รับอีเมลนี้เนื่องจากมีการร้องขอการรีเซ็ตรหัสผ่านสำหรับบัญชีของคุณ</p>
+                    <p>โปรดคลิกที่ปุ่มด้านล่างเพื่อดำเนินการเปลี่ยนรหัสผ่านใหม่ (ลิงก์นี้จะมีอายุ 10 นาที):</p>
+                    <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; background-color: #10b981; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">รีเซ็ตรหัสผ่าน</a>
+                    <p>หากคุณไม่ได้เป็นผู้ร้องขอ โปรดเพิกเฉยต่ออีเมลฉบับนี้</p>
+                </div>
+            `
+        });
+
+        res.status(200).json({ success: true, message: 'ส่งอีเมลรีเซ็ตรหัสผ่านเรียบร้อยแล้ว' });
+    } catch (err) {
+        console.error(err);
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+        await user.save();
+
+        res.status(500);
+        throw new Error('ไม่สามารถส่งอีเมลได้ กรุณาลองใหม่อีกครั้ง');
+    }
+});
+
+// @desc    Reset Password
+// @route   PUT /api/auth/reset-password/:resettoken
+// @access  Public
+const resetPassword = asyncHandler(async (req, res) => {
+    // Get hashed token
+    const resetPasswordToken = crypto
+        .createHash('sha256')
+        .update(req.params.resettoken)
+        .digest('hex');
+
+    const user = await User.findOne({
+        resetPasswordToken,
+        resetPasswordExpire: { $gt: Date.now() }
+    });
+
+    if (!user) {
+        res.status(400);
+        throw new Error('โทเคนรีเซ็ตรหัสผ่านไม่ถูกต้องหรือหมดอายุแล้ว');
+    }
+
+    // Set new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(req.body.password, salt);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        message: 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่',
+        token: generateToken(user._id)
+    });
+});
+
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
         expiresIn: '30d',
@@ -177,4 +272,6 @@ module.exports = {
     getMe,
     updateProfile,
     googleLogin,
+    forgotPassword,
+    resetPassword
 };

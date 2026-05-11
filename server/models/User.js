@@ -30,7 +30,9 @@ const userSchema = mongoose.Schema({
     isSuspended: {
         type: Boolean,
         default: false
-    }
+    },
+    resetPasswordToken: String,
+    resetPasswordExpire: Date
 }, {
     timestamps: true
 });

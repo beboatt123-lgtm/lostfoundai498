@@ -21,12 +21,14 @@ import AdminSettings from './pages/admin/Settings';
 
 import AIChatSearch from './pages/AIChatSearch';
 import Chat from './pages/Chat';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import './App.css';
 
 // Layout wrapper to conditionally hide Navbar/Footer
 const AppLayout = ({ children }) => {
     const location = useLocation();
-    const hideNavFooter = ['/login', '/register'].includes(location.pathname);
+    const hideNavFooter = ['/login', '/register', '/forgot-password', '/reset-password'].some(path => location.pathname.startsWith(path));
     const isAdminRoute = location.pathname.startsWith('/admin');
 
     if (isAdminRoute) {
@@ -60,6 +62,8 @@ function App() {
                         <Route path="/report/:type" element={<ReportItem />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
+                        <Route path="/forgot-password" element={<ForgotPassword />} />
+                        <Route path="/reset-password/:token" element={<ResetPassword />} />
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/chat/:userId" element={<Chat />} />
 

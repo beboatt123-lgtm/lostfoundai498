@@ -79,7 +79,7 @@ const Login = () => {
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
                                 <Label htmlFor="password">รหัสผ่าน</Label>
-                                <Link to="#" className="text-sm font-medium text-emerald-600 hover:text-emerald-500 transition-colors">
+                                <Link to="/forgot-password" title="Forgot Password" id="forgot-password-link" className="text-sm font-medium text-emerald-600 hover:text-emerald-500 transition-colors">
                                     ลืมรหัสผ่าน?
                                 </Link>
                             </div>
