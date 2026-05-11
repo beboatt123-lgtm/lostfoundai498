@@ -215,13 +215,13 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
         res.status(200).json({ success: true, message: 'ส่งอีเมลรีเซ็ตรหัสผ่านเรียบร้อยแล้ว' });
     } catch (err) {
-        console.error(err);
+        console.error('Email Send Error:', err);
         user.resetPasswordToken = undefined;
         user.resetPasswordExpire = undefined;
         await user.save();
 
         res.status(500);
-        throw new Error('ไม่สามารถส่งอีเมลได้ กรุณาลองใหม่อีกครั้ง');
+        throw new Error(err.message || 'ไม่สามารถส่งอีเมลได้ กรุณาลองใหม่อีกครั้ง');
     }
 });
 

@@ -11,8 +11,8 @@ const sendEmail = async (options) => {
     });
 
     if (error) {
-        console.error('Resend Error:', error);
-        throw new Error('Failed to send email via Resend');
+        console.error('Resend API Error:', error);
+        throw new Error(`Resend Error: ${error.message || 'Unknown error'}`);
     }
 
     return data;
