@@ -109,11 +109,11 @@ const Login = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-3">
                         <Button
                             variant="outline"
                             type="button"
-                            className="w-full bg-white hover:bg-slate-50 border-slate-200 text-slate-700 font-medium transition-all hover:-translate-y-0.5 hover:shadow-sm"
+                            className="w-full bg-white hover:bg-slate-50 border-slate-200 text-slate-700 font-medium transition-all hover:-translate-y-0.5 hover:shadow-sm h-11"
                             onClick={() => handleGoogleLogin()}
                             disabled={loading}
                         >
@@ -135,17 +135,7 @@ const Login = () => {
                                     fill="#EA4335"
                                 />
                             </svg>
-                            Google
-                        </Button>
-                        <Button variant="outline" type="button" className="w-full bg-white hover:bg-slate-50 border-slate-200 text-slate-700 font-medium transition-all hover:-translate-y-0.5 hover:shadow-sm">
-                            <svg className="mr-2 h-4 w-4" viewBox="0 0 23 23">
-                                <path fill="#f3f3f3" d="M0 0h23v23H0z" />
-                                <path fill="#f35325" d="M1 1h10v10H1z" />
-                                <path fill="#81bc06" d="M12 1h10v10H12z" />
-                                <path fill="#05a6f0" d="M1 12h10v10H1z" />
-                                <path fill="#ffba08" d="M12 12h10v10H12z" />
-                            </svg>
-                            Microsoft
+                            เข้าสู่ระบบด้วย Google
                         </Button>
                     </div>
 
