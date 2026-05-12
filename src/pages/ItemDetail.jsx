@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Calendar, Share2, Flag, MessageCircle, Loader2, Sparkles } from 'lucide-react';
+import { MapPin, Calendar, MessageCircle, Loader2, Sparkles } from 'lucide-react';
 import api from '../lib/axios';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from '../context/AuthContext';
@@ -152,23 +152,11 @@ const ItemDetail = () => {
                             size="lg"
                             className="w-full h-15 rounded-2xl text-lg font-black bg-emerald-600 hover:bg-emerald-700 shadow-xl shadow-emerald-200 transition-all active:scale-95"
                             onClick={() => {
-                                if (item.user?._id === currentUser?._id) {
-                                    alert("คุณไม่สามารถแชทกับตัวเองได้ครับ 😄");
-                                    return;
-                                }
-                                navigate(`/chat/${item.user?._id}`);
+                                navigate('/admin/chat');
                             }}
                         >
                             <MessageCircle className="mr-3 h-6 w-6" /> ติดต่อพูดคุยกับผู้ประกาศ
                         </Button>
-                        <div className="flex gap-3">
-                            <Button variant="outline" size="lg" className="flex-1 font-semibold border-slate-300">
-                                <Share2 className="mr-2 h-5 w-5" /> แชร์
-                            </Button>
-                            <Button variant="outline" size="lg" className="flex-1 font-semibold border-slate-300 text-rose-600 hover:text-rose-700 hover:bg-rose-50">
-                                <Flag className="mr-2 h-5 w-5" /> แจ้งปัญหา
-                            </Button>
-                        </div>
                     </div>
 
                     <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
