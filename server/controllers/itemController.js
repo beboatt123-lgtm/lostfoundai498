@@ -406,9 +406,9 @@ const generateAIImage = asyncHandler(async (req, res) => {
             prompt: aiPrompt
         });
     } catch (error) {
-        console.error("AI Image Generation failed:", error);
+        console.error("AI Image Generation failed:", error.message);
         res.status(500);
-        throw new Error('Failed to generate image');
+        throw new Error(`Failed to generate image: ${error.message}`);
     }
 });
 

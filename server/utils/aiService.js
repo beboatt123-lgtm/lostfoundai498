@@ -70,7 +70,7 @@ const generateImagePrompt = async (title, description) => {
     if (!process.env.GEMINI_API_KEY) return `A professional product photo of ${title}`;
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         const prompt = `You are an expert at creating prompts for AI image generators. 
         I have a lost or found item described as:
         Title: ${title}
