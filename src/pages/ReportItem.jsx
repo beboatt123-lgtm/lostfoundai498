@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,8 @@ const ReportItem = () => {
     const [imagePreviews, setImagePreviews] = useState([]);
     const [matches, setMatches] = useState([]);
     const [showMatches, setShowMatches] = useState(false);
+    const [mainLocations, setMainLocations] = useState([]);
+    const [locationsLoading, setLocationsLoading] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -49,18 +51,31 @@ const ReportItem = () => {
         storagePosition: ''
     });
 
-    const mainLocations = [
-        "ตึก A (สำนักงาน)",
-        "ตึก B (ห้องปฏิบัติการ)",
-        "โรงอาหาร (Canteen)",
-        "หอสมุดกลาง",
-        "ลานจอดรถ P1",
-        "ลานจอดรถ P2",
-        "สนามกีฬากลาง",
-        "ศาลาพักผ่อน",
-        "ทางเดินเท้าหลัก",
-        "อื่นๆ"
-    ];
+    useEffect(() => {
+        const fetchLocations = async () => {
+            try {
+                setLocationsLoading(true);
+                const res = await api.get('/api/locations');
+                setMainLocations(res.data.map(loc => loc.name));
+            } catch (err) {
+                console.error("Failed to fetch locations", err);
+                // Fallback to default if API fails
+                setMainLocations([
+                    "ตึก A (สำนักงาน)",
+                    "ตึก B (ห้องปฏิบัติการ)",
+                    "โรงอาหาร (Canteen)",
+                    "หอสมุดกลาง",
+                    "ลานจอดรถ P1",
+                    "ลานจอดรถ P2",
+                    "สนามกีฬากลาง",
+                    "อื่นๆ"
+                ]);
+            } finally {
+                setLocationsLoading(false);
+            }
+        };
+        fetchLocations();
+    }, []);
 
     const categoryOptions = [
         // ... (existing categories)
@@ -296,7 +311,7 @@ const ReportItem = () => {
                                                 <SelectTrigger className="h-11 border-slate-200 rounded-lg font-medium">
                                                     <div className="flex items-center gap-2">
                                                         <MapPin size={16} className="text-slate-400" />
-                                                        <SelectValue placeholder="เลือกสถานที่หลัก" />
+                                                        <SelectValue placeholder={locationsLoading ? "กำลังโหลดสถานที่..." : "เลือกสถานที่หลัก"} />
                                                     </div>
                                                 </SelectTrigger>
                                                 <SelectContent>

@@ -32,6 +32,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/items', require('./routes/itemRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/chat', require('./routes/chatRoutes'));
+app.use('/api/locations', require('./routes/locationRoutes'));
 
 // Error Handler
 app.use(errorHandler);
