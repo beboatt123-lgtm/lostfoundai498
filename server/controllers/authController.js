@@ -128,24 +128,39 @@ const googleLogin = asyncHandler(async (req, res) => {
     const { tokenId } = req.body;
 
     if (!tokenId) {
-        console.error('Google Auth Error: No tokenId provided in request');
         res.status(400);
         throw new Error('Google authentication failed: No token provided');
     }
 
     try {
-        console.log('Attempting Google Auth with token:', tokenId.substring(0, 10) + '...');
+        // Try verifying as ID Token first
+        let email, given_name, family_name, picture;
         
-        // Fetch user info from Google using the access token
-        const googleRes = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${tokenId}`);
-        const { email, given_name, family_name, picture } = googleRes.data;
-
-        console.log('Google Auth Success for email:', email);
+        try {
+            const ticket = await client.verifyIdToken({
+                idToken: tokenId,
+                audience: process.env.GOOGLE_CLIENT_ID,
+            });
+            const payload = ticket.getPayload();
+            email = payload.email;
+            given_name = payload.given_name;
+            family_name = payload.family_name;
+            picture = payload.picture;
+            console.log('Google Auth verified via ID Token');
+        } catch (idError) {
+            console.log('ID Token verification failed, trying Access Token...');
+            // If ID Token verification fails, it might be an Access Token
+            const googleRes = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${tokenId}`);
+            email = googleRes.data.email;
+            given_name = googleRes.data.given_name;
+            family_name = googleRes.data.family_name;
+            picture = googleRes.data.picture;
+            console.log('Google Auth verified via Access Token');
+        }
 
         let user = await User.findOne({ email });
 
         if (!user) {
-            console.log('Creating new user for:', email);
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(crypto.randomBytes(8).toString('hex'), salt);
 
@@ -173,15 +188,9 @@ const googleLogin = asyncHandler(async (req, res) => {
             token: generateToken(user.id),
         });
     } catch (error) {
-        console.error('Google Auth Error Detailed:');
-        if (error.response) {
-            console.error('Data:', error.response.data);
-            console.error('Status:', error.response.status);
-        } else {
-            console.error('Message:', error.message);
-        }
-        res.status(error.response?.status || 500);
-        throw new Error(`Google authentication failed: ${error?.response?.data?.error_description || error.message}`);
+        console.error('Google Auth Final Error:', error.message);
+        res.status(401);
+        throw new Error(`Google authentication failed: ${error.message}`);
     }
 });
 // @desc    Forgot Password
