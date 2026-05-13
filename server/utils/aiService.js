@@ -63,4 +63,31 @@ const analyzeItemImage = async (imageUrl) => {
     }
 };
 
-module.exports = { analyzeItemImage };
+/**
+ * AI Service to generate image prompt from text
+ */
+const generateImagePrompt = async (title, description) => {
+    if (!process.env.GEMINI_API_KEY) return `A professional product photo of ${title}`;
+
+    try {
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const prompt = `You are an expert at creating prompts for AI image generators. 
+        I have a lost or found item described as:
+        Title: ${title}
+        Description: ${description}
+        
+        Please create a highly detailed English prompt for an AI image generator (like Stable Diffusion) to create a clear, realistic, single-item product photo of this object. 
+        Focus on physical characteristics, materials, colors, and textures. 
+        The photo should be on a plain, neutral studio background.
+        Return ONLY the final English prompt text.`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        return response.text().trim();
+    } catch (error) {
+        console.error("AI Prompt Generation Error:", error);
+        return `A clear product photo of ${title}, ${description}`;
+    }
+};
+
+module.exports = { analyzeItemImage, generateImagePrompt };

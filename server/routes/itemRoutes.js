@@ -9,7 +9,8 @@ const {
     updateItem,
     deleteItem,
     aiSearch,
-    exportItems
+    exportItems,
+    generateAIImage
 } = require('../controllers/itemController');
 
 const { protect, optionalProtect, admin } = require('../middleware/authMiddleware');
@@ -18,6 +19,7 @@ const upload = multer({ storage });
 
 router.get('/export', protect, admin, exportItems);
 router.post('/ai-search', optionalProtect, aiSearch);
+router.post('/generate-image', protect, generateAIImage);
 
 router.route('/')
     .get(optionalProtect, getItems)

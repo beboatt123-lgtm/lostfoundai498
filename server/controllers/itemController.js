@@ -11,12 +11,17 @@ const createItem = asyncHandler(async (req, res) => {
         locationDetail, date, reporterIdCard, reporterPhone, storagePosition 
     } = req.body;
 
-    if (!req.files || req.files.length === 0) {
-        res.status(400);
-        throw new Error('Please upload at least one image');
+    let images = req.files ? req.files.map(file => file.path) : [];
+    
+    // Add AI generated image if exists
+    if (req.body.aiGeneratedImage) {
+        images.push(req.body.aiGeneratedImage);
     }
 
-    const images = req.files.map(file => file.path); // Cloudinary URL
+    if (images.length === 0) {
+        res.status(400);
+        throw new Error('Please upload at least one image or generate one with AI');
+    }
 
     const item = await Item.create({
         user: req.user.id,
@@ -369,6 +374,44 @@ const exportItems = asyncHandler(async (req, res) => {
     res.send(buffer);
 });
 
+const cloudinary = require('../config/cloudinary');
+
+// @desc    Generate AI Image for an item
+// @route   POST /api/items/generate-image
+// @access  Private
+const generateAIImage = asyncHandler(async (req, res) => {
+    const { title, description } = req.body;
+
+    if (!title) {
+        res.status(400);
+        throw new Error('Please provide a title');
+    }
+
+    try {
+        const { generateImagePrompt } = require('../utils/aiService');
+        const aiPrompt = await generateImagePrompt(title, description);
+        
+        // Use Pollinations AI (Free and no API Key required)
+        const encodedPrompt = encodeURIComponent(aiPrompt);
+        const imageUrl = `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${Math.floor(Math.random() * 1000000)}&nologo=true&model=flux`;
+
+        // To make it persistent and comply with my app structure, 
+        // let's upload this generated image to Cloudinary
+        const uploadResponse = await cloudinary.uploader.upload(imageUrl, {
+            folder: 'lostfound_ai',
+        });
+
+        res.status(200).json({
+            imageUrl: uploadResponse.secure_url,
+            prompt: aiPrompt
+        });
+    } catch (error) {
+        console.error("AI Image Generation failed:", error);
+        res.status(500);
+        throw new Error('Failed to generate image');
+    }
+});
+
 module.exports = {
     createItem,
     getItems,
@@ -376,5 +419,6 @@ module.exports = {
     updateItem,
     deleteItem,
     aiSearch,
-    exportItems
+    exportItems,
+    generateAIImage
 };

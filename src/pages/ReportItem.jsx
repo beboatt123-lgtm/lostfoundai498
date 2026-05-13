@@ -38,6 +38,7 @@ const ReportItem = () => {
     const [showMatches, setShowMatches] = useState(false);
     const [mainLocations, setMainLocations] = useState([]);
     const [locationsLoading, setLocationsLoading] = useState(false);
+    const [aiGenerating, setAiGenerating] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -149,6 +150,41 @@ const ReportItem = () => {
         setImagePreviews(newPreviews);
     };
 
+    const handleGenerateAIImage = async () => {
+        if (!formData.title || !formData.description) {
+            setError('กรุณากรอกชื่อสิ่งของและรายละเอียดเพื่อใช้ในการเจนรูปภาพ');
+            return;
+        }
+
+        try {
+            setAiGenerating(true);
+            setError(null);
+            
+            const response = await api.post('/items/generate-image', {
+                title: formData.title,
+                description: formData.description
+            });
+
+            const imageUrl = response.data.imageUrl;
+            
+            // We need to handle this differently because it's a URL, not a File object
+            // For submission, we'll add a special flag or handle URLs in handleSubmit
+            setImagePreviews([...imagePreviews, imageUrl]);
+            // Since we can't easily turn a URL into a File object for multipart/form-data here,
+            // we'll store the AI image URL separately or handle it in handleSubmit
+            setFormData(prev => ({
+                ...prev,
+                aiGeneratedImage: imageUrl
+            }));
+
+        } catch (err) {
+            console.error("AI Generation failed", err);
+            setError("เกิดข้อผิดพลาดในการเจนรูปภาพ กรุณาลองใหม่อีกครั้ง");
+        } finally {
+            setAiGenerating(false);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -186,6 +222,10 @@ const ReportItem = () => {
             images.forEach(image => {
                 data.append('images', image);
             });
+
+            if (formData.aiGeneratedImage) {
+                data.append('aiGeneratedImage', formData.aiGeneratedImage);
+            }
 
             const response = await api.post('/items', data, {
                 headers: {
@@ -244,6 +284,17 @@ const ReportItem = () => {
                                     <Label className="text-base font-bold text-slate-800 flex items-center gap-2">
                                         รูปภาพสิ่งของ <span className="text-slate-400 font-normal">(จำเป็น) (สูงสุด 5 รูป)</span>
                                     </Label>
+                                    <Button 
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={handleGenerateAIImage}
+                                        disabled={aiGenerating || !formData.title}
+                                        className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-bold gap-2"
+                                    >
+                                        {aiGenerating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                                        สร้างรูปด้วย AI
+                                    </Button>
                                 </div>
 
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
