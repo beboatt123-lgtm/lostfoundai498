@@ -76,8 +76,32 @@ const AdminItems = () => {
                     <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">จัดการรายการทั้งหมด (Items)</h2>
                     <p className="text-slate-500 mt-1">บริหารจัดการรายการแจ้งหายและเจอของทั้งหมดในระบบ</p>
                 </div>
+    const handleExport = async () => {
+        try {
+            const response = await api.get('/items/export', { responseType: 'blob' });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'lostfound_report.xlsx');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            console.error('Export failed:', err);
+        }
+    };
+
+    return (
+        <div className="space-y-6 max-w-7xl mx-auto font-sans">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">จัดการรายการทั้งหมด</h2>
+                    <p className="text-slate-500 mt-1">บริหารจัดการรายการแจ้งหายและพบสิ่งของทั้งหมดในระบบ</p>
+                </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" className="gap-2 bg-white hover:bg-slate-50 border-slate-300 shadow-sm text-slate-700 font-medium"><Download size={16} /> Export CSV</Button>
+                    <Button onClick={handleExport} variant="outline" className="gap-2 bg-white hover:bg-slate-50 border-slate-300 shadow-sm text-slate-700 font-bold">
+                        <Download size={16} /> Export to Excel
+                    </Button>
                 </div>
             </div>
 
@@ -88,22 +112,11 @@ const AdminItems = () => {
                     <div className="relative w-full sm:w-96 group">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
                         <Input
-                            placeholder="ค้นหารายการ, ผู้ใช้งาน, สถานที่..."
+                            placeholder="ค้นหา ID, ชื่อของ, สถานที่..."
                             className="pl-10 bg-white border-slate-200 focus-visible:ring-emerald-500/20 shadow-sm"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
-                    </div>
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <Button variant="outline" size="sm" className="gap-2 bg-white border-dashed border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-400 font-medium">
-                            <Filter size={14} /> สถานะ
-                        </Button>
-                        <Button variant="outline" size="sm" className="gap-2 bg-white border-dashed border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-400 font-medium">
-                            <Shield size={14} /> ประเภท
-                        </Button>
-                        <Button variant="outline" size="sm" className="gap-2 bg-white border-dashed border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-400 font-medium hidden sm:flex">
-                            <Calendar size={14} /> วันที่
-                        </Button>
                     </div>
                 </div>
 
@@ -112,19 +125,27 @@ const AdminItems = () => {
                     <Table>
                         <TableHeader className="bg-slate-50/80 sticky top-0 z-10 backdrop-blur-sm">
                             <TableRow className="hover:bg-transparent border-slate-200">
-                                <TableHead className="w-[100px] font-bold text-slate-700">รหัสอ้างอิง</TableHead>
-                                <TableHead className="font-bold text-slate-700 min-w-[200px]">รายละเอียดสิ่งของ</TableHead>
+                                <TableHead className="w-[140px] font-bold text-slate-700 uppercase tracking-wider text-[10px]">Unique ID</TableHead>
+                                <TableHead className="font-bold text-slate-700 min-w-[180px]">รายละเอียดสิ่งของ</TableHead>
                                 <TableHead className="font-bold text-slate-700">ประเภท</TableHead>
                                 <TableHead className="font-bold text-slate-700">ผู้รายงาน</TableHead>
                                 <TableHead className="font-bold text-slate-700">สถานที่</TableHead>
+                                <TableHead className="font-bold text-slate-700">ตำแหน่งเก็บ</TableHead>
                                 <TableHead className="font-bold text-slate-700">สถานะ</TableHead>
                                 <TableHead className="text-right font-bold text-slate-700">จัดการ</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
+                            {items.length === 0 && !loading && (
+                                <TableRow>
+                                    <TableCell colSpan={8} className="text-center py-20 text-slate-400 font-medium">ไม่พบรายการข้อมูล</TableCell>
+                                </TableRow>
+                            )}
                             {items.map((item) => (
                                 <TableRow key={item._id} className="hover:bg-slate-50 transition-all border-b border-slate-100 last:border-0 group cursor-pointer">
-                                    <TableCell className="font-mono text-[10px] font-semibold text-slate-500 group-hover:text-emerald-600 transition-colors">{item._id.substring(0, 8)}...</TableCell>
+                                    <TableCell className="font-mono text-[11px] font-black text-emerald-600">
+                                        {item.customId || `#ID${item._id.substring(0, 8)}`}
+                                    </TableCell>
                                     <TableCell>
                                         <div className="flex flex-col py-1">
                                             <span className="font-bold text-slate-800 text-sm">{item.title}</span>
@@ -137,19 +158,19 @@ const AdminItems = () => {
                                         {getTypeBadge(item.type)}
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <Avatar className="h-7 w-7 border border-slate-200">
-                                                <AvatarImage src={item.user?.avatar} />
-                                                <AvatarFallback className="text-[10px] bg-indigo-50 text-indigo-600 font-bold">{item.user?.firstname?.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <span className="text-sm font-medium text-slate-700">{item.user?.firstname}</span>
+                                        <div className="flex flex-col gap-0.5">
+                                            <span className="text-sm font-bold text-slate-700">{item.user?.firstname}</span>
+                                            <span className="text-[10px] text-slate-400 font-medium">{item.reporterPhone}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex items-center gap-1 text-slate-600 text-sm max-w-[150px] truncate">
-                                            <MapPin size={12} className="text-slate-400 shrink-0" />
-                                            <span title={item.location} className="truncate">{item.location}</span>
+                                        <div className="flex flex-col text-sm max-w-[150px]">
+                                            <span className="font-bold text-slate-700 truncate">{item.locationMain}</span>
+                                            <span className="text-xs text-slate-400 truncate">{item.locationDetail}</span>
                                         </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant="secondary" className="bg-slate-100 text-slate-600 border-none font-bold text-[10px]">{item.storagePosition || '-'}</Badge>
                                     </TableCell>
                                     <TableCell>
                                         {getStatusBadge(item.status)}
@@ -158,7 +179,6 @@ const AdminItems = () => {
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-full">
-                                                    <span className="sr-only">เปิดเมนู</span>
                                                     <MoreHorizontal className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
@@ -187,26 +207,7 @@ const AdminItems = () => {
                 {/* Pagination Wrapper */}
                 <div className="flex items-center justify-between px-4 py-4 border-t border-slate-200 bg-slate-50/50">
                     <div className="text-xs text-slate-500 font-medium">
-                        แสดง <span className="font-bold text-slate-800">1-5</span> จาก <span className="font-bold text-slate-800">1,248</span> รายการ
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled>
-                            <span className="sr-only">ก่อนหน้า</span>
-                            &lt;
-                        </Button>
-                        <Button variant="outline" size="sm" className="h-8 w-8 p-0 bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700 hover:text-white font-bold shadow-md shadow-emerald-200">
-                            1
-                        </Button>
-                        <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                            2
-                        </Button>
-                        <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                            3
-                        </Button>
-                        <span className="text-slate-400">...</span>
-                        <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                            Next &gt;
-                        </Button>
+                        พบทั้งหมด <span className="font-bold text-slate-800">{items.length}</span> รายการ
                     </div>
                 </div>
             </div>

@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
             const { token, ...user } = res.data;
             localStorage.setItem('token', token);
             setUser(user);
-            return { success: true };
+            return { success: true, user };
         } catch (err) {
             setError(err.response?.data?.message || 'Registration failed');
             return { success: false, error: err.response?.data?.message };
@@ -54,7 +54,7 @@ export const AuthProvider = ({ children }) => {
             const { token, ...user } = res.data;
             localStorage.setItem('token', token);
             setUser(user);
-            return { success: true };
+            return { success: true, user };
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed');
             return { success: false, error: err.response?.data?.message };
@@ -72,7 +72,7 @@ export const AuthProvider = ({ children }) => {
             const { token, ...user } = res.data;
             localStorage.setItem('token', token);
             setUser(user);
-            return { success: true };
+            return { success: true, user };
         } catch (err) {
             setError(err.response?.data?.message || 'Google login failed');
             return { success: false, error: err.response?.data?.message };

@@ -19,7 +19,12 @@ const Login = () => {
         onSuccess: async (tokenResponse) => {
             const res = await googleLogin(tokenResponse.access_token);
             if (res.success) {
-                navigate('/');
+                // Requirement 4: Admin Redirect
+                if (res.user?.role === 'admin' || res.user?.role === 'staff') {
+                    navigate('/admin');
+                } else {
+                    navigate('/');
+                }
             }
         },
         onError: () => setError('Google Login Failed'),
@@ -29,7 +34,12 @@ const Login = () => {
         e.preventDefault();
         const res = await login(email, password);
         if (res.success) {
-            navigate('/');
+            // Requirement 4: Admin Redirect
+            if (res.user?.role === 'admin' || res.user?.role === 'staff') {
+                navigate('/admin');
+            } else {
+                navigate('/');
+            }
         }
     };
 

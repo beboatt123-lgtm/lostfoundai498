@@ -8,13 +8,15 @@ const {
     getItem,
     updateItem,
     deleteItem,
-    aiSearch
+    aiSearch,
+    exportItems
 } = require('../controllers/itemController');
 
-const { protect, optionalProtect } = require('../middleware/authMiddleware');
+const { protect, optionalProtect, admin } = require('../middleware/authMiddleware');
 
 const upload = multer({ storage });
 
+router.get('/export', protect, admin, exportItems);
 router.post('/ai-search', optionalProtect, aiSearch);
 
 router.route('/')

@@ -1,127 +1,288 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Search, AlertCircle, CheckCircle2, Sparkles, MapPin, Globe, Shield, Activity } from 'lucide-react';
+import { 
+    ArrowRight, Search, AlertCircle, CheckCircle2, Sparkles, MapPin, 
+    Globe, Shield, Activity, Smartphone, Wallet, Shirt, Briefcase, 
+    Gem, Glasses, FileBadge, BookText, HeartPulse, PawPrint, Trophy, 
+    Music, Wrench, ToyBrick, Boxes, Calendar, Loader2, Filter, X, SortAsc
+} from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import RecentItems from "@/components/RecentItems";
 import { Input } from "@/components/ui/input";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import api from '../lib/axios';
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import heroBg from '../assets/hero-bg.png';
 
 const Home = () => {
     const navigate = useNavigate();
+    const { user: currentUser } = useAuth();
+    
+    // Search & Filter States
+    const [items, setItems] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [type, setType] = useState('all');
+    const [category, setCategory] = useState('all');
+    const [sortBy, setSortBy] = useState('newest');
+
+    const categoryIcons = {
+        'electronics': Smartphone,
+        'wallet': Wallet,
+        'clothing': Shirt,
+        'bag': Briefcase,
+        'jewelry': Gem,
+        'glasses': Glasses,
+        'documents': FileBadge,
+        'stationery': BookText,
+        'health': HeartPulse,
+        'pets': PawPrint,
+        'sports': Trophy,
+        'music': Music,
+        'tools': Wrench,
+        'toy': ToyBrick,
+        'others': Boxes,
+    };
+
+    const fetchItems = async () => {
+        setLoading(true);
+        try {
+            const params = {};
+            if (searchQuery) params.search = searchQuery;
+            if (type && type !== 'all') params.type = type;
+            if (category && category !== 'all') params.category = category;
+            if (sortBy) params.sort = sortBy;
+
+            const res = await api.get('/items', { params });
+            let data = res.data;
+            
+            // Client-side sorting
+            if (sortBy === 'newest') data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            else if (sortBy === 'oldest') data.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+            setItems(data);
+        } catch (err) {
+            console.error("Failed to fetch items", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchItems();
+    }, [type, category, sortBy]);
 
     const handleSearch = (e) => {
-        e.preventDefault();
-        if (searchQuery.trim()) {
-            navigate(`/search?search=${encodeURIComponent(searchQuery)}`);
+        e?.preventDefault();
+        fetchItems();
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            handleSearch();
         }
     };
 
     return (
-        <div className="min-h-screen bg-[#060b18] font-sans text-slate-100 antialiased selection:bg-emerald-500/30 italic-text-none">
-            {/* Ultra-Compact High-Tech Dark Hero */}
-            <section className="relative pt-12 pb-8 lg:pt-16 lg:pb-12 border-b border-white/5 overflow-hidden">
-                {/* Visual Background Image Layer */}
+        <div className="min-h-screen bg-[#060b18] font-sans text-slate-100 antialiased selection:bg-emerald-500/30 mobile-optimized">
+            {/* High-Tech Dark Hero (Requirement 5: Search Bar on Top) */}
+            <section className="relative pt-20 pb-12 lg:pt-28 lg:pb-20 border-b border-white/5 overflow-hidden">
                 <div 
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30 mix-blend-luminosity pointer-events-none" 
                     style={{ backgroundImage: `url(${heroBg})` }}
                 ></div>
-                {/* Subtle Grid Pattern Layer */}
-                <div 
-                    className="absolute inset-0 opacity-10 pointer-events-none" 
-                    style={{ 
-                        backgroundImage: 'radial-gradient(#334155 1px, transparent 1px)', 
-                        backgroundSize: '24px 24px' 
-                    }}
-                ></div>
-                {/* Crisp Dark Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-b from-[#060b18]/80 via-[#060b18]/10 to-[#060b18] pointer-events-none"></div>
 
-                <div className="max-w-6xl mx-auto px-6 relative z-10">
-                    <div className="flex flex-col items-center text-center space-y-5">
-                        
-                        {/* Status Label (Compact) */}
-                        <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[8px] font-black uppercase tracking-[0.2em] animate-in fade-in duration-500">
-                             <div className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse"></div>
-                             Network Status: Global & Active
-                        </div>
+                <div className="max-w-6xl mx-auto px-6 relative z-10 text-center">
+                    <h1 className="text-3xl md:text-5xl font-black text-white tracking-tighter leading-tight mb-8">
+                        ตามหาสิ่งของที่หายไป <br/>
+                        <span className="text-emerald-500 uppercase tracking-widest text-xl md:text-2xl mt-2 block">Search Intelligent</span>
+                    </h1>
 
-                        {/* Impact Heading (Condensed) */}
-                        <div className="space-y-1 max-w-4xl">
-                            <h1 className="text-2xl md:text-3xl lg:text-5xl font-black text-white tracking-tighter leading-tight drop-shadow-xl">
-                                ตามหาสิ่งของที่หายไป <br/>
-                                <span className="text-emerald-500 uppercase">Search Intelligent</span>
-                            </h1>
-                        </div>
-
-                        {/* Compact Integrated Search Bar */}
-                        <div className="w-full max-w-lg animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
-                            <form onSubmit={handleSearch} className="relative group">
-                                <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/30 to-blue-500/30 rounded-xl blur-md opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
-                                <div className="relative flex items-center bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-1 focus-within:border-emerald-500/30 transition-all shadow-xl">
-                                    <Search className="ml-3 text-emerald-500/60" size={16} />
-                                    <Input 
-                                        type="text" 
-                                        placeholder="พิมพ์ชื่อสิ่งของหรือสถานที่เพื่อเริ่มการค้นหา..." 
-                                        className="border-none focus-visible:ring-0 text-slate-100 text-xs md:text-sm font-medium h-9 bg-transparent placeholder:text-slate-500"
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                    />
-                                    <Button type="submit" className="h-8 px-5 bg-emerald-500 hover:bg-emerald-600 text-[#060b18] font-black text-[10px] rounded-lg shadow-lg shadow-emerald-500/10 transition-all active:scale-95">
-                                        SEARCH
-                                    </Button>
-                                </div>
-                            </form>
-                        </div>
-
-                        {/* Refined Quick Actions (Small) */}
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-1 animate-in fade-in duration-700 delay-100">
-                            <Link to="/report/lost" className="w-full sm:w-auto">
-                                <Button className="w-full h-9 px-6 rounded-lg font-black bg-rose-500/5 text-rose-500 border border-rose-500/10 hover:bg-rose-500/10 text-[10px] uppercase tracking-widest transition-all">
-                                    <AlertCircle size={14} className="mr-2" /> ประกาศตามหาของ
+                    {/* Requirement 5: Integrated Search Bar */}
+                    <div className="w-full max-w-2xl mx-auto space-y-4">
+                        <form onSubmit={handleSearch} className="relative group">
+                            <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/30 to-blue-500/30 rounded-2xl blur-md opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
+                            <div className="relative flex items-center bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-1.5 focus-within:border-emerald-500/30 transition-all shadow-2xl">
+                                <Search className="ml-4 text-emerald-500/60" size={20} />
+                                <Input 
+                                    type="text" 
+                                    placeholder="ค้นหาชื่อสิ่งของ หรือสถานที่..." 
+                                    className="border-none focus-visible:ring-0 text-slate-100 text-sm md:text-base font-bold h-12 bg-transparent placeholder:text-slate-500"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                />
+                                <Button type="submit" className="h-10 px-8 bg-emerald-500 hover:bg-emerald-600 text-[#060b18] font-black text-xs rounded-xl shadow-lg transition-all active:scale-95">
+                                    ค้นหา
                                 </Button>
-                            </Link>
-                            <Link to="/report/found" className="w-full sm:w-auto">
-                                <Button className="w-full h-9 px-6 rounded-lg font-black bg-emerald-500/5 text-emerald-500 border border-emerald-500/10 hover:bg-emerald-500/10 text-[10px] uppercase tracking-widest transition-all">
-                                    <CheckCircle2 size={14} className="mr-2" /> แจ้งพบสิ่งของ
-                                </Button>
-                            </Link>
-                        </div>
+                            </div>
+                        </form>
 
-                        {/* Subtle High-Density Stats (Compact) */}
-                        <div className="w-full max-w-4xl grid grid-cols-2 md:grid-cols-4 gap-4 pt-8 border-t border-white/5 animate-in fade-in duration-1000 delay-300">
-                            {[
-                                { icon: <Globe size={14} />, label: "Coverage", value: "National" },
-                                { icon: <Activity size={14} />, label: "Accuracy", value: "94.2% AI" },
-                                { icon: <Shield size={14} />, label: "Security", value: "Encrypted" },
-                                { icon: <Sparkles size={14} />, label: "Engine", value: "v2.0 Active" }
-                            ].map((stat, i) => (
-                                <div key={i} className="flex flex-col items-center md:items-start group">
-                                    <div className="flex items-center gap-1.5 text-slate-500 mb-0.5">
-                                        <div className="text-emerald-500/50 group-hover:text-emerald-400 mt-[-1px] transition-colors">{stat.icon}</div>
-                                        <span className="text-[8px] font-black uppercase tracking-[0.2em]">{stat.label}</span>
-                                    </div>
-                                    <span className="text-[11px] font-bold text-slate-300 tracking-tight">{stat.value}</span>
-                                </div>
-                            ))}
+                        {/* Filter Shortcuts */}
+                        <div className="flex flex-wrap items-center justify-center gap-2">
+                             <Select value={type} onValueChange={setType}>
+                                <SelectTrigger className="h-9 w-32 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest rounded-lg">
+                                    <SelectValue placeholder="ประเภท" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-[#0f172a] border-white/10 text-white">
+                                    <SelectItem value="all">ทุกประเภท</SelectItem>
+                                    <SelectItem value="lost" className="text-rose-400">ของหาย</SelectItem>
+                                    <SelectItem value="found" className="text-emerald-400">พบสิ่งของ</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            <Select value={category} onValueChange={setCategory}>
+                                <SelectTrigger className="h-9 w-40 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest rounded-lg">
+                                    <SelectValue placeholder="หมวดหมู่" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-[#0f172a] border-white/10 text-white max-h-[300px]">
+                                    <SelectItem value="all">ทุกหมวดหมู่</SelectItem>
+                                    {Object.entries(categoryIcons).map(([key, Icon]) => (
+                                        <SelectItem key={key} value={key}>
+                                            <div className="flex items-center gap-2 uppercase tracking-tight text-[10px]">
+                                                <Icon size={12} /> {key}
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
+
+                    {/* Requirement 2: Quick Actions (Hidded if not logged in - though here they are protected routes anyway) */}
+                    {currentUser && (
+                        <div className="flex items-center justify-center gap-3 mt-10">
+                            <Link to="/report/lost">
+                                <Button className="h-11 px-8 rounded-xl font-black bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500/20 text-xs uppercase tracking-widest transition-all">
+                                    <AlertCircle size={16} className="mr-2" /> ประกาศของหาย
+                                </Button>
+                            </Link>
+                            <Link to="/report/found">
+                                <Button className="h-11 px-8 rounded-xl font-black bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500/20 text-xs uppercase tracking-widest transition-all">
+                                    <CheckCircle2 size={16} className="mr-2" /> แจ้งพบของ
+                                </Button>
+                            </Link>
+                        </div>
+                    )}
                 </div>
             </section>
 
-            {/* List Section */}
-            <div className="bg-[#060b18] py-4">
-                <RecentItems />
+            {/* Requirement 5: Feed Area (Search Results) */}
+            <div className="max-w-6xl mx-auto px-6 py-16">
+                <div className="flex items-center justify-between mb-10">
+                    <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
+                        <Activity className="text-emerald-500" />
+                        รายการประกาศล่าสุด
+                    </h2>
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                        <SelectTrigger className="w-40 h-10 bg-white/5 border-white/10 text-xs font-bold text-slate-400">
+                            <div className="flex items-center gap-2">
+                                <SortAsc size={14} />
+                                <span>{sortBy === 'newest' ? 'ล่าสุดก่อน' : 'เก่าสุดก่อน'}</span>
+                            </div>
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#0f172a] border-white/10 text-white">
+                            <SelectItem value="newest">ล่าสุดก่อน</SelectItem>
+                            <SelectItem value="oldest">เก่าสุดก่อน</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {loading ? (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                            <div key={i} className="space-y-4 animate-pulse">
+                                <div className="aspect-[4/3] bg-white/5 rounded-2xl"></div>
+                                <div className="h-4 bg-white/5 rounded w-3/4"></div>
+                                <div className="h-3 bg-white/5 rounded w-1/2"></div>
+                            </div>
+                        ))}
+                    </div>
+                ) : items.length === 0 ? (
+                    // Requirement 7: Fix white screen / empty state
+                    <div className="text-center py-24 bg-white/5 rounded-3xl border border-white/5">
+                        <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center text-slate-600 mx-auto mb-6">
+                            <Search size={40} />
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-2">ไม่พบรายการที่ต้องการ</h3>
+                        <p className="text-slate-500 text-sm font-medium">ลองค้นหาด้วยคำอื่นๆ หรือเลือกดูหมวดหมู่อื่นดูนะครับ</p>
+                        <Button variant="ghost" onClick={() => { setSearchQuery(''); setType('all'); setCategory('all'); }} className="mt-6 text-emerald-500 font-bold">
+                            ล้างการค้นหาทั้งหมด
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-10">
+                        {items.map((item) => (
+                            <Link key={item._id} to={`/item/${item._id}`} className="group relative">
+                                <div className="absolute -inset-2 bg-white/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-all -z-10 blur-sm"></div>
+                                <div className="flex flex-col h-full space-y-4">
+                                    <div className="aspect-[4/3] relative overflow-hidden rounded-2xl bg-white/5 ring-1 ring-white/10">
+                                        <img
+                                            src={item.images?.[0] || 'https://via.placeholder.com/500x500?text=No+Image'}
+                                            alt={item.title}
+                                            className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105"
+                                        />
+                                        <div className={`absolute top-3 left-3 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest text-white shadow-lg ring-1 ring-white/20 ${item.type === 'lost' ? 'bg-rose-600' : 'bg-emerald-600'}`}>
+                                            {item.type === 'lost' ? 'Lost' : 'Found'}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="px-1 flex-1 flex flex-col space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                <div className="w-6 h-6 rounded-md bg-white/5 border border-white/10 flex items-center justify-center text-emerald-500 shrink-0">
+                                                    {(() => {
+                                                        const Icon = categoryIcons[item.category] || Boxes;
+                                                        return <Icon size={12} />;
+                                                    })()}
+                                                </div>
+                                                <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider truncate">
+                                                    {item.category?.replace('-', ' ')}
+                                                </span>
+                                            </div>
+                                            <span className="text-[9px] font-bold text-slate-700">#ID{item._id.toString().slice(-4)}</span>
+                                        </div>
+                                        
+                                        {/* Requirement 6: Dynamic Title */}
+                                        <h3 className="font-bold text-white text-sm md:text-base leading-snug group-hover:text-emerald-400 transition-colors line-clamp-2">
+                                            {item.title}
+                                        </h3>
+                                        
+                                        <div className="pt-3 mt-auto space-y-2 border-t border-white/5">
+                                            <div className="flex items-center gap-2 text-[11px] text-slate-400 font-bold truncate">
+                                                <MapPin size={12} className="text-emerald-500 shrink-0" />
+                                                <span className="truncate">{item.location}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2 text-[11px] text-slate-400 font-bold">
+                                                    <Calendar size={12} className="text-slate-600 shrink-0" />
+                                                    <span>
+                                                        {new Date(item.date).toLocaleDateString('th-TH', { 
+                                                            day: 'numeric', 
+                                                            month: 'short',
+                                                            year: '2-digit'
+                                                        })}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                )}
             </div>
 
-            {/* Minimalist Footer */}
-            <footer className="py-10 border-t border-white/5 px-6 bg-[#060b18]">
-                <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                         <div className="font-black text-lg tracking-tighter text-white">LOSTFOUND <span className="text-emerald-500 italic">SYSTEM</span></div>
-                         <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.4em] mt-0.5">Professional Intelligent Service</p>
+            {/* Footer */}
+            <footer className="py-20 border-t border-white/5 px-6 bg-[#060b18]">
+                <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
+                    <div className="space-y-2">
+                         <div className="font-black text-2xl tracking-tighter text-white">LOSTFOUND <span className="text-emerald-500 italic">SYSTEM</span></div>
+                         <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em]">Professional Intelligent Service</p>
                     </div>
-                    <div className="flex items-center gap-6 text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                    <div className="flex items-center gap-8 text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">
                         <Link to="/about" className="hover:text-white transition-colors">About</Link>
                         <Link to="/privacy" className="hover:text-white transition-colors">Privacy</Link>
                         <Link to="/contact" className="hover:text-white transition-colors">Support</Link>

@@ -14,8 +14,14 @@ import {
     Music, Wrench, ToyBrick, Boxes, LayoutGrid, Sparkles
 } from 'lucide-react';
 import api from '../lib/axios';
-import { useAuth } from '../context/AuthContext';
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 
 const ReportItem = () => {
     const { type } = useParams(); // 'lost' or 'found'
@@ -27,16 +33,36 @@ const ReportItem = () => {
     const [error, setError] = useState(null);
     const [images, setImages] = useState([]);
     const [imagePreviews, setImagePreviews] = useState([]);
+    const [matches, setMatches] = useState([]);
+    const [showMatches, setShowMatches] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '',
         category: '',
         description: '',
-        location: '',
-        date: ''
+        locationMain: '',
+        locationDetail: '',
+        date: '',
+        reporterIdCard: '',
+        reporterPhone: '',
+        storagePosition: ''
     });
 
+    const mainLocations = [
+        "ตึก A (สำนักงาน)",
+        "ตึก B (ห้องปฏิบัติการ)",
+        "โรงอาหาร (Canteen)",
+        "หอสมุดกลาง",
+        "ลานจอดรถ P1",
+        "ลานจอดรถ P2",
+        "สนามกีฬากลาง",
+        "ศาลาพักผ่อน",
+        "ทางเดินเท้าหลัก",
+        "อื่นๆ"
+    ];
+
     const categoryOptions = [
+        // ... (existing categories)
         { value: "electronics", label: "อุปกรณ์อิเล็กทรอนิกส์", icon: Smartphone },
         { value: "wallet", label: "กระเป๋าสตางค์/บัตร/กุญแจ", icon: Wallet },
         { value: "clothing", label: "เสื้อผ้า/เครื่องแต่งกาย", icon: Shirt },
@@ -54,6 +80,7 @@ const ReportItem = () => {
         { value: "others", label: "อื่นๆ", icon: Boxes },
     ];
 
+    // ... (theme definition)
     const theme = isLost ? {
         primary: 'rose',
         button: 'bg-rose-600 hover:bg-rose-700',
@@ -78,6 +105,10 @@ const ReportItem = () => {
 
     const handleCategoryChange = (value) => {
         setFormData({ ...formData, category: value });
+    };
+
+    const handleLocationMainChange = (value) => {
+        setFormData({ ...formData, locationMain: value });
     };
 
     const handleImageChange = (e) => {
@@ -124,21 +155,34 @@ const ReportItem = () => {
             data.append('title', formData.title);
             data.append('category', formData.category);
             data.append('description', formData.description);
-            data.append('location', formData.location);
+            data.append('locationMain', formData.locationMain);
+            data.append('locationDetail', formData.locationDetail);
             data.append('date', formData.date);
+            data.append('reporterIdCard', formData.reporterIdCard);
+            data.append('reporterPhone', formData.reporterPhone);
             data.append('type', type);
+            
+            // Requirement 10: Position code (Admin only)
+            if (user.role === 'admin' || user.role === 'staff') {
+                data.append('storagePosition', formData.storagePosition);
+            }
 
             images.forEach(image => {
                 data.append('images', image);
             });
 
-            await api.post('/items', data, {
+            const response = await api.post('/items', data, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
             });
 
-            navigate('/');
+            if (response.data.matches && response.data.matches.length > 0) {
+                setMatches(response.data.matches);
+                setShowMatches(true);
+            } else {
+                navigate('/');
+            }
         } catch (err) {
             console.error(err);
             setError(err.response?.data?.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง');
@@ -212,24 +256,23 @@ const ReportItem = () => {
 
                             {/* Core Details Section */}
                             <div className="p-8">
-                                <div className="grid md:grid-cols-2 gap-8">
                                     <div className="space-y-6">
                                         <div className="space-y-2">
-                                            <Label htmlFor="title" className="text-sm font-bold text-slate-700">หัวข้อประกาศ <span className="text-rose-500">*</span></Label>
+                                            <Label htmlFor="title" className="text-sm font-bold text-slate-700">ชื่อสิ่งของ <span className="text-rose-500">*</span></Label>
                                             <Input
                                                 id="title"
-                                                placeholder={`เช่น ${isLost ? 'ทำกระเป๋าสตางค์ยี่ห้อ Coach หาย' : 'เจอกุญแจกุญแจรถยนต์'}`}
+                                                placeholder={`เช่น ${isLost ? 'กระเป๋าสตางค์สีดำ' : 'เจอกุญแจกุญแจรถยนต์'}`}
                                                 value={formData.title}
                                                 onChange={handleChange}
                                                 required
-                                                className="h-11 border-slate-200 rounded-lg focus:ring-1 focus:ring-slate-300 transition-all font-medium"
+                                                className="h-11 border-slate-200 rounded-lg font-medium"
                                             />
                                         </div>
 
                                         <div className="space-y-2">
                                             <Label htmlFor="category" className="text-sm font-bold text-slate-700">หมวดหมู่ <span className="text-rose-500">*</span></Label>
                                             <Select onValueChange={handleCategoryChange} value={formData.category} required>
-                                                <SelectTrigger className="h-11 border-slate-200 rounded-lg font-medium text-slate-700">
+                                                <SelectTrigger className="h-11 border-slate-200 rounded-lg font-medium">
                                                     <SelectValue placeholder="เลือกหมวดหมู่สิ่งของ" />
                                                 </SelectTrigger>
                                                 <SelectContent className="max-h-[300px]">
@@ -245,23 +288,38 @@ const ReportItem = () => {
                                             </Select>
                                         </div>
 
+                                        {/* Requirement 16: Location Dropdown */}
                                         <div className="space-y-2">
-                                            <Label htmlFor="location" className="text-sm font-bold text-slate-700">{isLost ? 'สถานที่หาย' : 'สถานที่พบ'} <span className="text-rose-500">*</span></Label>
-                                            <div className="relative">
-                                                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                                <Input
-                                                    id="location"
-                                                    placeholder="เช่น หน้าหอสมุดกลาง, ห้างสรรพสินค้าชั้น 3"
-                                                    value={formData.location}
-                                                    onChange={handleChange}
-                                                    required
-                                                    className="pl-10 h-11 border-slate-200 rounded-lg font-medium"
-                                                />
-                                            </div>
+                                            <Label htmlFor="locationMain" className="text-sm font-bold text-slate-700">{isLost ? 'สถานที่หาย (หมวดหมู่หลัก)' : 'สถานที่พบ (หมวดหมู่หลัก)'} <span className="text-rose-500">*</span></Label>
+                                            <Select onValueChange={handleLocationMainChange} value={formData.locationMain} required>
+                                                <SelectTrigger className="h-11 border-slate-200 rounded-lg font-medium">
+                                                    <div className="flex items-center gap-2">
+                                                        <MapPin size={16} className="text-slate-400" />
+                                                        <SelectValue placeholder="เลือกสถานที่หลัก" />
+                                                    </div>
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {mainLocations.map((loc) => (
+                                                        <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        {/* Requirement 17: Location Detail */}
+                                        <div className="space-y-2">
+                                            <Label htmlFor="locationDetail" className="text-sm font-bold text-slate-700">รายละเอียดจุดที่พบ <span className="text-slate-400 font-normal">(เช่น โต๊ะที่ 3, ใต้เก้าอี้)</span></Label>
+                                            <Input
+                                                id="locationDetail"
+                                                placeholder="ระบุจุดย่อยอย่างละเอียด..."
+                                                value={formData.locationDetail}
+                                                onChange={handleChange}
+                                                className="h-11 border-slate-200 rounded-lg font-medium"
+                                            />
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="date" className="text-sm font-bold text-slate-700">{isLost ? 'วันที่คาดว่าหาย' : 'วันที่พบ'} <span className="text-rose-500">*</span></Label>
+                                            <Label htmlFor="date" className="text-sm font-bold text-slate-700">{isLost ? 'วันที่หาย' : 'วันที่พบ'} <span className="text-rose-500">*</span></Label>
                                             <div className="relative">
                                                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                                                 <Input
@@ -276,16 +334,58 @@ const ReportItem = () => {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="description" className="text-sm font-bold text-slate-700">รายละเอียดเพิ่มเติม <span className="text-rose-500">*</span></Label>
-                                        <Textarea
-                                            id="description"
-                                            placeholder="ระบุลักษณะโดยละเอียด เช่น สี, ขนาด, ยี่ห้อ, จุดสังเกตเฉพาะ หรือตำหนิ เพื่อให้เจ้าของหรือผู้พบเห็นสามารถยืนยันได้ถูกต้อง"
-                                            className="h-[calc(100%-28px)] min-h-[220px] border-slate-200 rounded-lg focus:ring-1 focus:ring-slate-300 transition-all font-medium leading-relaxed resize-none p-4"
-                                            value={formData.description}
-                                            onChange={handleChange}
-                                            required
-                                        />
+                                    <div className="space-y-6">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="description" className="text-sm font-bold text-slate-700">รายละเอียดลักษณะของสิ่งของ <span className="text-rose-500">*</span></Label>
+                                            <Textarea
+                                                id="description"
+                                                placeholder="ระบุลักษณะโดยละเอียด เช่น สี, ยี่ห้อ, จุดสังเกตเฉพาะ เพื่อให้เจ้าของยืนยันได้ถูกต้อง"
+                                                className="h-32 border-slate-200 rounded-lg p-4 font-medium"
+                                                value={formData.description}
+                                                onChange={handleChange}
+                                                required
+                                            />
+                                        </div>
+
+                                        {/* Requirement 18: User Identity */}
+                                        <div className="grid grid-cols-1 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="reporterIdCard" className="text-sm font-bold text-slate-700">เลขบัตรประชาชน (เพื่อยืนยันตัวตน) <span className="text-rose-500">*</span></Label>
+                                                <Input
+                                                    id="reporterIdCard"
+                                                    placeholder="เลขบัตร 13 หลัก"
+                                                    value={formData.reporterIdCard}
+                                                    onChange={handleChange}
+                                                    required
+                                                    className="h-11 border-slate-200 bg-white"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="reporterPhone" className="text-sm font-bold text-slate-700">เบอร์โทรศัพท์ติดต่อ <span className="text-rose-500">*</span></Label>
+                                                <Input
+                                                    id="reporterPhone"
+                                                    placeholder="0xx-xxx-xxxx"
+                                                    value={formData.reporterPhone}
+                                                    onChange={handleChange}
+                                                    required
+                                                    className="h-11 border-slate-200 bg-white"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Requirement 10: Position Code (Only for Admin) */}
+                                        {(user?.role === 'admin' || user?.role === 'staff') && (
+                                            <div className="space-y-2 p-4 rounded-xl bg-emerald-50 border border-emerald-100">
+                                                <Label htmlFor="storagePosition" className="text-sm font-bold text-emerald-700">รหัสตำแหน่งจัดเก็บ (เฉพาะแอดมิน)</Label>
+                                                <Input
+                                                    id="storagePosition"
+                                                    placeholder="เช่น ตู้ A ชั้น 1"
+                                                    value={formData.storagePosition}
+                                                    onChange={handleChange}
+                                                    className="h-11 border-emerald-200 bg-white focus:ring-emerald-500"
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -340,6 +440,64 @@ const ReportItem = () => {
                     </div>
                 </div>
             </div>
+
+            {/* AI Matching Modal (Requirement 14) */}
+            <Dialog open={showMatches} onOpenChange={(open) => {
+                if (!open) navigate('/');
+                setShowMatches(open);
+            }}>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-none rounded-2xl shadow-2xl">
+                    <DialogHeader className="p-6 bg-emerald-600 text-white">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-white/20 rounded-lg">
+                                <Sparkles size={24} className="text-white" />
+                            </div>
+                            <DialogTitle className="text-2xl font-black">ตรวจพบรายการที่คล้ายคลึงกัน!</DialogTitle>
+                        </div>
+                        <DialogDescription className="text-emerald-50 font-medium">
+                            เราพบว่ามีคนเคยแจ้ง {isLost ? 'พบ' : 'หาย'} สิ่งของที่คล้ายกับที่คุณเพิ่งรายงาน กรุณาตรวจสอบว่าใช่ของชิ้นเดียวกันหรือไม่
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50">
+                        {matches.map((match) => (
+                            <div key={match._id} className="flex gap-4 p-4 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-emerald-300 transition-all group">
+                                <div className="w-24 h-24 shrink-0 rounded-lg overflow-hidden bg-slate-100">
+                                    <img src={match.images[0]} alt={match.title} className="w-full h-full object-cover" />
+                                </div>
+                                <div className="flex-1 min-w-0 flex flex-col justify-between">
+                                    <div>
+                                        <h3 className="font-bold text-slate-900 truncate">{match.title}</h3>
+                                        <p className="text-xs text-slate-500 line-clamp-2 mt-1">{match.description}</p>
+                                    </div>
+                                    <div className="flex items-center justify-between mt-2">
+                                        <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                            <span className="flex items-center gap-1"><MapPin size={10} /> {match.locationMain}</span>
+                                            <span className="flex items-center gap-1"><Calendar size={10} /> {new Date(match.date).toLocaleDateString()}</span>
+                                        </div>
+                                        <Button 
+                                            size="sm" 
+                                            className="h-8 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs"
+                                            onClick={() => navigate(`/items/${match._id}`)}
+                                        >
+                                            ดูรายละเอียด
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="p-6 border-t border-slate-100 bg-white flex justify-end gap-3">
+                        <Button variant="outline" className="font-bold border-slate-200" onClick={() => navigate('/')}>
+                            ไม่ใช่ของที่ค้นหา
+                        </Button>
+                        <Button className="bg-slate-900 hover:bg-slate-800 text-white font-bold" onClick={() => navigate('/')}>
+                            ปิดหน้าต่าง
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

@@ -25,6 +25,43 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import './App.css';
 
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { Navigate } from 'react-router-dom';
+
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+    const { user, loading } = useAuth();
+    
+    if (loading) return (
+        <div className="min-h-screen bg-[#060b18] flex items-center justify-center">
+            <div className="h-10 w-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+    );
+    
+    if (!user) {
+        return <Navigate to="/login" replace />;
+    }
+    
+    return children;
+};
+
+// Admin Route Component
+const AdminRoute = ({ children }) => {
+    const { user, loading } = useAuth();
+    
+    if (loading) return (
+        <div className="min-h-screen bg-[#060b18] flex items-center justify-center">
+            <div className="h-10 w-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+    );
+    
+    if (!user || (user.role !== 'admin' && user.role !== 'staff')) {
+        return <Navigate to="/login" replace />;
+    }
+    
+    return children;
+};
+
 // Layout wrapper to conditionally hide Navbar/Footer
 const AppLayout = ({ children }) => {
     const location = useLocation();
@@ -36,18 +73,14 @@ const AppLayout = ({ children }) => {
     }
 
     return (
-        <div className="bg-background min-h-screen flex flex-col font-sans selection:bg-emerald-100 selection:text-emerald-900">
+        <div className="bg-background min-h-screen flex flex-col font-sans selection:bg-emerald-100 selection:text-emerald-900 mobile-optimized">
             {!hideNavFooter && <Navbar />}
             <main className={`flex-grow ${!hideNavFooter ? 'pt-20' : ''}`}>
                 {children}
             </main>
-
-
         </div>
     );
 };
-
-import { AuthProvider } from './context/AuthContext';
 
 function App() {
     return (
@@ -55,30 +88,31 @@ function App() {
             <AuthProvider>
                 <AppLayout>
                     <Routes>
-                        {/* Public Routes */}
-                        <Route path="/" element={<Home />} />
-                        <Route path="/search" element={<SearchItems />} />
-                        <Route path="/item/:id" element={<ItemDetail />} />
-                        <Route path="/report/:type" element={<ReportItem />} />
+                        {/* Auth Routes */}
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
                         <Route path="/forgot-password" element={<ForgotPassword />} />
                         <Route path="/reset-password/:token" element={<ResetPassword />} />
-                        <Route path="/profile" element={<Profile />} />
-                        <Route path="/chat/:userId" element={<Chat />} />
 
+                        {/* Protected User Routes */}
+                        <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+                        <Route path="/search" element={<ProtectedRoute><SearchItems /></ProtectedRoute>} />
+                        <Route path="/item/:id" element={<ProtectedRoute><ItemDetail /></ProtectedRoute>} />
+                        <Route path="/report/:type" element={<ProtectedRoute><ReportItem /></ProtectedRoute>} />
+                        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                        <Route path="/chat/:userId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
 
-                        {/* Admin Routes */}
+                        {/* Protected Admin Routes */}
                         <Route path="/admin/login" element={<AdminLogin />} />
-                        <Route path="/admin" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
-                        <Route path="/admin/items" element={<AdminLayout><AdminItems /></AdminLayout>} />
-                        <Route path="/admin/lost" element={<AdminLayout><AdminLostItems /></AdminLayout>} />
-                        <Route path="/admin/found" element={<AdminLayout><AdminFoundItems /></AdminLayout>} />
-                        <Route path="/admin/chat" element={<AdminLayout><AdminChat /></AdminLayout>} />
-                        <Route path="/admin/users" element={<AdminLayout><AdminUsers /></AdminLayout>} />
-                        <Route path="/admin/staff" element={<AdminLayout><AdminStaff /></AdminLayout>} />
-                        <Route path="/admin/ai-search" element={<AdminLayout><AIChatSearch /></AdminLayout>} />
-                        <Route path="/admin/settings" element={<AdminLayout><AdminSettings /></AdminLayout>} />
+                        <Route path="/admin" element={<AdminRoute><AdminLayout><AdminDashboard /></AdminLayout></AdminRoute>} />
+                        <Route path="/admin/items" element={<AdminRoute><AdminLayout><AdminItems /></AdminLayout></AdminRoute>} />
+                        <Route path="/admin/lost" element={<AdminRoute><AdminLayout><AdminLostItems /></AdminLayout></AdminRoute>} />
+                        <Route path="/admin/found" element={<AdminRoute><AdminLayout><AdminFoundItems /></AdminLayout></AdminRoute>} />
+                        <Route path="/admin/chat" element={<AdminRoute><AdminLayout><AdminChat /></AdminLayout></AdminRoute>} />
+                        <Route path="/admin/users" element={<AdminRoute><AdminLayout><AdminUsers /></AdminLayout></AdminRoute>} />
+                        <Route path="/admin/staff" element={<AdminRoute><AdminLayout><AdminStaff /></AdminLayout></AdminRoute>} />
+                        <Route path="/admin/ai-search" element={<AdminRoute><AdminLayout><AIChatSearch /></AdminLayout></AdminRoute>} />
+                        <Route path="/admin/settings" element={<AdminRoute><AdminLayout><AdminSettings /></AdminLayout></AdminRoute>} />
                     </Routes>
                 </AppLayout>
             </AuthProvider>

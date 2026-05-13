@@ -87,10 +87,62 @@ const ItemDetail = () => {
                             <Badge className={`px-3 py-1 text-sm ${item.type === 'lost' ? 'bg-rose-100 text-rose-700 hover:bg-rose-200' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'}`}>
                                 {item.type === 'lost' ? 'ประกาศหาย' : 'ประกาศเจอของ'}
                             </Badge>
+                            {item.customId && (
+                                <Badge variant="outline" className="text-emerald-600 border-emerald-200 font-mono font-bold bg-emerald-50">
+                                    {item.customId}
+                                </Badge>
+                            )}
                             <Badge variant="outline" className="text-slate-500">{categories[item.category] || item.category}</Badge>
                         </div>
                         <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">{item.title}</h1>
-                        <p className="text-slate-500 text-lg leading-relaxed">{item.description}</p>
+                        <p className="text-slate-500 text-lg leading-relaxed mb-6">{item.description}</p>
+
+                        {/* Location and Info Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
+                                <div className="flex items-center gap-3 mb-1">
+                                    <MapPin size={16} className="text-emerald-600" />
+                                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">สถานที่</p>
+                                </div>
+                                <p className="font-bold text-slate-800">{item.locationMain}</p>
+                                {item.locationDetail && <p className="text-xs text-slate-500 mt-0.5">{item.locationDetail}</p>}
+                            </div>
+
+                            <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
+                                <div className="flex items-center gap-3 mb-1">
+                                    <Calendar size={16} className="text-emerald-600" />
+                                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">วันที่</p>
+                                </div>
+                                <p className="font-bold text-slate-800">
+                                    {new Date(item.date).toLocaleDateString('th-TH', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric',
+                                    })}
+                                </p>
+                            </div>
+
+                            {(currentUser?.role === 'admin' || currentUser?.role === 'staff') && (
+                                <div className="bg-indigo-50 rounded-2xl p-5 border border-indigo-100 sm:col-span-2">
+                                    <div className="flex items-center gap-3 mb-1">
+                                        <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                                        <p className="text-[10px] text-indigo-400 font-black uppercase tracking-widest">ข้อมูลสำหรับเจ้าหน้าที่</p>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <p className="text-xs text-indigo-500 font-medium">ตำแหน่งจัดเก็บสิ่งของ:</p>
+                                            <p className="font-black text-indigo-900 text-lg">{item.storagePosition || 'ไม่ได้ระบุ'}</p>
+                                        </div>
+                                        {item.reporterIdCard && (
+                                            <div className="text-right">
+                                                <p className="text-xs text-indigo-500 font-medium">เลขบัตรประชาชนผู้แจ้ง:</p>
+                                                <p className="font-bold text-indigo-900">{item.reporterIdCard}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
                         {/* AI Analysis Result */}
                         {(item.aiTags?.length > 0 || item.aiDescription) && (
@@ -117,34 +169,6 @@ const ItemDetail = () => {
                                 )}
                             </div>
                         )}
-                    </div>
-
-                    <div className="bg-slate-50 rounded-2xl p-6 space-y-4 border border-slate-100">
-                        <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-emerald-600 shadow-sm border border-slate-100">
-                                <MapPin size={20} />
-                            </div>
-                            <div>
-                                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">สถานที่</p>
-                                <p className="font-semibold text-slate-800">{item.location}</p>
-                            </div>
-                        </div>
-                        <div className="w-full h-px bg-slate-200"></div>
-                        <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-emerald-600 shadow-sm border border-slate-100">
-                                <Calendar size={20} />
-                            </div>
-                            <div>
-                                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">วันและเวลา</p>
-                                <p className="font-semibold text-slate-800">
-                                    {new Date(item.date).toLocaleDateString('th-TH', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                    })}
-                                </p>
-                            </div>
-                        </div>
                     </div>
 
                     <div className="flex flex-col gap-4">

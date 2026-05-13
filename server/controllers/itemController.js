@@ -6,7 +6,10 @@ const { analyzeItemImage } = require('../utils/aiService');
 // @route   POST /api/items
 // @access  Private
 const createItem = asyncHandler(async (req, res) => {
-    const { title, description, type, category, location, date } = req.body;
+    const { 
+        title, description, type, category, locationMain, 
+        locationDetail, date, reporterIdCard, reporterPhone, storagePosition 
+    } = req.body;
 
     if (!req.files || req.files.length === 0) {
         res.status(400);
@@ -21,14 +24,18 @@ const createItem = asyncHandler(async (req, res) => {
         description,
         type,
         category,
-        location,
+        locationMain,
+        locationDetail,
+        location: `${locationMain} ${locationDetail}`, // Compatibility for old fields if any
         date,
+        reporterIdCard,
+        reporterPhone,
+        storagePosition: storagePosition || '',
         images,
         status: 'open'
     });
 
-    // Run AI analysis (Trigger in background to keep UI snappy, or await if you want immediate results)
-    // For now, let's await it to show the AI power on the first load!
+    // Run AI analysis
     if (images.length > 0) {
         try {
             const aiResult = await analyzeItemImage(images[0]);
@@ -42,7 +49,36 @@ const createItem = asyncHandler(async (req, res) => {
         }
     }
 
-    res.status(201).json(item);
+    // Requirement 13: AI Matching Logic
+    // Search for items of the opposite type that might match
+    const oppositeType = type === 'lost' ? 'found' : 'lost';
+    let matches = [];
+    
+    try {
+        // Simple keyword matching for now (Requirement 13)
+        // In a real system, we'd use vector search or Gemini to compare
+        const keywords = title.split(' ').filter(k => k.length > 2);
+        
+        const potentialMatches = await Item.find({
+            type: oppositeType,
+            status: 'open',
+            $or: [
+                { category: category },
+                { title: { $regex: keywords.join('|'), $options: 'i' } },
+                { aiTags: { $in: item.aiTags || [] } } // Compare with AI generated tags
+            ]
+        }).limit(5);
+
+        matches = potentialMatches;
+    } catch (err) {
+        console.error("AI Matching failed:", err);
+    }
+
+    res.status(201).json({
+        item,
+        matches, // Requirement 13
+        message: matches.length > 0 ? 'ตรวจพบของที่คล้ายคลึงกันในระบบ!' : 'สร้างประกาศสำเร็จ'
+    });
 });
 
 // @desc    Get all items
@@ -87,7 +123,9 @@ const getItems = asyncHandler(async (req, res) => {
         query.$or = [
             { title: { $regex: search, $options: 'i' } },
             { description: { $regex: search, $options: 'i' } },
-            { location: { $regex: search, $options: 'i' } }
+            { locationMain: { $regex: search, $options: 'i' } },
+            { locationDetail: { $regex: search, $options: 'i' } },
+            { customId: { $regex: search, $options: 'i' } } // Also allow searching by Unique ID
         ];
     }
 
@@ -287,11 +325,46 @@ const aiSearch = asyncHandler(async (req, res) => {
     }
 });
 
+// @desc    Export all items to Excel
+// @route   GET /api/items/export
+// @access  Private (Admin)
+const exportItems = asyncHandler(async (req, res) => {
+    const XLSX = require('xlsx');
+    const items = await Item.find({}).populate('user', 'firstname lastname email');
+
+    const data = items.map(item => ({
+        'Unique ID': item.customId,
+        'Title': item.title,
+        'Type': item.type === 'lost' ? 'แจ้งหาย' : 'พบสิ่งของ',
+        'Category': item.category,
+        'Location (Main)': item.locationMain,
+        'Location (Detail)': item.locationDetail,
+        'Storage Position': item.storagePosition,
+        'Reporter Name': `${item.user?.firstname} ${item.user?.lastname}`,
+        'Reporter ID Card': item.reporterIdCard,
+        'Reporter Phone': item.reporterPhone,
+        'Date': new Date(item.date).toLocaleDateString(),
+        'Status': item.status,
+        'Created At': item.createdAt.toLocaleDateString()
+    }));
+
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'LostFound Items');
+
+    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    res.setHeader('Content-Disposition', 'attachment; filename=lostfound_report.xlsx');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buffer);
+});
+
 module.exports = {
     createItem,
     getItems,
     getItem,
     updateItem,
     deleteItem,
-    aiSearch
+    aiSearch,
+    exportItems
 };

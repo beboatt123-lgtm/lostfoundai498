@@ -1,1 +1,53 @@
 /* App-specific styles */
+
+/* Mobile UX Optimizations (Requirement 3) */
+@media (max-width: 768px) {
+    :root {
+        font-size: 17px; /* Slightly larger base font for mobile */
+    }
+    
+    .mobile-optimized h1 {
+        font-size: 1.75rem !important;
+        line-height: 1.2 !important;
+    }
+    
+    .mobile-optimized h2 {
+        font-size: 1.4rem !important;
+    }
+    
+    .mobile-optimized p, 
+    .mobile-optimized span, 
+    .mobile-optimized input,
+    .mobile-optimized button {
+        font-size: 1rem !important; /* Ensure readable text on small screens */
+    }
+    
+    .mobile-optimized .text-[8px],
+    .mobile-optimized .text-[9px],
+    .mobile-optimized .text-[10px],
+    .mobile-optimized .text-xs {
+        font-size: 0.85rem !important; /* Upscale tiny text for mobile legibility */
+        letter-spacing: 0.05em !important;
+    }
+
+    /* Make touch targets larger */
+    button, a, input, select {
+        min-height: 44px !important;
+    }
+}
+
+.italic-text-none * {
+    font-style: normal !important;
+}
+
+/* Custom Scrollbar for better UX */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #10b981;
+    border-radius: 10px;
+}
