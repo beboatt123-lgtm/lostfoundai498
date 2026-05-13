@@ -18,7 +18,8 @@ import {
     Filter,
     Calendar,
     AlertCircle,
-    Loader2
+    Loader2,
+    Plus
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -112,6 +113,12 @@ const AdminLostItems = () => {
                             className="gap-2 bg-white text-slate-600 hover:text-rose-600 border-slate-200 h-11 rounded-xl px-5 transition-all"
                         >
                             รีเฟรชข้อมูล
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/report/lost')}
+                            className="gap-2 bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-200 h-11 rounded-xl px-5 transition-all font-bold"
+                        >
+                            <Plus size={18} /> เพิ่มรายการของหาย
                         </Button>
                     </div>
                 </div>

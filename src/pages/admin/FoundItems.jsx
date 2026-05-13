@@ -18,7 +18,8 @@ import {
     Filter,
     Calendar,
     ShieldCheck,
-    Loader2
+    Loader2,
+    Plus
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -112,6 +113,12 @@ const AdminFoundItems = () => {
                             className="gap-2 bg-white text-slate-600 hover:text-emerald-600 border-slate-200 h-11 rounded-xl px-5 transition-all"
                         >
                             รีเฟรชข้อมูล
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/report/found')}
+                            className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200 h-11 rounded-xl px-5 transition-all font-bold"
+                        >
+                            <Plus size={18} /> เพิ่มรายการที่พบ
                         </Button>
                     </div>
                 </div>

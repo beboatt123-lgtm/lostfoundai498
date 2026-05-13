@@ -6,6 +6,15 @@ import { MapPin, Calendar, Share2, Flag, MessageCircle, Loader2, Sparkles } from
 import api from '../lib/axios';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from '../context/AuthContext';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter
+} from "@/components/ui/dialog";
+import { Phone, Info } from 'lucide-react';
 
 const ItemDetail = () => {
     const { id } = useParams();
@@ -14,6 +23,7 @@ const ItemDetail = () => {
     const [item, setItem] = useState(null);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [showContactModal, setShowContactModal] = useState(false);
 
     const categories = {
         'electronics': 'อุปกรณ์อิเล็กทรอนิกส์',
@@ -175,24 +185,10 @@ const ItemDetail = () => {
                         <Button
                             size="lg"
                             className="w-full h-15 rounded-2xl text-lg font-black bg-emerald-600 hover:bg-emerald-700 shadow-xl shadow-emerald-200 transition-all active:scale-95"
-                            onClick={() => {
-                                if (item.user?._id === currentUser?._id) {
-                                    alert("คุณไม่สามารถแชทกับตัวเองได้ครับ 😄");
-                                    return;
-                                }
-                                navigate(`/chat/${item.user?._id}`);
-                            }}
+                            onClick={() => setShowContactModal(true)}
                         >
                             <MessageCircle className="mr-3 h-6 w-6" /> ติดต่อพูดคุยกับผู้ประกาศ
                         </Button>
-                        <div className="flex gap-3">
-                            <Button variant="outline" size="lg" className="flex-1 font-semibold border-slate-300">
-                                <Share2 className="mr-2 h-5 w-5" /> แชร์
-                            </Button>
-                            <Button variant="outline" size="lg" className="flex-1 font-semibold border-slate-300 text-rose-600 hover:text-rose-700 hover:bg-rose-50">
-                                <Flag className="mr-2 h-5 w-5" /> แจ้งปัญหา
-                            </Button>
-                        </div>
                     </div>
 
                     <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
@@ -207,6 +203,47 @@ const ItemDetail = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Contact Info Popup (Requirement Update) */}
+            <Dialog open={showContactModal} onOpenChange={setShowContactModal}>
+                <DialogContent className="max-w-[400px] rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
+                    <div className="bg-emerald-600 p-8 text-center text-white relative">
+                        <div className="absolute top-[-20px] right-[-20px] w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+                        <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm ring-1 ring-white/30">
+                            <Phone size={32} className="text-white" />
+                        </div>
+                        <DialogTitle className="text-2xl font-black mb-2">ช่องทางการติดต่อ</DialogTitle>
+                        <DialogDescription className="text-emerald-100 font-medium">
+                            กรุณาติดต่อรับสิ่งของหรือสอบถามข้อมูลได้ที่
+                        </DialogDescription>
+                    </div>
+                    <div className="p-8 bg-white space-y-6">
+                        <div className="flex items-start gap-4 p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-emerald-200">
+                                <MapPin size={20} />
+                            </div>
+                            <div>
+                                <p className="text-xs font-black text-emerald-600 uppercase tracking-widest mb-1">สถานที่ติดต่อ</p>
+                                <p className="text-lg font-bold text-slate-800">ติดต่อห้องกิจกรรม ตึก A6</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                            <Info size={18} className="text-slate-400" />
+                            <p className="text-sm text-slate-500 font-medium">
+                                โปรดเตรียมหลักฐานแสดงความเป็นเจ้าของมาด้วยนะครับ
+                            </p>
+                        </div>
+
+                        <Button 
+                            className="w-full h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold transition-all active:scale-95"
+                            onClick={() => setShowContactModal(false)}
+                        >
+                            ตกลง รับทราบ
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

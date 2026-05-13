@@ -48,8 +48,12 @@ const Navbar = () => {
                 <div className="hidden md:flex gap-8">
                     <Link to="/" className="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">หน้าแรก</Link>
                     <Link to="/search" className="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">ค้นหาของหาย</Link>
-                    <Link to="/report/lost" className="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">ประกาศตามหาของ</Link>
-                    <Link to="/report/found" className="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">แจ้งพบสิ่งของ</Link>
+                    {(!user || (user.role !== 'admin' && user.role !== 'staff')) && (
+                        <>
+                            <Link to="/report/lost" className="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">ประกาศตามหาของ</Link>
+                            <Link to="/report/found" className="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">แจ้งพบสิ่งของ</Link>
+                        </>
+                    )}
 
                 </div>
             </div>
@@ -150,18 +154,22 @@ const Navbar = () => {
                                 </div>
                                 <span>ค้นหาของหาย</span>
                             </Link>
-                            <Link to="/report/lost" onClick={() => setIsOpen(false)} className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-slate-50 transition-all font-bold text-slate-600 hover:text-slate-900 text-rose-600">
-                                <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center text-rose-500">
-                                    <PlusCircle size={18} />
-                                </div>
-                                <span>ประกาศตามหาของ (Searching)</span>
-                            </Link>
-                            <Link to="/report/found" onClick={() => setIsOpen(false)} className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-slate-50 transition-all font-bold text-slate-600 hover:text-slate-900 text-emerald-600">
-                                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500">
-                                    <PlusCircle size={18} />
-                                </div>
-                                <span>แจ้งพบสิ่งของ (Found)</span>
-                            </Link>
+                            {(!user || (user.role !== 'admin' && user.role !== 'staff')) && (
+                                <>
+                                    <Link to="/report/lost" onClick={() => setIsOpen(false)} className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-slate-50 transition-all font-bold text-slate-600 hover:text-slate-900 text-rose-600">
+                                        <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center text-rose-500">
+                                            <PlusCircle size={18} />
+                                        </div>
+                                        <span>ประกาศตามหาของ (Searching)</span>
+                                    </Link>
+                                    <Link to="/report/found" onClick={() => setIsOpen(false)} className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-slate-50 transition-all font-bold text-slate-600 hover:text-slate-900 text-emerald-600">
+                                        <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500">
+                                            <PlusCircle size={18} />
+                                        </div>
+                                        <span>แจ้งพบสิ่งของ (Found)</span>
+                                    </Link>
+                                </>
+                            )}
 
 
                         </div>
