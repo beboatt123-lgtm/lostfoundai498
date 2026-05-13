@@ -126,52 +126,40 @@ const updateProfile = asyncHandler(async (req, res) => {
 // @route   POST /api/auth/google
 // @access  Public
 const googleLogin = asyncHandler(async (req, res) => {
-    console.log('Google Login Request received:', req.body);
     const { tokenId } = req.body;
 
     if (!tokenId) {
         res.status(400);
-        throw new Error('Google authentication failed: No token provided');
+        throw new Error('กรุณาส่ง Token มาให้ระบบ');
     }
 
     try {
-        // Try verifying as ID Token first
-        let email, given_name, family_name, picture;
+        console.log('Google Auth Request:', { hasToken: !!tokenId });
         
-        try {
-            const ticket = await googleClient.verifyIdToken({
-                idToken: tokenId,
-                audience: process.env.GOOGLE_CLIENT_ID,
-            });
-            const payload = ticket.getPayload();
-            email = payload.email;
-            given_name = payload.given_name;
-            family_name = payload.family_name;
-            picture = payload.picture;
-            console.log('Google Auth verified via ID Token');
-        } catch (idError) {
-            console.log('ID Token verification failed, trying Access Token...');
-            // If ID Token verification fails, it might be an Access Token
-            const googleRes = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${tokenId}`);
-            email = googleRes.data.email;
-            given_name = googleRes.data.given_name;
-            family_name = googleRes.data.family_name;
-            picture = googleRes.data.picture;
-            console.log('Google Auth verified via Access Token');
+        // Fetch user info from Google (Frontend sends access_token)
+        const googleRes = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${tokenId}`);
+        const { email, given_name, family_name, picture } = googleRes.data;
+
+        if (!email) {
+            res.status(401);
+            throw new Error('ไม่สามารถดึงอีเมลจาก Google ได้');
         }
 
         let user = await User.findOne({ email });
 
         if (!user) {
+            console.log('Creating new Google user:', email);
             const salt = await bcrypt.genSalt(10);
-            const hashedPassword = await bcrypt.hash(crypto.randomBytes(8).toString('hex'), salt);
+            // Generate a secure random password
+            const randomPassword = crypto.randomBytes(16).toString('hex');
+            const hashedPassword = await bcrypt.hash(randomPassword, salt);
 
             user = await User.create({
-                firstname: given_name,
-                lastname: family_name || '-',
+                firstname: given_name || 'Google',
+                lastname: family_name || 'User',
                 email,
                 password: hashedPassword,
-                avatar: picture,
+                avatar: picture || 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
             });
         }
 
@@ -190,11 +178,12 @@ const googleLogin = asyncHandler(async (req, res) => {
             token: generateToken(user.id),
         });
     } catch (error) {
-        console.error('Google Auth Final Error:', error.message);
-        res.status(401);
-        throw new Error(`Google authentication failed: ${error.message}`);
+        console.error('Google Auth Error:', error.response?.data || error.message);
+        res.status(error.response?.status || 500);
+        throw new Error(`Google Login Failed: ${error.message}`);
     }
 });
+
 // @desc    Forgot Password
 // @route   POST /api/auth/forgot-password
 // @access  Public
