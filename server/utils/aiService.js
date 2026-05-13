@@ -1,8 +1,10 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { GoogleGenAI } = require("@google/genai");
 const axios = require('axios');
 
 // Configure Gemini (Need GEMINI_API_KEY in .env)
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const nativeAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 /**
  * Download image from URL and convert to base64
@@ -90,4 +92,44 @@ const generateImagePrompt = async (title, description) => {
     }
 };
 
-module.exports = { analyzeItemImage, generateImagePrompt };
+/**
+ * Native Image Generation using Gemini 3.1 Flash
+ */
+const generateNativeImage = async (title, description) => {
+    try {
+        // 1. Get a good prompt using Gemini 1.5 Flash (since it's better at text reasoning)
+        const aiPrompt = await generateImagePrompt(title, description);
+        
+        console.log("Generating Native Image with prompt:", aiPrompt);
+
+        // 2. Use Gemini 3.1 Flash for image generation
+        const response = await nativeAI.models.generateContent({
+            model: 'gemini-3.1-flash-image-preview',
+            contents: [{ text: aiPrompt }],
+            config: {
+                responseModalities: ['IMAGE'],
+                imageConfig: {
+                    aspectRatio: '1:1',
+                    imageSize: '1K',
+                },
+            },
+        });
+
+        // 3. Extract image data
+        for (const part of response.candidates[0].content.parts) {
+            if (part.inlineData) {
+                return {
+                    base64: part.inlineData.data,
+                    mimeType: part.inlineData.mimeType,
+                    prompt: aiPrompt
+                };
+            }
+        }
+        throw new Error("No image data returned from Gemini");
+    } catch (error) {
+        console.error("Native Image Generation Error:", error);
+        throw error;
+    }
+};
+
+module.exports = { analyzeItemImage, generateImagePrompt, generateNativeImage };
