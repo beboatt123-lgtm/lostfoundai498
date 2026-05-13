@@ -126,6 +126,7 @@ const updateProfile = asyncHandler(async (req, res) => {
 // @route   POST /api/auth/google
 // @access  Public
 const googleLogin = asyncHandler(async (req, res) => {
+    console.log('Google Login Request received:', req.body);
     const { tokenId } = req.body;
 
     if (!tokenId) {
