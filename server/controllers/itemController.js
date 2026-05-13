@@ -391,15 +391,24 @@ const generateAIImage = asyncHandler(async (req, res) => {
         const { generateImagePrompt } = require('../utils/aiService');
         const aiPrompt = await generateImagePrompt(title, description);
         
-        // Use Pollinations AI (Free and reliable for now)
+        // Use a more stable Pollinations AI endpoint
         const encodedPrompt = encodeURIComponent(aiPrompt);
-        const imageUrl = `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${Math.floor(Math.random() * 1000000)}&nologo=true&model=flux`;
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true`;
 
-        console.log("Generating image via Pollinations AI...");
+        console.log("Generating image via stable Pollinations AI endpoint...");
 
-        // Upload the image to Cloudinary to get a permanent URL
-        const uploadResponse = await cloudinary.uploader.upload(imageUrl, {
-            folder: 'lostfound_ai',
+        // Fetch the image as a buffer first for better reliability
+        const imageRes = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+        const buffer = Buffer.from(imageRes.data);
+
+        // Upload the buffer to Cloudinary
+        const uploadResponse = await new Promise((resolve, reject) => {
+            cloudinary.uploader.upload_stream({
+                folder: 'lostfound_ai',
+            }, (error, result) => {
+                if (error) reject(error);
+                else resolve(result);
+            }).end(buffer);
         });
 
         res.status(200).json({
