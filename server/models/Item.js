@@ -70,6 +70,21 @@ const itemSchema = mongoose.Schema({
     }],
     aiDescription: {
         type: String
+    },
+    receiverIdCard: {
+        type: String,
+        default: ''
+    },
+    receiverPhone: {
+        type: String,
+        default: ''
+    },
+    receiverImage: {
+        type: String,
+        default: ''
+    },
+    resolvedAt: {
+        type: Date
     }
 }, {
     timestamps: true

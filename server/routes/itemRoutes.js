@@ -26,6 +26,7 @@ router.route('/')
 router.route('/:id')
     .get(getItem)
     .put(protect, updateItem)
+    .patch(protect, upload.single('receiverImage'), updateItem)
     .delete(protect, deleteItem);
 
 module.exports = router;

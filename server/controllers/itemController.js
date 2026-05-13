@@ -171,7 +171,17 @@ const updateItem = asyncHandler(async (req, res) => {
         throw new Error('User not authorized');
     }
 
-    const updatedItem = await Item.findByIdAndUpdate(req.params.id, req.body, {
+    const updateData = { ...req.body };
+    
+    if (req.file) {
+        updateData.receiverImage = req.file.path;
+    }
+
+    if (updateData.status === 'resolved') {
+        updateData.resolvedAt = new Date();
+    }
+
+    const updatedItem = await Item.findByIdAndUpdate(req.params.id, updateData, {
         new: true,
     });
 

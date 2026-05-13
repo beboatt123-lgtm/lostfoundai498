@@ -11,16 +11,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-    MoreHorizontal,
-    Eye,
-    CheckCircle,
-    Search,
-    Filter,
-    Calendar,
-    ShieldCheck,
-    Loader2,
-    Plus
-} from "lucide-react";
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Search, Filter, Calendar, ShieldCheck, Loader2, Plus, MoreHorizontal, Eye } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -37,6 +36,15 @@ const AdminFoundItems = () => {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
+    const [selectedItemId, setSelectedItemId] = useState(null);
+    const [resolveLoading, setResolveLoading] = useState(false);
+    const [resolveData, setResolveData] = useState({
+        receiverIdCard: '',
+        receiverPhone: '',
+    });
+    const [receiverImage, setReceiverImage] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
     const navigate = useNavigate();
 
     const fetchFoundItems = async () => {
@@ -69,14 +77,48 @@ const AdminFoundItems = () => {
         }
     };
 
-    const handleResolve = async (id) => {
-        if (window.confirm('คุณต้องการทำเครื่องหมายรายการนี้ว่า "จับคู่/คืนแล้ว" ใช่หรือไม่?')) {
-            try {
-                await api.put(`/items/${id}`, { status: 'resolved' });
-                fetchFoundItems();
-            } catch (err) {
-                console.error("Update failed", err);
-            }
+    const handleResolveClick = (id) => {
+        setSelectedItemId(id);
+        setIsResolveModalOpen(true);
+    };
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setReceiverImage(file);
+            setImagePreview(URL.createObjectURL(file));
+        }
+    };
+
+    const handleResolveSubmit = async (e) => {
+        e.preventDefault();
+        if (!resolveData.receiverIdCard || !resolveData.receiverPhone || !receiverImage) {
+            alert('กรุณากรอกข้อมูลและอัปโหลดรูปภาพให้ครบถ้วน');
+            return;
+        }
+
+        try {
+            setResolveLoading(true);
+            const formData = new FormData();
+            formData.append('status', 'resolved');
+            formData.append('receiverIdCard', resolveData.receiverIdCard);
+            formData.append('receiverPhone', resolveData.receiverPhone);
+            formData.append('receiverImage', receiverImage);
+
+            await api.patch(`/items/${selectedItemId}`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            setIsResolveModalOpen(false);
+            setResolveData({ receiverIdCard: '', receiverPhone: '' });
+            setReceiverImage(null);
+            setImagePreview(null);
+            fetchFoundItems();
+        } catch (err) {
+            console.error("Resolve failed", err);
+            alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+        } finally {
+            setResolveLoading(false);
         }
     };
 
@@ -189,7 +231,7 @@ const AdminFoundItems = () => {
                                                             <Eye className="mr-2.5 h-4 w-4 text-slate-400" /> ดูรายละเอียดจริง
                                                         </DropdownMenuItem>
                                                         {item.status === 'open' && (
-                                                            <DropdownMenuItem className="cursor-pointer py-2.5 text-blue-600 font-bold focus:text-blue-700 focus:bg-blue-50" onClick={() => handleResolve(item._id)}>
+                                                            <DropdownMenuItem className="cursor-pointer py-2.5 text-blue-600 font-bold focus:text-blue-700 focus:bg-blue-50" onClick={() => handleResolveClick(item._id)}>
                                                                 <CheckCircle className="mr-2.5 h-4 w-4" /> บันทึกการส่งคืนสำเร็จ
                                                             </DropdownMenuItem>
                                                         )}
@@ -204,6 +246,99 @@ const AdminFoundItems = () => {
                     )}
                 </div>
             </div>
+
+            {/* Resolve Modal (Identity Verification) */}
+            <Dialog open={isResolveModalOpen} onOpenChange={setIsResolveModalOpen}>
+                <DialogContent className="max-w-md rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
+                    <div className="bg-slate-900 p-8 text-center text-white relative">
+                        <div className="absolute top-[-20px] right-[-20px] w-40 h-40 bg-blue-500/20 rounded-full blur-3xl"></div>
+                        <div className="bg-blue-500 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-900/40">
+                            <CheckCircle size={32} />
+                        </div>
+                        <DialogTitle className="text-2xl font-black mb-2">บันทึกการส่งคืนสำเร็จ</DialogTitle>
+                        <DialogDescription className="text-slate-400">
+                            กรุณากรอกข้อมูลผู้รับสิ่งของเพื่อเป็นหลักฐานในระบบ
+                        </DialogDescription>
+                    </div>
+
+                    <form onSubmit={handleResolveSubmit} className="p-8 bg-white space-y-5">
+                        <div className="space-y-2">
+                            <Label htmlFor="receiverIdCard" className="text-xs font-black uppercase tracking-widest text-slate-500">เลขบัตรประชาชนผู้มารับ</Label>
+                            <div className="relative">
+                                <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                <Input 
+                                    id="receiverIdCard"
+                                    placeholder="กรอกเลข 13 หลัก"
+                                    className="pl-10 h-12 bg-slate-50 border-slate-200 rounded-xl"
+                                    value={resolveData.receiverIdCard}
+                                    onChange={(e) => setResolveData({...resolveData, receiverIdCard: e.target.value})}
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="receiverPhone" className="text-xs font-black uppercase tracking-widest text-slate-500">เบอร์โทรศัพท์ติดต่อ</Label>
+                            <div className="relative">
+                                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                <Input 
+                                    id="receiverPhone"
+                                    placeholder="08X-XXX-XXXX"
+                                    className="pl-10 h-12 bg-slate-50 border-slate-200 rounded-xl"
+                                    value={resolveData.receiverPhone}
+                                    onChange={(e) => setResolveData({...resolveData, receiverPhone: e.target.value})}
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label className="text-xs font-black uppercase tracking-widest text-slate-500">รูปถ่ายหลักฐานการรับมอบ</Label>
+                            <div 
+                                onClick={() => document.getElementById('receiverImage').click()}
+                                className="border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center cursor-pointer hover:bg-slate-50 transition-all overflow-hidden aspect-video flex flex-col items-center justify-center gap-2"
+                            >
+                                {imagePreview ? (
+                                    <img src={imagePreview} className="w-full h-full object-cover rounded-lg" alt="Preview" />
+                                ) : (
+                                    <>
+                                        <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                                            <Camera size={24} />
+                                        </div>
+                                        <p className="text-xs font-bold text-slate-400">คลิกเพื่ออัปโหลดรูปถ่าย</p>
+                                    </>
+                                )}
+                            </div>
+                            <input 
+                                id="receiverImage" 
+                                type="file" 
+                                accept="image/*" 
+                                className="hidden" 
+                                onChange={handleImageChange}
+                                required 
+                            />
+                        </div>
+
+                        <div className="flex gap-3 pt-4">
+                            <Button 
+                                type="button" 
+                                variant="outline" 
+                                className="flex-1 h-12 rounded-xl font-bold"
+                                onClick={() => setIsResolveModalOpen(false)}
+                            >
+                                ยกเลิก
+                            </Button>
+                            <Button 
+                                type="submit" 
+                                disabled={resolveLoading}
+                                className="flex-1 h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-200"
+                            >
+                                {resolveLoading ? <Loader2 className="animate-spin h-5 w-5" /> : 'ยืนยันบันทึกการส่งคืน'}
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
