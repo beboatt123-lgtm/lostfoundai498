@@ -376,8 +376,6 @@ const exportItems = asyncHandler(async (req, res) => {
     res.send(buffer);
 });
 
-const cloudinary = require('../config/cloudinary');
-
 // @desc    Generate AI Image for an item
 // @route   POST /api/items/generate-image
 // @access  Private
