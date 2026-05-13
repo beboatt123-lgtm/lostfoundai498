@@ -1,6 +1,8 @@
 const asyncHandler = require('express-async-handler');
 const Item = require('../models/Item');
 const { analyzeItemImage } = require('../utils/aiService');
+const axios = require('axios');
+const cloudinary = require('../config/cloudinary');
 
 // @desc    Create new item (Lost/Found)
 // @route   POST /api/items
