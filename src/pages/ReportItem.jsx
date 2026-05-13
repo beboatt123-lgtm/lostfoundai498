@@ -55,7 +55,7 @@ const ReportItem = () => {
         const fetchLocations = async () => {
             try {
                 setLocationsLoading(true);
-                const res = await api.get('/api/locations');
+                const res = await api.get('/locations');
                 setMainLocations(res.data.map(loc => loc.name));
             } catch (err) {
                 console.error("Failed to fetch locations", err);
