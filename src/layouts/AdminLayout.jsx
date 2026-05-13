@@ -13,7 +13,8 @@ import {
     Bell,
     ChevronDown,
     MessageSquare,
-    ShieldCheck
+    ShieldCheck,
+    ExternalLink
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -46,6 +47,7 @@ const AdminLayout = ({ children }) => {
 
     const menuItems = [
         { icon: <LayoutDashboard size={20} />, label: 'ภาพรวมระบบ', path: '/admin' },
+        { icon: <ExternalLink size={20} className="text-blue-400" />, label: 'ไปหน้าหลักของเว็บ', path: '/' },
         { icon: <Package size={20} className="text-rose-400" />, label: 'จัดการของหาย', path: '/admin/lost' },
         { icon: <MapPin size={20} className="text-emerald-400" />, label: 'จัดการของที่พบ', path: '/admin/found' },
         { icon: <MessageSquare size={20} className="text-blue-400" />, label: 'แชทช่วยเหลือ', path: '/admin/chat' },
@@ -185,6 +187,12 @@ const AdminLayout = ({ children }) => {
                                 className="pl-10 h-10 bg-slate-100/50 border-slate-200 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500/30 transition-all font-medium placeholder:text-slate-400"
                             />
                         </div>
+
+                        <Link to="/">
+                            <Button variant="ghost" size="sm" className="hidden xl:flex gap-2 font-bold text-slate-500 hover:text-emerald-600 hover:bg-emerald-50">
+                                <ExternalLink size={14} /> ไปหน้าหลักของเว็บ
+                            </Button>
+                        </Link>
                     </div>
 
                     <div className="flex items-center gap-2">

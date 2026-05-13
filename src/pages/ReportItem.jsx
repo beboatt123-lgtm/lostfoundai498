@@ -14,6 +14,7 @@ import {
     Music, Wrench, ToyBrick, Boxes, LayoutGrid, Sparkles
 } from 'lucide-react';
 import api from '../lib/axios';
+import { useAuth } from '../context/AuthContext';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
     Dialog,
