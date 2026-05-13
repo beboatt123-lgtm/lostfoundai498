@@ -134,16 +134,17 @@ const googleLogin = asyncHandler(async (req, res) => {
     }
 
     try {
-        console.log('Google Auth Request:', { hasToken: !!tokenId });
+        console.log('Google Auth Attempt...');
         
         // Fetch user info from Google (Frontend sends access_token)
         const googleRes = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${tokenId}`);
-        const { email, given_name, family_name, picture } = googleRes.data;
-
-        if (!email) {
+        
+        if (!googleRes.data || !googleRes.data.email) {
             res.status(401);
-            throw new Error('ไม่สามารถดึงอีเมลจาก Google ได้');
+            throw new Error('ข้อมูลจาก Google ไม่ถูกต้อง');
         }
+
+        const { email, given_name, family_name, picture } = googleRes.data;
 
         let user = await User.findOne({ email });
 
@@ -178,8 +179,9 @@ const googleLogin = asyncHandler(async (req, res) => {
             token: generateToken(user.id),
         });
     } catch (error) {
-        console.error('Google Auth Error:', error.response?.data || error.message);
-        res.status(error.response?.status || 500);
+        console.error('Google Auth Final Error:', error.message);
+        const status = error.response?.status || res.statusCode || 500;
+        res.status(status === 200 ? 500 : status);
         throw new Error(`Google Login Failed: ${error.message}`);
     }
 });
