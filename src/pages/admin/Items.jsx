@@ -69,13 +69,6 @@ const AdminItems = () => {
             : <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-bold">เจอของ</Badge>;
     };
 
-    return (
-        <div className="space-y-6 max-w-7xl mx-auto font-sans">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">จัดการรายการทั้งหมด (Items)</h2>
-                    <p className="text-slate-500 mt-1">บริหารจัดการรายการแจ้งหายและเจอของทั้งหมดในระบบ</p>
-                </div>
     const handleExport = async () => {
         try {
             const response = await api.get('/items/export', { responseType: 'blob' });

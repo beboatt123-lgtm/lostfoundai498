@@ -386,7 +386,6 @@ const ReportItem = () => {
                                                 />
                                             </div>
                                         )}
-                                    </div>
                                 </div>
                             </div>
 
@@ -439,7 +438,6 @@ const ReportItem = () => {
                         </p>
                     </div>
                 </div>
-            </div>
 
             {/* AI Matching Modal (Requirement 14) */}
             <Dialog open={showMatches} onOpenChange={(open) => {
@@ -499,7 +497,8 @@ const ReportItem = () => {
                 </DialogContent>
             </Dialog>
         </div>
-    );
+    </div>
+);
 };
 
 export default ReportItem;
