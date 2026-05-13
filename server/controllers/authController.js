@@ -125,22 +125,33 @@ const updateProfile = asyncHandler(async (req, res) => {
 // @route   POST /api/auth/google
 // @access  Public
 const googleLogin = asyncHandler(async (req, res) => {
-    const { tokenId } = req.body; // In this case, tokenId will be the access_token from the frontend
+    const { tokenId } = req.body;
+
+    if (!tokenId) {
+        console.error('Google Auth Error: No tokenId provided in request');
+        res.status(400);
+        throw new Error('Google authentication failed: No token provided');
+    }
 
     try {
+        console.log('Attempting Google Auth with token:', tokenId.substring(0, 10) + '...');
+        
         // Fetch user info from Google using the access token
         const googleRes = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${tokenId}`);
         const { email, given_name, family_name, picture } = googleRes.data;
 
+        console.log('Google Auth Success for email:', email);
+
         let user = await User.findOne({ email });
 
         if (!user) {
+            console.log('Creating new user for:', email);
             const salt = await bcrypt.genSalt(10);
-            const hashedPassword = await bcrypt.hash(Math.random().toString(36).slice(-8), salt);
+            const hashedPassword = await bcrypt.hash(crypto.randomBytes(8).toString('hex'), salt);
 
             user = await User.create({
                 firstname: given_name,
-                lastname: family_name || '-', // Use dash as fallback for non-empty required field
+                lastname: family_name || '-',
                 email,
                 password: hashedPassword,
                 avatar: picture,
@@ -162,8 +173,14 @@ const googleLogin = asyncHandler(async (req, res) => {
             token: generateToken(user.id),
         });
     } catch (error) {
-        console.error('Google Auth Error Details:', error?.response?.data || error.message);
-        res.status(401);
+        console.error('Google Auth Error Detailed:');
+        if (error.response) {
+            console.error('Data:', error.response.data);
+            console.error('Status:', error.response.status);
+        } else {
+            console.error('Message:', error.message);
+        }
+        res.status(error.response?.status || 500);
         throw new Error(`Google authentication failed: ${error?.response?.data?.error_description || error.message}`);
     }
 });
