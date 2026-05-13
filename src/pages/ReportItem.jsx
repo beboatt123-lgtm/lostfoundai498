@@ -190,8 +190,8 @@ const ReportItem = () => {
             return;
         }
 
-        if (images.length === 0) {
-            setError('กรุณาอัปโหลดรูปภาพสิ่งของอย่างน้อย 1 รูป');
+        if (images.length === 0 && !formData.aiGeneratedImage) {
+            setError('กรุณาอัปโหลดรูปภาพสิ่งของ หรือกดสร้างรูปด้วย AI อย่างน้อย 1 รูป');
             setLoading(false);
             return;
         }

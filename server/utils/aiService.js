@@ -34,7 +34,7 @@ const analyzeItemImage = async (imageUrl) => {
     }
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
         const prompt = `Analyze this image for a Lost & Found application.
         Please provide:
@@ -72,7 +72,7 @@ const generateImagePrompt = async (title, description) => {
     if (!process.env.GEMINI_API_KEY) return `A professional product photo of ${title}`;
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
         const prompt = `You are an expert at creating prompts for AI image generators. 
         I have a lost or found item described as:
         Title: ${title}
