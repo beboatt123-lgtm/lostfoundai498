@@ -7,7 +7,8 @@ const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
 const User = require('../models/User');
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+// Initialize Google OAuth Client
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // @desc    Register new user
 // @route   POST /api/auth/register
@@ -137,7 +138,7 @@ const googleLogin = asyncHandler(async (req, res) => {
         let email, given_name, family_name, picture;
         
         try {
-            const ticket = await client.verifyIdToken({
+            const ticket = await googleClient.verifyIdToken({
                 idToken: tokenId,
                 audience: process.env.GOOGLE_CLIENT_ID,
             });
