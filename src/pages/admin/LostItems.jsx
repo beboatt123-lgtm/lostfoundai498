@@ -50,7 +50,7 @@ const AdminLostItems = () => {
     const fetchLostItems = async () => {
         try {
             setLoading(true);
-            const res = await api.get('/items?type=lost');
+            const res = await api.get('items?type=lost');
             setItems(res.data);
         } catch (err) {
             console.error("Failed to fetch lost items", err);
@@ -105,7 +105,7 @@ const AdminLostItems = () => {
             formData.append('receiverPhone', resolveData.receiverPhone);
             formData.append('receiverImage', receiverImage);
 
-            await api.patch(`/items/${selectedItemId}`, formData, {
+            await api.patch(`items/${selectedItemId}`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 

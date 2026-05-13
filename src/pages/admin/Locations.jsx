@@ -56,7 +56,7 @@ const AdminLocations = () => {
     const fetchLocations = async () => {
         try {
             setLoading(true);
-            const res = await api.get('/locations/admin');
+            const res = await api.get('locations/admin');
             setLocations(res.data);
         } catch (err) {
             console.error("Failed to fetch locations", err);
@@ -90,9 +90,9 @@ const AdminLocations = () => {
         try {
             setSubmitLoading(true);
             if (modalMode === 'add') {
-                await api.post('/locations', formData);
+                await api.post('locations', formData);
             } else {
-                await api.put(`/locations/${selectedLocation._id}`, formData);
+                await api.put(`locations/${selectedLocation._id}`, formData);
             }
             setIsModalOpen(false);
             fetchLocations();
@@ -107,7 +107,7 @@ const AdminLocations = () => {
     const handleDelete = async (id) => {
         if (window.confirm('คุณต้องการลบสถานที่นี้ใช่หรือไม่?')) {
             try {
-                await api.delete(`/locations/${id}`);
+                await api.delete(`locations/${id}`);
                 fetchLocations();
             } catch (err) {
                 console.error("Failed to delete location", err);

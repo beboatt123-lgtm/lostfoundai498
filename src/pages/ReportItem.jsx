@@ -56,7 +56,7 @@ const ReportItem = () => {
         const fetchLocations = async () => {
             try {
                 setLocationsLoading(true);
-                const res = await api.get('/locations');
+                const res = await api.get('locations');
                 setMainLocations(res.data.map(loc => loc.name));
             } catch (err) {
                 console.error("Failed to fetch locations", err);
@@ -79,7 +79,6 @@ const ReportItem = () => {
     }, []);
 
     const categoryOptions = [
-        // ... (existing categories)
         { value: "electronics", label: "อุปกรณ์อิเล็กทรอนิกส์", icon: Smartphone },
         { value: "wallet", label: "กระเป๋าสตางค์/บัตร/กุญแจ", icon: Wallet },
         { value: "clothing", label: "เสื้อผ้า/เครื่องแต่งกาย", icon: Shirt },
@@ -90,14 +89,13 @@ const ReportItem = () => {
         { value: "stationery", label: "เครื่องเขียน/หนังสือ", icon: BookText },
         { value: "health", label: "อุปกรณ์สุขภาพ/ยา", icon: HeartPulse },
         { value: "pets", label: "สัตว์เลี้ยง/สิ่งมีชีวิต", icon: PawPrint },
-        { value: "sports", label: "อุปกรณ์กีฬา/สันทนาการ", icon: Trophy },
+        { value: "sports", label: "อุปกรณ์กีฬา/สันทการ", icon: Trophy },
         { value: "music", label: "เครื่องดนตรี/ลำโพง/หูฟัง", icon: Music },
         { value: "tools", label: "เครื่องมือ/อุปกรณ์ช่าง", icon: Wrench },
         { value: "toy", label: "ของเล่น/ของสะสม", icon: ToyBrick },
         { value: "others", label: "อื่นๆ", icon: Boxes },
     ];
 
-    // ... (theme definition)
     const theme = isLost ? {
         primary: 'rose',
         button: 'bg-rose-600 hover:bg-rose-700',
@@ -160,18 +158,14 @@ const ReportItem = () => {
             setAiGenerating(true);
             setError(null);
             
-            const response = await api.post('/items/generate-image', {
+            const response = await api.post('items/generate-image', {
                 title: formData.title,
                 description: formData.description
             });
 
             const imageUrl = response.data.imageUrl;
             
-            // We need to handle this differently because it's a URL, not a File object
-            // For submission, we'll add a special flag or handle URLs in handleSubmit
             setImagePreviews([...imagePreviews, imageUrl]);
-            // Since we can't easily turn a URL into a File object for multipart/form-data here,
-            // we'll store the AI image URL separately or handle it in handleSubmit
             setFormData(prev => ({
                 ...prev,
                 aiGeneratedImage: imageUrl
@@ -214,7 +208,6 @@ const ReportItem = () => {
             data.append('reporterPhone', formData.reporterPhone);
             data.append('type', type);
             
-            // Requirement 10: Position code (Admin only)
             if (user.role === 'admin' || user.role === 'staff') {
                 data.append('storagePosition', formData.storagePosition);
             }
@@ -227,7 +220,7 @@ const ReportItem = () => {
                 data.append('aiGeneratedImage', formData.aiGeneratedImage);
             }
 
-            const response = await api.post('/items', data, {
+            const response = await api.post('items', data, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
