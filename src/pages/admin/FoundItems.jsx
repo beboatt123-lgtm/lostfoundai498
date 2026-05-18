@@ -221,12 +221,22 @@ const AdminFoundItems = () => {
                                                 <div className="flex flex-col py-1 gap-1">
                                                     <div className="flex items-center gap-2.5">
                                                         <Avatar className="h-7 w-7 border border-slate-100 shadow-sm shrink-0">
-                                                            <AvatarImage src={item.user?.avatar} />
-                                                            <AvatarFallback className="text-[10px] bg-emerald-50 text-emerald-600 font-bold">{item.user?.firstname?.charAt(0) || 'U'}</AvatarFallback>
+                                                            <AvatarImage src={item.user && typeof item.user === 'object' ? item.user.avatar : ''} />
+                                                            <AvatarFallback className="text-[10px] bg-emerald-50 text-emerald-600 font-bold">
+                                                                {item.user && typeof item.user === 'object' && item.user.firstname 
+                                                                    ? item.user.firstname.charAt(0) 
+                                                                    : 'U'}
+                                                            </AvatarFallback>
                                                         </Avatar>
                                                         <div className="flex flex-col">
-                                                            <span className="text-sm font-bold text-slate-800 leading-none">{item.user ? `${item.user.firstname} ${item.user.lastname || ''}` : 'ไม่ระบุชื่อ'}</span>
-                                                            {item.user?.email && <span className="text-[11px] text-slate-400 mt-0.5">{item.user.email}</span>}
+                                                            <span className="text-sm font-bold text-slate-800 leading-none">
+                                                                {item.user && typeof item.user === 'object' && item.user.firstname 
+                                                                    ? `${item.user.firstname} ${item.user.lastname || ''}`.trim() 
+                                                                    : 'ไม่ระบุชื่อ'}
+                                                            </span>
+                                                            {item.user && typeof item.user === 'object' && item.user.email && (
+                                                                <span className="text-[11px] text-slate-400 mt-0.5">{item.user.email}</span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                     <div className="flex flex-wrap gap-1.5 mt-1">
