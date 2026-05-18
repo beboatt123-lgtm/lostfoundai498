@@ -175,8 +175,21 @@ const ItemCard = ({ item, onDelete }) => {
                     <div>
                         <div className="flex justify-between items-start mb-2">
                             <h3 className="font-bold text-slate-900 text-lg line-clamp-1">{item.title}</h3>
-                            <Badge variant={item.status === 'open' ? 'default' : 'secondary'} className="capitalize">
-                                {item.status}
+                            <Badge 
+                                variant="outline" 
+                                className={`font-bold capitalize ${
+                                    item.status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse' :
+                                    item.status === 'rejected' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                                    item.status === 'resolved' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                    item.status === 'closed' ? 'bg-slate-100 text-slate-600 border-slate-200' :
+                                    'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                }`}
+                            >
+                                {item.status === 'pending' ? 'รอแอดมินอนุมัติ' :
+                                 item.status === 'rejected' ? 'ปฏิเสธการเผยแพร่' :
+                                 item.status === 'resolved' ? 'สำเร็จแล้ว' :
+                                 item.status === 'closed' ? 'ปิดประกาศ' :
+                                 'กำลังประกาศ'}
                             </Badge>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">

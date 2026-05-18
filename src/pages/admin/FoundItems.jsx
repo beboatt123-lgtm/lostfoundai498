@@ -19,7 +19,7 @@ import {
     DialogFooter
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Search, Filter, Calendar, ShieldCheck, Loader2, Plus, MoreHorizontal, Eye } from "lucide-react";
+import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Search, Filter, Calendar, ShieldCheck, Loader2, Plus, MoreHorizontal, Eye, XCircle } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -50,12 +50,21 @@ const AdminFoundItems = () => {
     const fetchFoundItems = async () => {
         try {
             setLoading(true);
-            const res = await api.get('items?type=found');
+            const res = await api.get('items?type=found&status=all');
             setItems(res.data);
         } catch (err) {
             console.error("Failed to fetch found items", err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleStatusUpdate = async (id, newStatus) => {
+        try {
+            await api.put(`items/${id}`, { status: newStatus });
+            fetchFoundItems();
+        } catch (err) {
+            console.error('Failed to update status:', err);
         }
     };
 
@@ -70,7 +79,9 @@ const AdminFoundItems = () => {
 
     const getStatusBadge = (status) => {
         switch (status) {
-            case 'open': return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200 shadow-sm">กำลังประกาศเจอ</Badge>;
+            case 'pending': return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-200 shadow-sm font-bold animate-pulse">รออนุมัติ</Badge>;
+            case 'rejected': return <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-200 border-rose-200 shadow-sm font-medium">ปฏิเสธการเผยแพร่</Badge>;
+            case 'open': return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200 shadow-sm">เผยแพร่แล้ว</Badge>;
             case 'resolved': return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200 shadow-sm">จับคู่แล้ว / คืนแล้ว</Badge>;
             case 'closed': return <Badge className="bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200 shadow-sm">ปิดประกาศ</Badge>;
             default: return <Badge variant="outline">{status}</Badge>;
@@ -224,12 +235,24 @@ const AdminFoundItems = () => {
                                                             <MoreHorizontal className="h-5 w-5" />
                                                         </Button>
                                                     </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-xl border-slate-200">
+                                                    <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-xl border-slate-200">
                                                         <DropdownMenuLabel className="font-bold text-slate-500">จัดการข้อมูล</DropdownMenuLabel>
                                                         <DropdownMenuSeparator />
                                                         <DropdownMenuItem className="cursor-pointer py-2.5" onClick={() => navigate(`/items/${item._id}`)}>
                                                             <Eye className="mr-2.5 h-4 w-4 text-slate-400" /> ดูรายละเอียดจริง
                                                         </DropdownMenuItem>
+                                                        
+                                                        {item.status === 'pending' && (
+                                                            <>
+                                                                <DropdownMenuItem className="cursor-pointer py-2.5 text-emerald-600 font-bold focus:text-emerald-700 focus:bg-emerald-50" onClick={() => handleStatusUpdate(item._id, 'open')}>
+                                                                    <CheckCircle className="mr-2.5 h-4 w-4" /> อนุมัติเผยแพร่
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem className="cursor-pointer py-2.5 text-rose-600 font-bold focus:text-rose-700 focus:bg-rose-50" onClick={() => handleStatusUpdate(item._id, 'rejected')}>
+                                                                    <XCircle className="mr-2.5 h-4 w-4" /> ปฏิเสธโพสต์
+                                                                </DropdownMenuItem>
+                                                            </>
+                                                        )}
+
                                                         {item.status === 'open' && (
                                                             <DropdownMenuItem className="cursor-pointer py-2.5 text-blue-600 font-bold focus:text-blue-700 focus:bg-blue-50" onClick={() => handleResolveClick(item._id)}>
                                                                 <CheckCircle className="mr-2.5 h-4 w-4" /> บันทึกการส่งคืนสำเร็จ

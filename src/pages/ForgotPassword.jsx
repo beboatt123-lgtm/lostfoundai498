@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Link } from 'react-router-dom';
-import { KeyRound, Loader2, ArrowLeft, MailCheck } from 'lucide-react';
+import { MapPin, Loader2, ArrowLeft, MailCheck } from 'lucide-react';
 import api from '../lib/axios';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -61,12 +61,18 @@ const ForgotPassword = () => {
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-slate-50 to-emerald-50 p-4">
             <Card className="w-full max-w-md shadow-2xl border-white/50 backdrop-blur-sm bg-white/90">
                 <CardHeader className="space-y-1 text-center">
-                    <div className="flex justify-center mb-4">
-                        <div className="h-12 w-12 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600">
-                            <KeyRound size={24} />
+                    <div className="flex justify-center mb-6">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-100">
+                                <MapPin size={22} fill="currentColor" />
+                            </div>
+                            <div className="flex flex-col text-left">
+                                <span className="text-xl font-extrabold text-slate-800 tracking-tight leading-none">Lost&Found</span>
+                                <span className="text-[9px] text-slate-500 font-bold tracking-widest uppercase mt-0.5">AI System</span>
+                            </div>
                         </div>
                     </div>
-                    <CardTitle className="text-2xl font-bold">ลืมรหัสผ่าน?</CardTitle>
+                    <CardTitle className="text-2xl font-bold text-slate-800">ลืมรหัสผ่าน?</CardTitle>
                     <CardDescription>
                         ไม่ต้องกังวล! กรอกอีเมลของคุณเพื่อรับลิงก์รีเซ็ตรหัสผ่าน
                     </CardDescription>

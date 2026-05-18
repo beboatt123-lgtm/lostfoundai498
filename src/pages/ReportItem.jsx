@@ -11,7 +11,7 @@ import {
     FileText, ImagePlus, AlertCircle, CheckCircle2, 
     Smartphone, Shirt, Wallet, Briefcase, Key, FileBadge, 
     PawPrint, Gem, Glasses, BookText, HeartPulse, Trophy, 
-    Music, Wrench, ToyBrick, Boxes, LayoutGrid, Sparkles
+    Music, Wrench, ToyBrick, Boxes, LayoutGrid, Sparkles, Clock
 } from 'lucide-react';
 import api from '../lib/axios';
 import { useAuth } from '../context/AuthContext';
@@ -23,6 +23,19 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+
+const validateThaiIDCard = (id) => {
+    const cleanId = id.replace(/-/g, "").trim();
+    if (!cleanId || cleanId.length !== 13) return false;
+    if (!/^[0-9]{13}$/.test(cleanId)) return false;
+    
+    let sum = 0;
+    for (let i = 0; i < 12; i++) {
+        sum += parseInt(cleanId.charAt(i)) * (13 - i);
+    }
+    const checkDigit = (11 - (sum % 11)) % 10;
+    return checkDigit === parseInt(cleanId.charAt(12));
+};
 
 const ReportItem = () => {
     const { type } = useParams(); // 'lost' or 'found'
@@ -39,6 +52,10 @@ const ReportItem = () => {
     const [mainLocations, setMainLocations] = useState([]);
     const [locationsLoading, setLocationsLoading] = useState(false);
     const [aiGenerating, setAiGenerating] = useState(false);
+    const [acceptTerms, setAcceptTerms] = useState(false);
+    const [showTermsModal, setShowTermsModal] = useState(false);
+    const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -196,6 +213,29 @@ const ReportItem = () => {
             return;
         }
 
+        // Validate Thai ID Card Number using Checksum algorithm
+        const cleanedIdCard = formData.reporterIdCard.replace(/-/g, "").trim();
+        if (!validateThaiIDCard(cleanedIdCard)) {
+            setError('เลขบัตรประชาชนไม่ถูกต้องตามหลักรูปแบบบัตรประชาชนไทย กรุณาตรวจสอบความถูกต้องและกรอกใหม่อีกครั้ง');
+            setLoading(false);
+            return;
+        }
+
+        // Validate Thai Phone Number
+        const cleanedPhone = formData.reporterPhone.replace(/-/g, "").trim();
+        if (!/^(0[689])[0-9]{8}$/.test(cleanedPhone) && !/^(02)[0-9]{7,8}$/.test(cleanedPhone)) {
+            setError('เบอร์โทรศัพท์ติดต่อไม่ถูกต้อง (ควรขึ้นต้นด้วย 0 และมี 9-10 หลัก)');
+            setLoading(false);
+            return;
+        }
+
+        // Validate Terms of Service Agreement
+        if (!acceptTerms) {
+            setError('กรุณายอมรับเงื่อนไขการใช้บริการและนโยบายความเป็นส่วนตัวของระบบก่อนทำการโพสต์');
+            setLoading(false);
+            return;
+        }
+
         try {
             const data = new FormData();
             data.append('title', formData.title);
@@ -204,8 +244,8 @@ const ReportItem = () => {
             data.append('locationMain', formData.locationMain);
             data.append('locationDetail', formData.locationDetail);
             data.append('date', formData.date);
-            data.append('reporterIdCard', formData.reporterIdCard);
-            data.append('reporterPhone', formData.reporterPhone);
+            data.append('reporterIdCard', cleanedIdCard);
+            data.append('reporterPhone', cleanedPhone);
             data.append('type', type);
             
             if (user.role === 'admin' || user.role === 'staff') {
@@ -226,11 +266,15 @@ const ReportItem = () => {
                 },
             });
 
-            if (response.data.matches && response.data.matches.length > 0) {
-                setMatches(response.data.matches);
-                setShowMatches(true);
+            if (user.role !== 'admin' && user.role !== 'staff') {
+                setShowSuccessModal(true);
             } else {
-                navigate('/');
+                if (response.data.matches && response.data.matches.length > 0) {
+                    setMatches(response.data.matches);
+                    setShowMatches(true);
+                } else {
+                    navigate('/');
+                }
             }
         } catch (err) {
             console.error(err);
@@ -350,7 +394,7 @@ const ReportItem = () => {
 
                                         {/* Requirement 16: Location Dropdown */}
                                         <div className="space-y-2">
-                                            <Label htmlFor="locationMain" className="text-sm font-bold text-slate-700">{isLost ? 'สถานที่หาย (หมวดหมู่หลัก)' : 'สถานที่พบ (หมวดหมู่หลัก)'} <span className="text-rose-500">*</span></Label>
+                                            <Label htmlFor="locationMain" className="text-sm font-bold text-slate-700">{isLost ? 'สถานที่ล่าสุดที่คาดว่าพบเจอสิ่งของครั้งสุดท้าย (สถานที่หลัก)' : 'สถานที่ที่พบของ (สถานที่หลัก)'} <span className="text-rose-500">*</span></Label>
                                             <Select onValueChange={handleLocationMainChange} value={formData.locationMain} required>
                                                 <SelectTrigger className="h-11 border-slate-200 rounded-lg font-medium">
                                                     <div className="flex items-center gap-2">
@@ -368,10 +412,10 @@ const ReportItem = () => {
 
                                         {/* Requirement 17: Location Detail */}
                                         <div className="space-y-2">
-                                            <Label htmlFor="locationDetail" className="text-sm font-bold text-slate-700">รายละเอียดจุดที่พบ <span className="text-slate-400 font-normal">(เช่น โต๊ะที่ 3, ใต้เก้าอี้)</span></Label>
+                                            <Label htmlFor="locationDetail" className="text-sm font-bold text-slate-700">{isLost ? 'รายละเอียดจุดหรือบริเวณที่พบเจอครั้งสุดท้าย' : 'รายละเอียดจุดที่พบ'} <span className="text-slate-400 font-normal">{isLost ? '(เช่น โต๊ะเรียนเลขที่ 3, บนชั้นวางของ)' : '(เช่น โต๊ะที่ 3, ใต้เก้าอี้)'}</span></Label>
                                             <Input
                                                 id="locationDetail"
-                                                placeholder="ระบุจุดย่อยอย่างละเอียด..."
+                                                placeholder={isLost ? "ระบุรายละเอียดจุดหรือบริเวณเพิ่มเติม..." : "ระบุจุดย่อยอย่างละเอียด..."}
                                                 value={formData.locationDetail}
                                                 onChange={handleChange}
                                                 className="h-11 border-slate-200 rounded-lg font-medium"
@@ -413,9 +457,13 @@ const ReportItem = () => {
                                                 <Label htmlFor="reporterIdCard" className="text-sm font-bold text-slate-700">เลขบัตรประชาชน (เพื่อยืนยันตัวตน) <span className="text-rose-500">*</span></Label>
                                                 <Input
                                                     id="reporterIdCard"
-                                                    placeholder="เลขบัตร 13 หลัก"
+                                                    placeholder="เลขบัตร 13 หลัก (เฉพาะตัวเลข)"
                                                     value={formData.reporterIdCard}
-                                                    onChange={handleChange}
+                                                    maxLength={13}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value.replace(/[^0-9]/g, ""); // Allow only digits
+                                                        setFormData(prev => ({ ...prev, reporterIdCard: val }));
+                                                    }}
                                                     required
                                                     className="h-11 border-slate-200 bg-white"
                                                 />
@@ -424,9 +472,13 @@ const ReportItem = () => {
                                                 <Label htmlFor="reporterPhone" className="text-sm font-bold text-slate-700">เบอร์โทรศัพท์ติดต่อ <span className="text-rose-500">*</span></Label>
                                                 <Input
                                                     id="reporterPhone"
-                                                    placeholder="0xx-xxx-xxxx"
+                                                    placeholder="เบอร์โทรศัพท์ 10 หลัก (เฉพาะตัวเลข)"
                                                     value={formData.reporterPhone}
-                                                    onChange={handleChange}
+                                                    maxLength={10}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value.replace(/[^0-9]/g, ""); // Allow only digits
+                                                        setFormData(prev => ({ ...prev, reporterPhone: val }));
+                                                    }}
                                                     required
                                                     className="h-11 border-slate-200 bg-white"
                                                 />
@@ -449,6 +501,58 @@ const ReportItem = () => {
                                 </div>
                             </div>
 
+                            {/* Terms of Service Section */}
+                            <div className="px-8 py-6 bg-slate-50/30 border-t border-slate-100">
+                                <div className="flex items-start gap-3">
+                                    <input
+                                        id="acceptTerms"
+                                        type="checkbox"
+                                        checked={acceptTerms}
+                                        onChange={(e) => {
+                                            const checked = e.target.checked;
+                                            if (checked) {
+                                                // Prevent instant checking, open the modal first to let them agree
+                                                setShowTermsModal(true);
+                                            } else {
+                                                // Uncheck instantly if already checked
+                                                setAcceptTerms(false);
+                                            }
+                                        }}
+                                        className={`mt-1 h-4.5 w-4.5 rounded border-slate-300 focus:ring-${theme.primary}-500/30 accent-${isLost ? 'rose-600' : 'emerald-600'} cursor-pointer`}
+                                    />
+                                    <div className="space-y-1">
+                                        <Label htmlFor="acceptTerms" className="text-sm font-bold text-slate-700 cursor-pointer selection:bg-transparent">
+                                            ฉันยอมรับและตกลงตาม{" "}
+                                            <span 
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setShowTermsModal(true);
+                                                }}
+                                                className={`${theme.text} hover:underline cursor-pointer`}
+                                            >
+                                                เงื่อนไขการใช้บริการ
+                                            </span>{" "}
+                                            และ{" "}
+                                            <span 
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setShowPrivacyModal(true);
+                                                }}
+                                                className={`${theme.text} hover:underline cursor-pointer`}
+                                            >
+                                                นโยบายความเป็นส่วนตัว
+                                            </span>{" "}
+                                            ของระบบ Lost&Found
+                                        </Label>
+                                        <p className="text-xs text-slate-500 font-medium">
+                                            ข้อมูลเลขบัตรประชาชนและข้อมูลติดต่อของคุณจะถูกใช้เพื่อการยืนยันตัวตนและการติดต่อประสานงานรับสิ่งของคืนเท่านั้น
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Submission Area */}
                             <div className="p-8 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-4">
                                 <p className="text-sm text-slate-500 font-medium italic">
@@ -465,8 +569,8 @@ const ReportItem = () => {
                                     </Button>
                                     <Button
                                         type="submit"
-                                        disabled={loading}
-                                        className={`flex-1 sm:flex-none h-11 px-8 rounded-lg font-bold text-white shadow-sm transition-all active:scale-95 ${theme.button}`}
+                                        disabled={loading || !acceptTerms}
+                                        className={`flex-1 sm:flex-none h-11 px-8 rounded-lg font-bold text-white shadow-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none ${theme.button}`}
                                     >
                                         {loading ? (
                                             <>
@@ -552,6 +656,140 @@ const ReportItem = () => {
                         </Button>
                         <Button className="bg-slate-900 hover:bg-slate-800 text-white font-bold" onClick={() => navigate('/')}>
                             ปิดหน้าต่าง
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Terms of Service Modal */}
+            <Dialog open={showTermsModal} onOpenChange={setShowTermsModal}>
+                <DialogContent className="max-w-lg max-h-[80vh] overflow-hidden flex flex-col p-0 border-none rounded-2xl shadow-2xl">
+                    <DialogHeader className="p-6 bg-slate-900 text-white">
+                        <DialogTitle className="text-xl font-bold">เงื่อนไขการใช้บริการระบบ Lost&Found</DialogTitle>
+                        <DialogDescription className="text-slate-400 font-medium text-xs mt-1">
+                            มีผลบังคับใช้ตั้งแต่วันที่ 1 มกราคม 2569 เป็นต้นไป
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4 text-sm text-slate-600 leading-relaxed">
+                        <p className="font-bold text-slate-800">โปรดอ่านเงื่อนไขการใช้บริการอย่างละเอียดก่อนตกลงเปิดใช้งานโพสต์ของคุณ:</p>
+                        
+                        <div className="space-y-2">
+                            <h4 className="font-bold text-slate-800">1. ความถูกต้องและสิทธิ์ในข้อมูล</h4>
+                            <p>ผู้ใช้บริการตกลงและรับรองว่า ข้อมูลรายละเอียดสิ่งของ รูปภาพ เลขประจำตัวประชาชน และข้อมูลติดต่อที่กรอกเข้าสู่ระบบนั้น เป็นข้อมูลที่เป็นความจริง ถูกต้อง และเป็นสิทธิ์ของผู้ใช้โดยชอบธรรมทุกประการ</p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <h4 className="font-bold text-slate-800">2. ข้อห้ามการใช้งานระบบ</h4>
+                            <p>ห้ามมิให้ลงประกาศสิ่งของที่เป็นสิ่งของผิดกฎหมายทุกประเภท รวมถึงอาวุธ สารเสพติด วัตถุอันตราย หรือสิ่งของที่เข้าข่ายลามกอนาจารและละเมิดสิทธิ์บุคคลอื่น</p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <h4 className="font-bold text-slate-800">3. การคุ้มครองความเป็นส่วนตัว</h4>
+                            <p>ระบบจะเก็บรักษาข้อมูลบัตรประชาชนและข้อมูลติดต่อของท่านไว้เป็นความลับ และจะเปิดเผยให้แก่คู่สนทนาเมื่อมีการทักแชทประสานงานยืนยันตัวตนเจ้าของทรัพย์สินที่แท้จริงเท่านั้น</p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <h4 className="font-bold text-slate-800">4. ขอบเขตความรับผิดชอบ</h4>
+                            <p>ระบบ Lost&Found เป็นเพียงสื่อกลางเพื่อช่วยติดตามและประสานงานเท่านั้น ทางเราไม่มีส่วนรับผิดชอบต่อความเสียหาย สูญหาย หรือข้อพิพาทใดๆ ที่เกิดขึ้นระหว่างกระบวนการส่งคืนของ</p>
+                        </div>
+                    </div>
+                    <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+                        <Button 
+                            variant="outline" 
+                            className="font-bold border-slate-200 text-xs h-9 px-4 rounded-lg" 
+                            onClick={() => {
+                                setAcceptTerms(false);
+                                setShowTermsModal(false);
+                            }}
+                        >
+                            ปฏิเสธ
+                        </Button>
+                        <Button 
+                            className={`text-white font-bold text-xs h-9 px-6 rounded-lg shadow-sm ${theme.button}`}
+                            onClick={() => {
+                                setAcceptTerms(true);
+                                setShowTermsModal(false);
+                            }}
+                        >
+                            ยอมรับและตกลง
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Privacy Policy Modal */}
+            <Dialog open={showPrivacyModal} onOpenChange={setShowPrivacyModal}>
+                <DialogContent className="max-w-lg max-h-[80vh] overflow-hidden flex flex-col p-0 border-none rounded-2xl shadow-2xl">
+                    <DialogHeader className="p-6 bg-slate-900 text-white">
+                        <DialogTitle className="text-xl font-bold">นโยบายความเป็นส่วนตัว (Privacy Policy)</DialogTitle>
+                        <DialogDescription className="text-slate-400 font-medium text-xs mt-1">
+                            การจัดการและปกป้องข้อมูลส่วนบุคคลตามกฎหมาย PDPA
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4 text-sm text-slate-600 leading-relaxed">
+                        <p className="font-bold text-slate-800">ระบบ Lost&Found ให้ความสำคัญสูงสุดต่อการรักษาความปลอดภัยของข้อมูลส่วนตัวของท่าน:</p>
+                        
+                        <div className="space-y-2">
+                            <h4 className="font-bold text-slate-800">1. ข้อมูลส่วนบุคคลที่เราจัดเก็บ</h4>
+                            <p>เรามีการจัดเก็บข้อมูล ได้แก่ ชื่อ-นามสกุล, เบอร์โทรศัพท์ติดต่อ, รูปภาพสิ่งของ และเลขบัตรประจำตัวประชาชน 13 หลัก เพื่อนำมาใช้ประโยชน์ในการยืนยันตัวตนเจ้าของสิทธิ์</p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <h4 className="font-bold text-slate-800">2. วัตถุประสงค์ในการประมวลผลข้อมูล</h4>
+                            <p>ข้อมูลทั้งหมดจะถูกใช้เพื่อการจับคู่สิ่งของหายด้วยระบบ AI Matching, ส่งการแจ้งเตือน, และเป็นหลักฐานในการติดต่อยืนยันรับสิ่งของคืนเพื่อความปลอดภัยสูงสุดของทรัพย์สินของท่าน</p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <h4 className="font-bold text-slate-800">3. การเก็บรักษาและระยะเวลา</h4>
+                            <p>ข้อมูลส่วนบุคคลจะถูกเก็บรักษาอย่างมีมาตรการความปลอดภัยขั้นสูง และระบบจะลบหรือปกปิดข้อมูลเหล่านั้นเมื่อสิ่งของชิ้นดังกล่าวได้รับการยืนยันการส่งคืนเสร็จสิ้นสมบูรณ์เป็นที่เรียบร้อย</p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <h4 className="font-bold text-slate-800">4. สิทธิ์ของท่านในฐานะเจ้าของข้อมูล</h4>
+                            <p>ตามกฎหมาย PDPA ท่านมีสิทธิ์ในการเข้าถึง ขอสำเนา แก้ไข คัดค้าน หรือขอให้ระงับและทำลายข้อมูลส่วนบุคคลของท่านที่อยู่ในระบบได้ทุกเมื่อผ่านการติดต่อฝ่ายบริการดูแลระบบ</p>
+                        </div>
+                    </div>
+                    <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
+                        <Button className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-6 rounded-lg text-xs h-9" onClick={() => setShowPrivacyModal(false)}>
+                            ปิดหน้าต่าง
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Success / Pending Admin Approval Modal */}
+            <Dialog open={showSuccessModal} onOpenChange={(open) => {
+                if (!open) {
+                    setShowSuccessModal(false);
+                    navigate('/');
+                }
+            }}>
+                <DialogContent className="max-w-md p-0 border-none rounded-2xl shadow-2xl overflow-hidden font-sans">
+                    <div className="p-8 text-center space-y-6">
+                        <div className="mx-auto h-20 w-20 bg-amber-50 rounded-full flex items-center justify-center border border-amber-100 shadow-sm animate-pulse">
+                            <Clock className="h-10 w-10 text-amber-600" />
+                        </div>
+                        <div className="space-y-2">
+                            <DialogTitle className="text-2xl font-black text-slate-800">
+                                ส่งข้อมูลสำเร็จ!
+                            </DialogTitle>
+                            <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">
+                                อยู่ระหว่างรอผู้ดูแลระบบตรวจสอบ
+                            </p>
+                        </div>
+                        <DialogDescription className="text-sm text-slate-600 leading-relaxed font-medium">
+                            เนื่องจากคุณเป็นผู้ใช้งานทั่วไป เพื่อความปลอดภัยและป้องกันการแอบอ้างสิทธิ์ โพสต์ประกาศสิ่งของของคุณจะได้รับการอนุมัติและเผยแพร่สู่ระบบสาธารณะหลังจากที่ผู้ดูแลระบบ (Admin) ตรวจสอบความถูกต้องเรียบร้อยแล้ว
+                        </DialogDescription>
+                    </div>
+                    <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-center">
+                        <Button 
+                            className={`w-full text-white font-bold py-2.5 rounded-xl shadow-md transition-all active:scale-95 ${theme.button}`}
+                            onClick={() => {
+                                setShowSuccessModal(false);
+                                navigate('/');
+                            }}
+                        >
+                            ตกลง และกลับหน้าแรก
                         </Button>
                     </div>
                 </DialogContent>

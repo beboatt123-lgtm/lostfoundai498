@@ -19,7 +19,8 @@ import {
     Download,
     Shield,
     Calendar,
-    MapPin
+    MapPin,
+    XCircle
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -31,34 +32,59 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "@/lib/axios";
 
 const AdminItems = () => {
+    const navigate = useNavigate();
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
 
+    const fetchItems = async () => {
+        try {
+            const res = await api.get('/items', {
+                params: { search, status: 'all' }
+            });
+            setItems(res.data);
+        } catch (err) {
+            console.error('Failed to fetch items:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchItems = async () => {
-            try {
-                const res = await api.get('/items', {
-                    params: { search, status: 'all' }
-                });
-                setItems(res.data);
-            } catch (err) {
-                console.error('Failed to fetch items:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchItems();
     }, [search]);
 
+    const handleStatusUpdate = async (id, newStatus) => {
+        try {
+            await api.put(`/items/${id}`, { status: newStatus });
+            fetchItems();
+        } catch (err) {
+            console.error('Failed to update status:', err);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?')) {
+            try {
+                await api.delete(`/items/${id}`);
+                setItems(prev => prev.filter(item => item._id !== id));
+            } catch (err) {
+                console.error('Failed to delete item:', err);
+            }
+        }
+    };
+
     const getStatusBadge = (status) => {
         switch (status) {
+            case 'pending': return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-200 shadow-sm font-bold animate-pulse">รออนุมัติ</Badge>;
+            case 'rejected': return <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-200 border-rose-200 shadow-sm font-medium">ปฏิเสธการเผยแพร่</Badge>;
             case 'resolved': return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200 shadow-sm font-medium">สำเร็จแล้ว</Badge>;
             case 'closed': return <Badge className="bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200 shadow-sm font-medium">ปิดรายการ</Badge>;
-            case 'open': return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-200 shadow-sm font-medium">กำลังดำเนินการ</Badge>;
+            case 'open': return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200 shadow-sm font-medium">เผยแพร่แล้ว (กำลังดำเนินการ)</Badge>;
             default: return <Badge variant="outline" className="text-slate-600 border-slate-300 font-medium">{status}</Badge>;
         }
     };
@@ -175,17 +201,32 @@ const AdminItems = () => {
                                                     <MoreHorizontal className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="w-48 shadow-xl border-slate-200">
+                                            <DropdownMenuContent align="end" className="w-56 shadow-xl border-slate-200">
                                                 <DropdownMenuLabel className="text-xs font-bold text-slate-500 uppercase tracking-wider">ตัวเลือกจัดการ</DropdownMenuLabel>
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem className="cursor-pointer font-medium py-2">
+                                                <DropdownMenuItem className="cursor-pointer font-medium py-2" onClick={() => navigate(`/items/${item._id}`)}>
                                                     <Eye className="mr-2 h-4 w-4 text-slate-500" /> ดูรายละเอียด
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem className="cursor-pointer font-medium py-2">
-                                                    <CheckCircle className="mr-2 h-4 w-4 text-emerald-500" /> ตรวจสอบแล้ว
-                                                </DropdownMenuItem>
+                                                
+                                                {item.status === 'pending' && (
+                                                    <>
+                                                        <DropdownMenuItem className="cursor-pointer font-bold py-2 text-emerald-600 focus:text-emerald-700 focus:bg-emerald-50" onClick={() => handleStatusUpdate(item._id, 'open')}>
+                                                            <CheckCircle className="mr-2 h-4 w-4 text-emerald-500" /> อนุมัติเผยแพร่
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem className="cursor-pointer font-bold py-2 text-rose-600 focus:text-rose-700 focus:bg-rose-50" onClick={() => handleStatusUpdate(item._id, 'rejected')}>
+                                                            <XCircle className="mr-2 h-4 w-4 text-rose-500" /> ปฏิเสธโพสต์
+                                                        </DropdownMenuItem>
+                                                    </>
+                                                )}
+
+                                                {item.status === 'open' && (
+                                                    <DropdownMenuItem className="cursor-pointer font-medium py-2 text-emerald-600 focus:text-emerald-700 focus:bg-emerald-50" onClick={() => handleStatusUpdate(item._id, 'resolved')}>
+                                                        <CheckCircle className="mr-2 h-4 w-4 text-emerald-500" /> ทำเครื่องหมายเสร็จสิ้น
+                                                    </DropdownMenuItem>
+                                                )}
+
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem className="cursor-pointer font-medium py-2 text-rose-600 focus:text-rose-700 focus:bg-rose-50">
+                                                <DropdownMenuItem className="cursor-pointer font-medium py-2 text-red-600 focus:text-red-700 focus:bg-red-50" onClick={() => handleDelete(item._id)}>
                                                     <Trash2 className="mr-2 h-4 w-4" /> ลบรายการ
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>

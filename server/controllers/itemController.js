@@ -39,7 +39,7 @@ const createItem = asyncHandler(async (req, res) => {
         reporterPhone,
         storagePosition: storagePosition || '',
         images,
-        status: 'open'
+        status: (req.user.role === 'admin' || req.user.role === 'staff') ? 'open' : 'pending'
     });
 
     // Run AI analysis

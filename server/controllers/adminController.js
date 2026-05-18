@@ -7,35 +7,91 @@ const Item = require('../models/Item');
 // @route   GET /api/admin/stats
 // @access  Private/Admin
 const getStats = asyncHandler(async (req, res) => {
-    const totalItems = await Item.countDocuments();
-    const lostItems = await Item.countDocuments({ type: 'lost' });
-    const foundItems = await Item.countDocuments({ type: 'found' });
-    const resolvedItems = await Item.countDocuments({ status: 'returned' });
-    const totalUsers = await User.countDocuments({ role: 'user' });
-
-    // Last 7 days stats (simplified)
-    const last7Days = [];
-    for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        date.setHours(0, 0, 0, 0);
-
-        const nextDate = new Date(date);
-        nextDate.setDate(date.getDate() + 1);
-
-        const lost = await Item.countDocuments({
-            type: 'lost',
-            createdAt: { $gte: date, $lt: nextDate }
-        });
-        const found = await Item.countDocuments({
-            type: 'found',
-            createdAt: { $gte: date, $lt: nextDate }
-        });
-
-        const dayName = date.toLocaleDateString('th-TH', { weekday: 'long' });
-        last7Days.push({ name: dayName, lost, found });
+    const { startDate, endDate } = req.query;
+    
+    let start = null;
+    let end = null;
+    
+    if (startDate) {
+        start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+    } else {
+        start = new Date();
+        start.setDate(start.getDate() - 6);
+        start.setHours(0, 0, 0, 0);
     }
-
+    
+    if (endDate) {
+        end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+    } else {
+        end = new Date();
+        end.setHours(23, 59, 59, 999);
+    }
+    
+    let itemQuery = {
+        createdAt: { $gte: start, $lte: end }
+    };
+    
+    // Top Card stats (matching selected timeframe)
+    const totalItems = await Item.countDocuments(itemQuery);
+    const lostItems = await Item.countDocuments({ ...itemQuery, type: 'lost' });
+    const foundItems = await Item.countDocuments({ ...itemQuery, type: 'found' });
+    const resolvedItems = await Item.countDocuments({ ...itemQuery, status: 'returned' });
+    const totalUsers = await User.countDocuments({ role: 'user' }); // Users count is lifetime
+    
+    // Generate Chart Data dynamically based on selected date range
+    let chartData = [];
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays <= 31) {
+        // Group by days
+        for (let d = 0; d < diffDays; d++) {
+            const date = new Date(start);
+            date.setDate(start.getDate() + d);
+            date.setHours(0, 0, 0, 0);
+            
+            const nextDate = new Date(date);
+            nextDate.setDate(date.getDate() + 1);
+            
+            const lost = await Item.countDocuments({
+                type: 'lost',
+                createdAt: { $gte: date, $lt: nextDate }
+            });
+            const found = await Item.countDocuments({
+                type: 'found',
+                createdAt: { $gte: date, $lt: nextDate }
+            });
+            
+            const label = date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+            chartData.push({ name: label, lost, found });
+        }
+    } else {
+        // Group by months to keep charts beautiful and readable
+        let current = new Date(start);
+        while (current <= end) {
+            const dateStart = new Date(current.getFullYear(), current.getMonth(), 1, 0, 0, 0, 0);
+            const dateEnd = new Date(current.getFullYear(), current.getMonth() + 1, 1, 0, 0, 0, 0);
+            
+            const lost = await Item.countDocuments({
+                type: 'lost',
+                createdAt: { $gte: dateStart, $lt: dateEnd }
+            });
+            const found = await Item.countDocuments({
+                type: 'found',
+                createdAt: { $gte: dateStart, $lt: dateEnd }
+            });
+            
+            const monthsThai = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+            const label = `${monthsThai[current.getMonth()]} ${current.getFullYear() + 543}`;
+            chartData.push({ name: label, lost, found });
+            
+            // Move to next month
+            current.setMonth(current.getMonth() + 1);
+        }
+    }
+    
     res.status(200).json({
         stats: {
             totalItems,
@@ -44,7 +100,7 @@ const getStats = asyncHandler(async (req, res) => {
             resolvedItems,
             totalUsers
         },
-        chartData: last7Days
+        chartData
     });
 });
 

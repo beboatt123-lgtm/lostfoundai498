@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Package, CheckCircle2, AlertCircle, TrendingUp, Users, ArrowUpRight, ArrowDownRight, Clock } from 'lucide-react';
+import { Package, CheckCircle2, AlertCircle, TrendingUp, Users, ArrowUpRight, ArrowDownRight, Clock, Loader2, Calendar } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import api from '@/lib/axios';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
@@ -15,24 +15,42 @@ const data = [
 ];
 
 const AdminDashboard = () => {
+    const get7DaysAgo = () => {
+        const d = new Date();
+        d.setDate(d.getDate() - 6);
+        return d.toISOString().split('T')[0];
+    };
+    
+    const getToday = () => {
+        return new Date().toISOString().split('T')[0];
+    };
+
+    const [startDate, setStartDate] = useState(get7DaysAgo());
+    const [endDate, setEndDate] = useState(getToday());
     const [statsData, setStatsData] = useState(null);
     const [chartData, setChartData] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const fetchStats = async () => {
+        try {
+            setLoading(true);
+            const res = await api.get('/admin/stats', {
+                params: { startDate, endDate }
+            });
+            setStatsData(res.data.stats);
+            setChartData(res.data.chartData);
+        } catch (err) {
+            console.error('Failed to fetch stats:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const res = await api.get('/admin/stats');
-                setStatsData(res.data.stats);
-                setChartData(res.data.chartData);
-            } catch (err) {
-                console.error('Failed to fetch stats:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchStats();
-    }, []);
+        if (startDate && endDate) {
+            fetchStats();
+        }
+    }, [startDate, endDate]);
 
     const stats = [
         { title: 'รายการแจ้งทั้งหมด', value: statsData?.totalItems || '0', icon: <Package className="h-4 w-4 text-blue-600" />, change: '+0%', trend: 'up', color: 'bg-gradient-to-br from-blue-50 to-blue-50/10 border-blue-100 shadow-blue-100/50' },
@@ -43,14 +61,40 @@ const AdminDashboard = () => {
 
     return (
         <div className="space-y-8 max-w-7xl mx-auto font-sans">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div>
                     <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">ภาพรวมระบบ (Dashboard)</h2>
-                    <p className="text-slate-500 mt-2 text-base">สรุปสถานะการทำงานและสถิติการใช้งานประจำวัน</p>
+                    <p className="text-slate-500 mt-2 text-base">สรุปสถานะการทำงานและสถิติการใช้งานระบบตามช่วงเวลา</p>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-slate-500 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
-                    <Clock size={14} className="text-emerald-500" />
-                    <span>อัปเดตล่าสุด: วันนี้, 12:30 น.</span>
+                <div className="flex flex-wrap items-center gap-4 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">ตั้งแต่</span>
+                        <div className="relative">
+                            <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="bg-slate-50 hover:bg-slate-100/70 border border-slate-200 rounded-xl pl-9 pr-3 py-1.5 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all h-10 cursor-pointer"
+                            />
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">ถึง</span>
+                        <div className="relative">
+                            <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
+                            <input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                className="bg-slate-50 hover:bg-slate-100/70 border border-slate-200 rounded-xl pl-9 pr-3 py-1.5 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all h-10 cursor-pointer"
+                            />
+                        </div>
+                    </div>
+                    <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400 font-medium pl-2 border-l border-slate-100">
+                        <Clock size={12} className="text-emerald-500 animate-pulse" />
+                        <span>เรียลไทม์</span>
+                    </div>
                 </div>
             </div>
 
@@ -80,10 +124,15 @@ const AdminDashboard = () => {
             </div>
 
             <div className="grid gap-8 md:grid-cols-7">
-                <Card className="col-span-4 shadow-xl shadow-slate-200/40 border-slate-200 overflow-hidden">
+                <Card className="col-span-4 shadow-xl shadow-slate-200/40 border-slate-200 overflow-hidden relative">
+                    {loading && (
+                        <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] z-20 flex items-center justify-center">
+                            <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+                        </div>
+                    )}
                     <CardHeader className="border-b border-slate-50 bg-slate-50/50">
                         <CardTitle className="text-lg font-bold text-slate-800">สถิติการแจ้งหายและเจอของคืน</CardTitle>
-                        <CardDescription className="text-slate-500">เปรียบเทียบจำนวนรายการในช่วง 7 วันที่ผ่านมา</CardDescription>
+                        <CardDescription className="text-slate-500">เปรียบเทียบจำนวนรายการตามช่วงเวลาที่กำหนด</CardDescription>
                     </CardHeader>
                     <CardContent className="p-6">
                         <div style={{ width: '100%', height: 350 }}>

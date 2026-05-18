@@ -62,8 +62,8 @@ const itemSchema = mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['open', 'resolved', 'closed'],
-        default: 'open'
+        enum: ['pending', 'open', 'resolved', 'closed', 'rejected'],
+        default: 'pending'
     },
     aiTags: [{
         type: String
