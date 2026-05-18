@@ -136,7 +136,7 @@ const getItems = asyncHandler(async (req, res) => {
         ];
     }
 
-    const items = await Item.find(query).sort({ createdAt: -1 });
+    const items = await Item.find(query).populate('user', 'firstname lastname avatar email').sort({ createdAt: -1 });
 
     res.status(200).json(items);
 });

@@ -218,12 +218,30 @@ const AdminLostItems = () => {
                                             </TableCell>
                                             <TableCell><Badge variant="outline" className="text-slate-500 bg-slate-50 border-slate-200 py-1 capitalize px-3">{item.category}</Badge></TableCell>
                                             <TableCell>
-                                                <div className="flex items-center gap-2.5">
-                                                    <Avatar className="h-7 w-7 border border-slate-100 shadow-sm">
-                                                        <AvatarImage src={item.user?.avatar} />
-                                                        <AvatarFallback className="text-[10px] bg-rose-50 text-rose-600 font-bold">{item.user?.firstname?.charAt(0)}</AvatarFallback>
-                                                    </Avatar>
-                                                    <span className="text-sm font-bold text-slate-700">{item.user?.firstname}</span>
+                                                <div className="flex flex-col py-1 gap-1">
+                                                    <div className="flex items-center gap-2.5">
+                                                        <Avatar className="h-7 w-7 border border-slate-100 shadow-sm shrink-0">
+                                                            <AvatarImage src={item.user?.avatar} />
+                                                            <AvatarFallback className="text-[10px] bg-rose-50 text-rose-600 font-bold">{item.user?.firstname?.charAt(0) || 'U'}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-sm font-bold text-slate-800 leading-none">{item.user ? `${item.user.firstname} ${item.user.lastname || ''}` : 'ไม่ระบุชื่อ'}</span>
+                                                            {item.user?.email && <span className="text-[11px] text-slate-400 mt-0.5">{item.user.email}</span>}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-1.5 mt-1">
+                                                        {item.reporterPhone && (
+                                                            <span className="text-[10px] font-bold text-slate-600 bg-slate-100 rounded-lg px-2 py-0.5 w-fit flex items-center gap-1">
+                                                                <Phone size={10} className="text-slate-400" />
+                                                                {item.reporterPhone}
+                                                            </span>
+                                                        )}
+                                                        {item.reporterIdCard && (
+                                                            <span className="text-[10px] font-bold text-slate-500 bg-slate-100 rounded-lg px-2 py-0.5 w-fit flex items-center gap-1">
+                                                                บัตร: {item.reporterIdCard}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-slate-600 text-sm font-medium"><div className="truncate max-w-[150px]">{item.location}</div></TableCell>

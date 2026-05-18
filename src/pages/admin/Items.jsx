@@ -177,9 +177,10 @@ const AdminItems = () => {
                                         {getTypeBadge(item.type)}
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex flex-col gap-0.5">
-                                            <span className="text-sm font-bold text-slate-700">{item.user?.firstname}</span>
-                                            <span className="text-[10px] text-slate-400 font-medium">{item.reporterPhone}</span>
+                                        <div className="flex flex-col gap-0.5 py-1">
+                                            <span className="text-sm font-bold text-slate-800">{item.user ? `${item.user.firstname} ${item.user.lastname || ''}` : 'ไม่ระบุชื่อ'}</span>
+                                            {item.reporterPhone && <span className="text-[10px] font-bold text-slate-500">{item.reporterPhone}</span>}
+                                            {item.reporterIdCard && <span className="text-[9px] font-medium text-slate-400">บัตร: {item.reporterIdCard}</span>}
                                         </div>
                                     </TableCell>
                                     <TableCell>
