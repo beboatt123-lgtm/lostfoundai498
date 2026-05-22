@@ -28,6 +28,13 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import api from '../../lib/axios';
 import { useNavigate } from 'react-router-dom';
@@ -37,6 +44,7 @@ const AdminFoundItems = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterDate, setFilterDate] = useState('');
+    const [filterCategory, setFilterCategory] = useState('all');
     const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
     const [selectedItemId, setSelectedItemId] = useState(null);
     const [resolveLoading, setResolveLoading] = useState(false);
@@ -51,6 +59,25 @@ const AdminFoundItems = () => {
     const [receiverImage, setReceiverImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const navigate = useNavigate();
+
+    const categoryOptions = [
+        { value: "all", label: "ทุกหมวดหมู่" },
+        { value: "electronics", label: "อุปกรณ์อิเล็กทรอนิกส์" },
+        { value: "wallet", label: "กระเป๋าสตางค์/บัตร/กุญแจ" },
+        { value: "clothing", label: "เสื้อผ้า/เครื่องแต่งกาย" },
+        { value: "bag", label: "กระเป๋า/เป้" },
+        { value: "jewelry", label: "เครื่องประดับ/นาฬิกา" },
+        { value: "glasses", label: "แว่นตา" },
+        { value: "documents", label: "เอกสารสำคัญ/พาสปอร์ต" },
+        { value: "stationery", label: "เครื่องเขียน/หนังสือ" },
+        { value: "health", label: "อุปกรณ์สุขภาพ/ยา" },
+        { value: "pets", label: "สัตว์เลี้ยง/สิ่งมีชีวิต" },
+        { value: "sports", label: "อุปกรณ์กีฬา/สันทการ" },
+        { value: "music", label: "เครื่องดนตรี/ลำโพง/หูฟัง" },
+        { value: "tools", label: "เครื่องมือ/อุปกรณ์ช่าง" },
+        { value: "toy", label: "ของเล่น/ของสะสม" },
+        { value: "others", label: "อื่นๆ" },
+    ];
 
     const fetchFoundItems = async () => {
         try {
@@ -87,7 +114,9 @@ const AdminFoundItems = () => {
             matchesDate = itemDate === filterDate;
         }
 
-        return matchesSearch && matchesDate;
+        const matchesCategory = filterCategory === 'all' || item.category === filterCategory;
+
+        return matchesSearch && matchesDate && matchesCategory;
     });
 
     const getStatusBadge = (status) => {
@@ -215,6 +244,20 @@ const AdminFoundItems = () => {
                                     <XCircle className="h-4 w-4" />
                                 </button>
                             )}
+                        </div>
+                        <div className="relative w-full sm:w-48 group">
+                            <Select value={filterCategory} onValueChange={setFilterCategory}>
+                                <SelectTrigger className="h-11 bg-white border-slate-200 focus-visible:ring-emerald-500/20 shadow-sm rounded-xl font-medium">
+                                    <SelectValue placeholder="เลือกหมวดหมู่" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {categoryOptions.map(cat => (
+                                        <SelectItem key={cat.value} value={cat.value}>
+                                            {cat.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
                     <div className="flex items-center gap-3 w-full sm:w-auto">
