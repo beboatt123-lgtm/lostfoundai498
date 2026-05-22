@@ -19,7 +19,7 @@ import {
     DialogFooter
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Search, Filter, Calendar, ShieldCheck, Loader2, Plus, MoreHorizontal, Eye, XCircle } from "lucide-react";
+import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Search, Filter, Calendar, AlertCircle, ShieldCheck, Loader2, Plus, MoreHorizontal, Eye, XCircle, Clock } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -36,10 +36,15 @@ const AdminFoundItems = () => {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filterDate, setFilterDate] = useState('');
     const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
     const [selectedItemId, setSelectedItemId] = useState(null);
     const [resolveLoading, setResolveLoading] = useState(false);
+    const [isExpireModalOpen, setIsExpireModalOpen] = useState(false);
+    const [expireDate, setExpireDate] = useState('');
+    const [expireLoading, setExpireLoading] = useState(false);
     const [resolveData, setResolveData] = useState({
+        receiverName: '',
         receiverIdCard: '',
         receiverPhone: '',
     });
@@ -72,10 +77,18 @@ const AdminFoundItems = () => {
         fetchFoundItems();
     }, []);
 
-    const filteredItems = items.filter(item =>
-        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.location.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredItems = items.filter(item => {
+        const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                              item.location.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        let matchesDate = true;
+        if (filterDate) {
+            const itemDate = new Date(item.date).toISOString().split('T')[0];
+            matchesDate = itemDate === filterDate;
+        }
+
+        return matchesSearch && matchesDate;
+    });
 
     const getStatusBadge = (status) => {
         switch (status) {
@@ -103,7 +116,7 @@ const AdminFoundItems = () => {
 
     const handleResolveSubmit = async (e) => {
         e.preventDefault();
-        if (!resolveData.receiverIdCard || !resolveData.receiverPhone || !receiverImage) {
+        if (!resolveData.receiverName || !resolveData.receiverIdCard || !resolveData.receiverPhone || !receiverImage) {
             alert('กรุณากรอกข้อมูลและอัปโหลดรูปภาพให้ครบถ้วน');
             return;
         }
@@ -112,6 +125,7 @@ const AdminFoundItems = () => {
             setResolveLoading(true);
             const formData = new FormData();
             formData.append('status', 'resolved');
+            formData.append('receiverName', resolveData.receiverName);
             formData.append('receiverIdCard', resolveData.receiverIdCard);
             formData.append('receiverPhone', resolveData.receiverPhone);
             formData.append('receiverImage', receiverImage);
@@ -121,7 +135,7 @@ const AdminFoundItems = () => {
             });
 
             setIsResolveModalOpen(false);
-            setResolveData({ receiverIdCard: '', receiverPhone: '' });
+            setResolveData({ receiverName: '', receiverIdCard: '', receiverPhone: '' });
             setReceiverImage(null);
             setImagePreview(null);
             fetchFoundItems();
@@ -130,6 +144,32 @@ const AdminFoundItems = () => {
             alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
         } finally {
             setResolveLoading(false);
+        }
+    };
+
+    const handleExpireClick = (id, currentExpireDate) => {
+        setSelectedItemId(id);
+        if (currentExpireDate) {
+            setExpireDate(new Date(currentExpireDate).toISOString().split('T')[0]);
+        } else {
+            setExpireDate('');
+        }
+        setIsExpireModalOpen(true);
+    };
+
+    const handleExpireSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            setExpireLoading(true);
+            await api.put(`items/${selectedItemId}`, { expirationDate: expireDate });
+            setIsExpireModalOpen(false);
+            setExpireDate('');
+            fetchFoundItems();
+        } catch (err) {
+            console.error("Set expiration date failed", err);
+            alert("เกิดข้อผิดพลาดในการบันทึกข้อมูลวันหมดอายุ");
+        } finally {
+            setExpireLoading(false);
         }
     };
 
@@ -150,14 +190,32 @@ const AdminFoundItems = () => {
             <div className="bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/40 overflow-hidden">
                 {/* Toolbar */}
                 <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row gap-4 justify-between items-center">
-                    <div className="relative w-full sm:w-96 group">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
-                        <Input
-                            placeholder="ค้นหาชื่องของที่แจ้งพบ หรือ สถานที่..."
-                            className="pl-10 h-11 bg-white border-slate-200 focus-visible:ring-emerald-500/20 shadow-sm rounded-xl font-medium"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                    <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-4">
+                        <div className="relative w-full sm:w-80 group">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+                            <Input
+                                placeholder="ค้นหาชื่องของที่แจ้งพบ หรือ สถานที่..."
+                                className="pl-10 h-11 bg-white border-slate-200 focus-visible:ring-emerald-500/20 shadow-sm rounded-xl font-medium"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <div className="relative w-full sm:w-48 group">
+                            <Input
+                                type="date"
+                                className="h-11 bg-white border-slate-200 focus-visible:ring-emerald-500/20 shadow-sm rounded-xl font-medium"
+                                value={filterDate}
+                                onChange={(e) => setFilterDate(e.target.value)}
+                            />
+                            {filterDate && (
+                                <button 
+                                    onClick={() => setFilterDate('')}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                >
+                                    <XCircle className="h-4 w-4" />
+                                </button>
+                            )}
+                        </div>
                     </div>
                     <div className="flex items-center gap-3 w-full sm:w-auto">
                         <Button
@@ -209,10 +267,18 @@ const AdminFoundItems = () => {
                                                     </div>
                                                     <div className="flex flex-col py-1 overflow-hidden">
                                                         <span className="font-bold text-slate-900 text-[15px] truncate max-w-[200px]">{item.title}</span>
-                                                        <span className="text-xs text-slate-400 mt-1 flex items-center gap-1.5 font-medium">
-                                                            <Calendar size={12} className="text-slate-300" />
-                                                            {new Date(item.date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}
-                                                        </span>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
+                                                                <Calendar size={12} className="text-slate-300" />
+                                                                {new Date(item.date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}
+                                                            </span>
+                                                            {item.expirationDate && (
+                                                                <span className="text-[10px] bg-rose-50 text-rose-600 px-1.5 py-0.5 rounded-md flex items-center gap-1 font-bold">
+                                                                    <Clock size={10} /> 
+                                                                    หมดอายุ: {new Date(item.expirationDate).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' })}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </TableCell>
@@ -282,9 +348,14 @@ const AdminFoundItems = () => {
                                                         )}
 
                                                         {item.status === 'open' && (
-                                                            <DropdownMenuItem className="cursor-pointer py-2.5 text-blue-600 font-bold focus:text-blue-700 focus:bg-blue-50" onClick={() => handleResolveClick(item._id)}>
-                                                                <CheckCircle className="mr-2.5 h-4 w-4" /> บันทึกการส่งคืนสำเร็จ
-                                                            </DropdownMenuItem>
+                                                            <>
+                                                                <DropdownMenuItem className="cursor-pointer py-2.5 text-blue-600 font-bold focus:text-blue-700 focus:bg-blue-50" onClick={() => handleResolveClick(item._id)}>
+                                                                    <CheckCircle className="mr-2.5 h-4 w-4" /> บันทึกการส่งคืนสำเร็จ
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem className="cursor-pointer py-2.5 text-orange-600 font-bold focus:text-orange-700 focus:bg-orange-50" onClick={() => handleExpireClick(item._id, item.expirationDate)}>
+                                                                    <Clock className="mr-2.5 h-4 w-4" /> กำหนดวันหมดอายุ
+                                                                </DropdownMenuItem>
+                                                            </>
                                                         )}
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
@@ -301,10 +372,10 @@ const AdminFoundItems = () => {
             {/* Resolve Modal (Identity Verification) */}
             <Dialog open={isResolveModalOpen} onOpenChange={setIsResolveModalOpen}>
                 <DialogContent className="max-w-md rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
-                    <div className="bg-slate-900 p-8 text-center text-white relative">
+                    <div className="bg-slate-900 p-6 text-center text-white relative">
                         <div className="absolute top-[-20px] right-[-20px] w-40 h-40 bg-blue-500/20 rounded-full blur-3xl"></div>
-                        <div className="bg-blue-500 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-900/40">
-                            <CheckCircle size={32} />
+                        <div className="bg-blue-500 w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-900/40">
+                            <CheckCircle size={24} />
                         </div>
                         <DialogTitle className="text-2xl font-black mb-2">บันทึกการส่งคืนสำเร็จ</DialogTitle>
                         <DialogDescription className="text-slate-400">
@@ -312,7 +383,22 @@ const AdminFoundItems = () => {
                         </DialogDescription>
                     </div>
 
-                    <form onSubmit={handleResolveSubmit} className="p-8 bg-white space-y-5">
+                    <form onSubmit={handleResolveSubmit} className="p-6 bg-white space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="receiverName" className="text-xs font-black uppercase tracking-widest text-slate-500">ชื่อ-นามสกุลผู้มารับ</Label>
+                            <div className="relative">
+                                <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                <Input 
+                                    id="receiverName"
+                                    placeholder="ชื่อและนามสกุล"
+                                    className="pl-10 h-10 bg-slate-50 border-slate-200 rounded-xl"
+                                    value={resolveData.receiverName}
+                                    onChange={(e) => setResolveData({...resolveData, receiverName: e.target.value})}
+                                    required
+                                />
+                            </div>
+                        </div>
+
                         <div className="space-y-2">
                             <Label htmlFor="receiverIdCard" className="text-xs font-black uppercase tracking-widest text-slate-500">เลขบัตรประชาชนผู้มารับ</Label>
                             <div className="relative">
@@ -320,7 +406,7 @@ const AdminFoundItems = () => {
                                 <Input 
                                     id="receiverIdCard"
                                     placeholder="กรอกเลข 13 หลัก"
-                                    className="pl-10 h-12 bg-slate-50 border-slate-200 rounded-xl"
+                                    className="pl-10 h-10 bg-slate-50 border-slate-200 rounded-xl"
                                     value={resolveData.receiverIdCard}
                                     onChange={(e) => setResolveData({...resolveData, receiverIdCard: e.target.value})}
                                     required
@@ -335,7 +421,7 @@ const AdminFoundItems = () => {
                                 <Input 
                                     id="receiverPhone"
                                     placeholder="08X-XXX-XXXX"
-                                    className="pl-10 h-12 bg-slate-50 border-slate-200 rounded-xl"
+                                    className="pl-10 h-10 bg-slate-50 border-slate-200 rounded-xl"
                                     value={resolveData.receiverPhone}
                                     onChange={(e) => setResolveData({...resolveData, receiverPhone: e.target.value})}
                                     required
@@ -347,7 +433,7 @@ const AdminFoundItems = () => {
                             <Label className="text-xs font-black uppercase tracking-widest text-slate-500">รูปถ่ายหลักฐานการรับมอบ</Label>
                             <div 
                                 onClick={() => document.getElementById('receiverImage').click()}
-                                className="border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center cursor-pointer hover:bg-slate-50 transition-all overflow-hidden aspect-video flex flex-col items-center justify-center gap-2"
+                                className="border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center cursor-pointer hover:bg-slate-50 transition-all overflow-hidden h-32 flex flex-col items-center justify-center gap-2"
                             >
                                 {imagePreview ? (
                                     <img src={imagePreview} className="w-full h-full object-cover rounded-lg" alt="Preview" />
@@ -374,7 +460,7 @@ const AdminFoundItems = () => {
                             <Button 
                                 type="button" 
                                 variant="outline" 
-                                className="flex-1 h-12 rounded-xl font-bold"
+                                className="flex-1 h-10 rounded-xl font-bold"
                                 onClick={() => setIsResolveModalOpen(false)}
                             >
                                 ยกเลิก
@@ -382,9 +468,56 @@ const AdminFoundItems = () => {
                             <Button 
                                 type="submit" 
                                 disabled={resolveLoading}
-                                className="flex-1 h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-200"
+                                className="flex-1 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-200"
                             >
                                 {resolveLoading ? <Loader2 className="animate-spin h-5 w-5" /> : 'ยืนยันบันทึกการส่งคืน'}
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Set Expiration Date Modal */}
+            <Dialog open={isExpireModalOpen} onOpenChange={setIsExpireModalOpen}>
+                <DialogContent className="max-w-sm rounded-3xl p-6 border-none shadow-2xl">
+                    <DialogHeader>
+                        <div className="mx-auto w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-2">
+                            <Clock className="h-6 w-6 text-orange-600" />
+                        </div>
+                        <DialogTitle className="text-center text-xl font-black text-slate-800">กำหนดวันหมดอายุ</DialogTitle>
+                        <DialogDescription className="text-center text-slate-500">
+                            ระบุวันหมดอายุสำหรับสิ่งของที่พบ (เช่น อาหาร หรือ ขนม)
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={handleExpireSubmit} className="space-y-4 mt-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="expireDate" className="text-xs font-black uppercase tracking-widest text-slate-500">เลือกวันที่หมดอายุ</Label>
+                            <Input 
+                                id="expireDate"
+                                type="date"
+                                className="h-12 bg-slate-50 border-slate-200 rounded-xl"
+                                value={expireDate}
+                                onChange={(e) => setExpireDate(e.target.value)}
+                                required
+                            />
+                        </div>
+
+                        <div className="flex gap-3 pt-4">
+                            <Button 
+                                type="button" 
+                                variant="outline" 
+                                className="flex-1 h-11 rounded-xl font-bold"
+                                onClick={() => setIsExpireModalOpen(false)}
+                            >
+                                ยกเลิก
+                            </Button>
+                            <Button 
+                                type="submit" 
+                                disabled={expireLoading}
+                                className="flex-1 h-11 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold shadow-lg shadow-orange-200"
+                            >
+                                {expireLoading ? <Loader2 className="animate-spin h-5 w-5" /> : 'บันทึกข้อมูล'}
                             </Button>
                         </div>
                     </form>

@@ -71,6 +71,10 @@ const itemSchema = mongoose.Schema({
     aiDescription: {
         type: String
     },
+    receiverName: {
+        type: String,
+        default: ''
+    },
     receiverIdCard: {
         type: String,
         default: ''
@@ -84,6 +88,9 @@ const itemSchema = mongoose.Schema({
         default: ''
     },
     resolvedAt: {
+        type: Date
+    },
+    expirationDate: {
         type: Date
     }
 }, {

@@ -132,6 +132,22 @@ const ItemDetail = () => {
                                 </p>
                             </div>
 
+                            {item.expirationDate && (
+                                <div className="bg-orange-50 rounded-2xl p-5 border border-orange-100 sm:col-span-2">
+                                    <div className="flex items-center gap-3 mb-1">
+                                        <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+                                        <p className="text-[10px] text-orange-600 font-black uppercase tracking-widest">วันหมดอายุ (สำหรับอาหาร/ขนม)</p>
+                                    </div>
+                                    <p className="font-black text-orange-900 text-lg">
+                                        หมดอายุวันที่: {new Date(item.expirationDate).toLocaleDateString('th-TH', {
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric',
+                                        })}
+                                    </p>
+                                </div>
+                            )}
+
                             {(currentUser?.role === 'admin' || currentUser?.role === 'staff') && (
                                 <div className="bg-indigo-50 rounded-2xl p-5 border border-indigo-100 sm:col-span-2">
                                     <div className="flex items-center gap-3 mb-1">
@@ -150,6 +166,35 @@ const ItemDetail = () => {
                                             </div>
                                         )}
                                     </div>
+                                </div>
+                            )}
+
+                            {item.status === 'resolved' && (currentUser?.role === 'admin' || currentUser?.role === 'staff') && (
+                                <div className="bg-emerald-50 rounded-2xl p-5 border border-emerald-100 sm:col-span-2">
+                                    <div className="flex items-center gap-3 mb-1">
+                                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                        <p className="text-[10px] text-emerald-600 font-black uppercase tracking-widest">ข้อมูลการส่งคืนสำเร็จ</p>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                                        <div>
+                                            <p className="text-xs text-emerald-600/70 font-medium">ชื่อ-นามสกุลผู้รับ:</p>
+                                            <p className="font-bold text-emerald-900">{item.receiverName || 'ไม่ได้ระบุ'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-emerald-600/70 font-medium">เบอร์โทรศัพท์:</p>
+                                            <p className="font-bold text-emerald-900">{item.receiverPhone || 'ไม่ได้ระบุ'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-emerald-600/70 font-medium">เลขบัตรประชาชน:</p>
+                                            <p className="font-bold text-emerald-900">{item.receiverIdCard || 'ไม่ได้ระบุ'}</p>
+                                        </div>
+                                    </div>
+                                    {item.receiverImage && (
+                                        <div className="mt-4">
+                                            <p className="text-xs text-emerald-600/70 font-medium mb-2">รูปถ่ายหลักฐานการรับมอบ:</p>
+                                            <img src={item.receiverImage} alt="Receiver Evidence" className="h-40 rounded-xl object-cover border-2 border-emerald-200 shadow-sm" />
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

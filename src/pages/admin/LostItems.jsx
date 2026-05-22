@@ -36,10 +36,12 @@ const AdminLostItems = () => {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filterDate, setFilterDate] = useState('');
     const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
     const [selectedItemId, setSelectedItemId] = useState(null);
     const [resolveLoading, setResolveLoading] = useState(false);
     const [resolveData, setResolveData] = useState({
+        receiverName: '',
         receiverIdCard: '',
         receiverPhone: '',
     });
@@ -72,10 +74,18 @@ const AdminLostItems = () => {
         fetchLostItems();
     }, []);
 
-    const filteredItems = items.filter(item =>
-        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.location.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredItems = items.filter(item => {
+        const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                              item.location.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        let matchesDate = true;
+        if (filterDate) {
+            const itemDate = new Date(item.date).toISOString().split('T')[0];
+            matchesDate = itemDate === filterDate;
+        }
+
+        return matchesSearch && matchesDate;
+    });
 
     const getStatusBadge = (status) => {
         switch (status) {
@@ -103,7 +113,7 @@ const AdminLostItems = () => {
 
     const handleResolveSubmit = async (e) => {
         e.preventDefault();
-        if (!resolveData.receiverIdCard || !resolveData.receiverPhone || !receiverImage) {
+        if (!resolveData.receiverName || !resolveData.receiverIdCard || !resolveData.receiverPhone || !receiverImage) {
             alert('กรุณากรอกข้อมูลและอัปโหลดรูปภาพให้ครบถ้วน');
             return;
         }
@@ -112,6 +122,7 @@ const AdminLostItems = () => {
             setResolveLoading(true);
             const formData = new FormData();
             formData.append('status', 'resolved');
+            formData.append('receiverName', resolveData.receiverName);
             formData.append('receiverIdCard', resolveData.receiverIdCard);
             formData.append('receiverPhone', resolveData.receiverPhone);
             formData.append('receiverImage', receiverImage);
@@ -121,7 +132,7 @@ const AdminLostItems = () => {
             });
 
             setIsResolveModalOpen(false);
-            setResolveData({ receiverIdCard: '', receiverPhone: '' });
+            setResolveData({ receiverName: '', receiverIdCard: '', receiverPhone: '' });
             setReceiverImage(null);
             setImagePreview(null);
             fetchLostItems();
@@ -150,14 +161,32 @@ const AdminLostItems = () => {
             <div className="bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/40 overflow-hidden">
                 {/* Toolbar */}
                 <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row gap-4 justify-between items-center">
-                    <div className="relative w-full sm:w-96 group">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-rose-500 transition-colors" />
-                        <Input
-                            placeholder="ค้นหาชื่อของหาย หรือ สถานที่..."
-                            className="pl-10 h-11 bg-white border-slate-200 focus-visible:ring-rose-500/20 shadow-sm rounded-xl font-medium"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                    <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-4">
+                        <div className="relative w-full sm:w-80 group">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-rose-500 transition-colors" />
+                            <Input
+                                placeholder="ค้นหาชื่อของหาย หรือ สถานที่..."
+                                className="pl-10 h-11 bg-white border-slate-200 focus-visible:ring-rose-500/20 shadow-sm rounded-xl font-medium"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <div className="relative w-full sm:w-48 group">
+                            <Input
+                                type="date"
+                                className="h-11 bg-white border-slate-200 focus-visible:ring-rose-500/20 shadow-sm rounded-xl font-medium"
+                                value={filterDate}
+                                onChange={(e) => setFilterDate(e.target.value)}
+                            />
+                            {filterDate && (
+                                <button 
+                                    onClick={() => setFilterDate('')}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                >
+                                    <XCircle className="h-4 w-4" />
+                                </button>
+                            )}
+                        </div>
                     </div>
                     <div className="flex items-center gap-3 w-full sm:w-auto">
                         <Button
@@ -301,10 +330,10 @@ const AdminLostItems = () => {
             {/* Resolve Modal (Identity Verification) */}
             <Dialog open={isResolveModalOpen} onOpenChange={setIsResolveModalOpen}>
                 <DialogContent className="max-w-md rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
-                    <div className="bg-slate-900 p-8 text-center text-white relative">
-                        <div className="absolute top-[-20px] right-[-20px] w-40 h-40 bg-emerald-500/20 rounded-full blur-3xl"></div>
-                        <div className="bg-emerald-500 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-900/40">
-                            <CheckCircle size={32} />
+                    <div className="bg-slate-900 p-6 text-center text-white relative">
+                        <div className="absolute top-[-20px] right-[-20px] w-40 h-40 bg-blue-500/20 rounded-full blur-3xl"></div>
+                        <div className="bg-blue-500 w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-900/40">
+                            <CheckCircle size={24} />
                         </div>
                         <DialogTitle className="text-2xl font-black mb-2">บันทึกการส่งคืนสำเร็จ</DialogTitle>
                         <DialogDescription className="text-slate-400">
@@ -312,7 +341,22 @@ const AdminLostItems = () => {
                         </DialogDescription>
                     </div>
 
-                    <form onSubmit={handleResolveSubmit} className="p-8 bg-white space-y-5">
+                    <form onSubmit={handleResolveSubmit} className="p-6 bg-white space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="receiverName" className="text-xs font-black uppercase tracking-widest text-slate-500">ชื่อ-นามสกุลผู้มารับ</Label>
+                            <div className="relative">
+                                <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                <Input 
+                                    id="receiverName"
+                                    placeholder="ชื่อและนามสกุล"
+                                    className="pl-10 h-10 bg-slate-50 border-slate-200 rounded-xl"
+                                    value={resolveData.receiverName}
+                                    onChange={(e) => setResolveData({...resolveData, receiverName: e.target.value})}
+                                    required
+                                />
+                            </div>
+                        </div>
+
                         <div className="space-y-2">
                             <Label htmlFor="receiverIdCard" className="text-xs font-black uppercase tracking-widest text-slate-500">เลขบัตรประชาชนผู้มารับ</Label>
                             <div className="relative">
@@ -320,7 +364,7 @@ const AdminLostItems = () => {
                                 <Input 
                                     id="receiverIdCard"
                                     placeholder="กรอกเลข 13 หลัก"
-                                    className="pl-10 h-12 bg-slate-50 border-slate-200 rounded-xl"
+                                    className="pl-10 h-10 bg-slate-50 border-slate-200 rounded-xl"
                                     value={resolveData.receiverIdCard}
                                     onChange={(e) => setResolveData({...resolveData, receiverIdCard: e.target.value})}
                                     required
@@ -335,7 +379,7 @@ const AdminLostItems = () => {
                                 <Input 
                                     id="receiverPhone"
                                     placeholder="08X-XXX-XXXX"
-                                    className="pl-10 h-12 bg-slate-50 border-slate-200 rounded-xl"
+                                    className="pl-10 h-10 bg-slate-50 border-slate-200 rounded-xl"
                                     value={resolveData.receiverPhone}
                                     onChange={(e) => setResolveData({...resolveData, receiverPhone: e.target.value})}
                                     required
@@ -347,14 +391,14 @@ const AdminLostItems = () => {
                             <Label className="text-xs font-black uppercase tracking-widest text-slate-500">รูปถ่ายหลักฐานการรับมอบ</Label>
                             <div 
                                 onClick={() => document.getElementById('receiverImage').click()}
-                                className="border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center cursor-pointer hover:bg-slate-50 transition-all overflow-hidden aspect-video flex flex-col items-center justify-center gap-2"
+                                className="border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center cursor-pointer hover:bg-slate-50 transition-all overflow-hidden h-24 flex flex-col items-center justify-center gap-2"
                             >
                                 {imagePreview ? (
                                     <img src={imagePreview} className="w-full h-full object-cover rounded-lg" alt="Preview" />
                                 ) : (
                                     <>
-                                        <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                                            <Camera size={24} />
+                                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                                            <Camera size={20} />
                                         </div>
                                         <p className="text-xs font-bold text-slate-400">คลิกเพื่ออัปโหลดรูปถ่าย</p>
                                     </>
@@ -374,7 +418,7 @@ const AdminLostItems = () => {
                             <Button 
                                 type="button" 
                                 variant="outline" 
-                                className="flex-1 h-12 rounded-xl font-bold"
+                                className="flex-1 h-10 rounded-xl font-bold"
                                 onClick={() => setIsResolveModalOpen(false)}
                             >
                                 ยกเลิก
@@ -382,7 +426,7 @@ const AdminLostItems = () => {
                             <Button 
                                 type="submit" 
                                 disabled={resolveLoading}
-                                className="flex-1 h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-200"
+                                className="flex-1 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-200"
                             >
                                 {resolveLoading ? <Loader2 className="animate-spin h-5 w-5" /> : 'ยืนยันปิดรายการ'}
                             </Button>

@@ -14,7 +14,6 @@ import AdminItems from './pages/admin/Items';
 import AdminUsers from './pages/admin/Users';
 import AdminLostItems from './pages/admin/LostItems';
 import AdminFoundItems from './pages/admin/FoundItems';
-import AdminChat from './pages/admin/Chat';
 import AdminStaff from './pages/admin/Staff';
 import AdminLogin from './pages/admin/Login';
 import AdminSettings from './pages/admin/Settings';
@@ -109,7 +108,6 @@ function App() {
                         <Route path="/admin/items" element={<AdminRoute><AdminLayout><AdminItems /></AdminLayout></AdminRoute>} />
                         <Route path="/admin/lost" element={<AdminRoute><AdminLayout><AdminLostItems /></AdminLayout></AdminRoute>} />
                         <Route path="/admin/found" element={<AdminRoute><AdminLayout><AdminFoundItems /></AdminLayout></AdminRoute>} />
-                        <Route path="/admin/chat" element={<AdminRoute><AdminLayout><AdminChat /></AdminLayout></AdminRoute>} />
                         <Route path="/admin/users" element={<AdminRoute><AdminLayout><AdminUsers /></AdminLayout></AdminRoute>} />
                         <Route path="/admin/staff" element={<AdminRoute><AdminLayout><AdminStaff /></AdminLayout></AdminRoute>} />
                         <Route path="/admin/ai-search" element={<AdminRoute><AdminLayout><AIChatSearch /></AdminLayout></AdminRoute>} />
