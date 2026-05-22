@@ -20,6 +20,7 @@ const Register = () => {
     const { register, loading, error: authError } = useAuth();
     const navigate = useNavigate();
     const [localError, setLocalError] = useState('');
+    const [successMsg, setSuccessMsg] = useState('');
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -28,6 +29,7 @@ const Register = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLocalError('');
+        setSuccessMsg('');
 
         if (formData.password !== formData.confirmPassword) {
             setLocalError('รหัสผ่านไม่ตรงกัน');
@@ -42,7 +44,8 @@ const Register = () => {
         });
 
         if (res.success) {
-            navigate('/');
+            setSuccessMsg(res.message || 'สมัครสมาชิกสำเร็จ กรุณายืนยันอีเมลของคุณ');
+            setFormData({ firstname: '', lastname: '', email: '', password: '', confirmPassword: '' });
         }
     };
 
@@ -78,8 +81,13 @@ const Register = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {(authError || localError) && (
-                        <Alert variant="destructive" className="bg-red-50 text-red-600 border-red-100">
+                        <Alert variant="destructive" className="bg-red-50 text-red-600 border-red-100 mb-4">
                             <AlertDescription>{localError || authError}</AlertDescription>
+                        </Alert>
+                    )}
+                    {successMsg && (
+                        <Alert className="bg-emerald-50 text-emerald-600 border-emerald-100 mb-4">
+                            <AlertDescription>{successMsg}</AlertDescription>
                         </Alert>
                     )}
                     <form onSubmit={handleSubmit}>

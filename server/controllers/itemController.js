@@ -3,6 +3,8 @@ const Item = require('../models/Item');
 const { analyzeItemImage } = require('../utils/aiService');
 const axios = require('axios');
 const cloudinary = require('../config/cloudinary');
+const sendEmail = require('../utils/sendEmail');
+const User = require('../models/User');
 
 // @desc    Create new item (Lost/Found)
 // @route   POST /api/items
@@ -86,6 +88,18 @@ const createItem = asyncHandler(async (req, res) => {
         matches, // Requirement 13
         message: matches.length > 0 ? 'ตรวจพบของที่คล้ายคลึงกันในระบบ!' : 'สร้างประกาศสำเร็จ'
     });
+
+    // Send email notification for posting an item
+    try {
+        const typeText = type === 'lost' ? 'ของหาย' : 'พบของ';
+        await sendEmail({
+            to: req.user.email,
+            subject: `แจ้งเตือนการสร้างประกาศ: ${title}`,
+            text: `สวัสดีคุณ ${req.user.firstname},\n\nระบบได้รับประกาศ "${title}" (หมวดหมู่: ${typeText}) ของคุณเรียบร้อยแล้ว\n\nขอบคุณที่ใช้บริการ Lost&Found AI`
+        });
+    } catch (err) {
+        console.error("Failed to send item creation email:", err);
+    }
 });
 
 // @desc    Get all items
@@ -190,9 +204,22 @@ const updateItem = asyncHandler(async (req, res) => {
 
     const updatedItem = await Item.findByIdAndUpdate(req.params.id, updateData, {
         new: true,
-    });
+    }).populate('user');
 
     res.status(200).json(updatedItem);
+
+    // Send email notification for resolving an item
+    if (updateData.status === 'resolved') {
+        try {
+            await sendEmail({
+                to: updatedItem.user.email,
+                subject: `อัปเดตสถานะ: รายการ "${updatedItem.title}" ถูกส่งคืนสำเร็จแล้ว`,
+                text: `สวัสดีคุณ ${updatedItem.user.firstname},\n\nรายการ "${updatedItem.title}" ของคุณได้รับการเปลี่ยนสถานะเป็น "ส่งคืนสำเร็จ" (Resolved) เรียบร้อยแล้ว\n\nยินดีด้วยที่คุณได้รับของคืน!\n\nขอบคุณที่ใช้บริการ Lost&Found AI`
+            });
+        } catch (err) {
+            console.error("Failed to send resolved item email:", err);
+        }
+    }
 });
 
 // @desc    Delete item

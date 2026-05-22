@@ -203,7 +203,7 @@ const AdminLostItems = () => {
                                     filteredItems.map((item) => (
                                         <TableRow key={item._id} className="hover:bg-slate-50/50 transition-all border-b border-slate-100 last:border-0 h-20">
                                             <TableCell className="px-6">
-                                                <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate(`/items/${item._id}`)}>
+                                                <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate(`/item/${item._id}`)}>
                                                     <div className="h-12 w-12 rounded-xl overflow-hidden bg-slate-100 border border-slate-100 shrink-0">
                                                         <img src={item.images?.[0] || 'https://via.placeholder.com/150'} alt="" className="w-full h-full object-cover" />
                                                     </div>
@@ -266,7 +266,7 @@ const AdminLostItems = () => {
                                                     <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-xl border-slate-200">
                                                         <DropdownMenuLabel className="font-bold text-slate-500">จัดการข้อมูล</DropdownMenuLabel>
                                                         <DropdownMenuSeparator />
-                                                        <DropdownMenuItem className="cursor-pointer py-2.5" onClick={() => navigate(`/items/${item._id}`)}>
+                                                        <DropdownMenuItem className="cursor-pointer py-2.5" onClick={() => navigate(`/item/${item._id}`)}>
                                                             <Eye className="mr-2.5 h-4 w-4 text-slate-400" /> ดูรายละเอียด
                                                         </DropdownMenuItem>
                                                         

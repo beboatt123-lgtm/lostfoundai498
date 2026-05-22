@@ -1,21 +1,33 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
-    const { data, error } = await resend.emails.send({
-        from: 'LostFound <onboarding@resend.dev>', // Default for unverified domains
-        to: options.email,
-        subject: options.subject,
-        html: options.html,
+    // Create a transporter using Gmail
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+        },
     });
 
-    if (error) {
-        console.error('Resend API Error:', error);
-        throw new Error(`Resend Error: ${error.message || 'Unknown error'}`);
+    const mailOptions = {
+        from: `Lost & Found <${process.env.EMAIL_USER}>`,
+        to: options.email || options.to,
+        subject: options.subject,
+        html: options.html,
+    };
+
+    if (options.message || options.text) {
+        mailOptions.text = options.message || options.text;
     }
 
-    return data;
+    try {
+        const info = await transporter.sendMail(mailOptions);
+        return info;
+    } catch (error) {
+        console.error('Nodemailer Error:', error);
+        throw new Error(`Email Send Error: ${error.message}`);
+    }
 };
 
 module.exports = sendEmail;

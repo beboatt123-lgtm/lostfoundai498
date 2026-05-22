@@ -129,29 +129,7 @@ const AdminLayout = ({ children }) => {
                 </div>
             </div>
 
-            <div className="mt-auto border-t border-slate-800 bg-[#0B1120] p-4">
-                <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10 border-2 border-slate-700 shadow-sm">
-                        <AvatarImage src={user?.avatar} />
-                        <AvatarFallback className="bg-emerald-500 text-white font-bold">{user?.firstname?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 overflow-hidden">
-                        <p className="text-sm font-semibold text-white truncate">{user?.firstname} {user?.lastname}</p>
-                        <p className="text-xs text-slate-500 truncate">{user?.email}</p>
-                    </div>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                            logout();
-                            navigate('/admin/login');
-                        }}
-                        className="text-slate-400 hover:text-red-400 hover:bg-red-500/10 h-8 w-8 rounded-full"
-                    >
-                        <LogOut size={16} />
-                    </Button>
-                </div>
-            </div>
+
         </div>
     );
 

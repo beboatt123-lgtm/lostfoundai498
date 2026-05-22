@@ -209,7 +209,7 @@ const AdminItems = () => {
                                             <DropdownMenuContent align="end" className="w-56 shadow-xl border-slate-200">
                                                 <DropdownMenuLabel className="text-xs font-bold text-slate-500 uppercase tracking-wider">ตัวเลือกจัดการ</DropdownMenuLabel>
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem className="cursor-pointer font-medium py-2" onClick={() => navigate(`/items/${item._id}`)}>
+                                                <DropdownMenuItem className="cursor-pointer font-medium py-2" onClick={() => navigate(`/item/${item._id}`)}>
                                                     <Eye className="mr-2 h-4 w-4 text-slate-500" /> ดูรายละเอียด
                                                 </DropdownMenuItem>
                                                 

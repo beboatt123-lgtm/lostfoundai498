@@ -33,10 +33,7 @@ export const AuthProvider = ({ children }) => {
         setError(null);
         try {
             const res = await api.post('/auth/register', userData);
-            const { token, ...user } = res.data;
-            localStorage.setItem('token', token);
-            setUser(user);
-            return { success: true, user };
+            return { success: true, message: res.data.message };
         } catch (err) {
             setError(err.response?.data?.message || 'Registration failed');
             return { success: false, error: err.response?.data?.message };

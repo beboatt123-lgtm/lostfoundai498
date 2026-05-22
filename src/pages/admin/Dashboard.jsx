@@ -135,9 +135,10 @@ const AdminDashboard = () => {
                         <CardDescription className="text-slate-500">เปรียบเทียบจำนวนรายการตามช่วงเวลาที่กำหนด</CardDescription>
                     </CardHeader>
                     <CardContent className="p-6">
-                        <div style={{ width: '100%', height: 350 }}>
-                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                        <div style={{ width: '100%', height: 350, minWidth: 1, minHeight: 1 }}>
+                            {chartData && chartData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+                                    <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="colorFound" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
@@ -160,6 +161,11 @@ const AdminDashboard = () => {
                                     <Area type="monotone" dataKey="lost" name="แจ้งหาย" stackId="1" stroke="#f43f5e" fillOpacity={1} fill="url(#colorLost)" strokeWidth={3} />
                                 </AreaChart>
                             </ResponsiveContainer>
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                    ไม่มีข้อมูลสถิติในช่วงเวลานี้
+                                </div>
+                            )}
                         </div>
                     </CardContent>
                 </Card>

@@ -640,7 +640,7 @@ const ReportItem = () => {
                                         <Button 
                                             size="sm" 
                                             className="h-8 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs"
-                                            onClick={() => navigate(`/items/${match._id}`)}
+                                            onClick={() => navigate(`/item/${match._id}`)}
                                         >
                                             ดูรายละเอียด
                                         </Button>

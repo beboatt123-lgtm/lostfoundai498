@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { MapPin, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -14,6 +14,10 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const { login, googleLogin, loading, error: authError } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+    
+    const queryParams = new URLSearchParams(location.search);
+    const isVerified = queryParams.get('verified') === 'true';
 
     const handleGoogleLogin = useGoogleLogin({
         onSuccess: async (tokenResponse) => {
@@ -74,8 +78,13 @@ const Login = () => {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                    {isVerified && (
+                        <Alert className="bg-emerald-50 text-emerald-600 border-emerald-100 mb-4">
+                            <AlertDescription>ยืนยันอีเมลสำเร็จแล้ว คุณสามารถเข้าสู่ระบบได้ทันที</AlertDescription>
+                        </Alert>
+                    )}
                     {authError && (
-                        <Alert variant="destructive" className="bg-red-50 text-red-600 border-red-100">
+                        <Alert variant="destructive" className="bg-red-50 text-red-600 border-red-100 mb-4">
                             <AlertDescription>{authError}</AlertDescription>
                         </Alert>
                     )}

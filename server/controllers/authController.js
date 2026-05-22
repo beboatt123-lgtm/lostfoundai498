@@ -32,23 +32,44 @@ const registerUser = asyncHandler(async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(20).toString('hex');
+    const hashedVerificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+
     // Create user
     const user = await User.create({
         firstname,
         lastname,
         email,
-        password: hashedPassword
+        password: hashedPassword,
+        verificationToken: hashedVerificationToken
     });
 
     if (user) {
+        // Send email
+        const verifyUrl = `${req.protocol}://${req.get('host')}/api/auth/verify/${verificationToken}`;
+        const message = `คุณได้สมัครสมาชิกสำเร็จแล้ว กรุณายืนยันอีเมลของคุณโดยคลิกที่ลิงก์ด้านล่าง:\n\n ${verifyUrl}`;
+
+        try {
+            await sendEmail({
+                email: user.email,
+                subject: 'ยืนยันการสมัครสมาชิก - Lost & Found',
+                message,
+                html: `
+                    <div style="font-family: sans-serif; padding: 20px; color: #333;">
+                        <h2>ยินดีต้อนรับสู่ Lost & Found</h2>
+                        <p>กรุณายืนยันการสมัครสมาชิกของคุณโดยคลิกที่ปุ่มด้านล่าง:</p>
+                        <a href="${verifyUrl}" style="display: inline-block; padding: 10px 20px; background-color: #10b981; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">ยืนยันอีเมล</a>
+                        <p>หากคุณไม่ได้สมัครสมาชิก โปรดเพิกเฉยต่ออีเมลฉบับนี้</p>
+                    </div>
+                `
+            });
+        } catch (err) {
+            console.error('Email Send Error:', err);
+        }
+
         res.status(201).json({
-            _id: user.id,
-            firstname: user.firstname,
-            lastname: user.lastname,
-            email: user.email,
-            role: user.role,
-            avatar: user.avatar,
-            token: generateToken(user.id)
+            message: 'สมัครสมาชิกสำเร็จ กรุณาตรวจสอบอีเมลของคุณเพื่อยืนยันบัญชี'
         });
     } else {
         res.status(400);
@@ -66,6 +87,11 @@ const loginUser = asyncHandler(async (req, res) => {
     const user = await User.findOne({ email });
 
     if (user && (await bcrypt.compare(password, user.password))) {
+        if (!user.isVerified) {
+            res.status(401);
+            throw new Error('กรุณายืนยันอีเมลของคุณก่อนเข้าสู่ระบบ');
+        }
+
         res.json({
             _id: user.id,
             firstname: user.firstname,
@@ -161,6 +187,7 @@ const googleLogin = asyncHandler(async (req, res) => {
                 email,
                 password: hashedPassword,
                 avatar: picture || 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
+                isVerified: true
             });
         }
 
@@ -285,6 +312,29 @@ const generateToken = (id) => {
     });
 };
 
+// @desc    Verify Email
+// @route   GET /api/auth/verify/:token
+// @access  Public
+const verifyEmail = asyncHandler(async (req, res) => {
+    const verificationToken = crypto
+        .createHash('sha256')
+        .update(req.params.token)
+        .digest('hex');
+
+    const user = await User.findOne({ verificationToken });
+
+    if (!user) {
+        res.status(400);
+        throw new Error('ลิงก์ยืนยันไม่ถูกต้องหรือถูกใช้งานไปแล้ว');
+    }
+
+    user.isVerified = true;
+    user.verificationToken = undefined;
+    await user.save();
+
+    res.redirect(`http://localhost:5173/login?verified=true`);
+});
+
 module.exports = {
     registerUser,
     loginUser,
@@ -292,5 +342,6 @@ module.exports = {
     updateProfile,
     googleLogin,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    verifyEmail
 };

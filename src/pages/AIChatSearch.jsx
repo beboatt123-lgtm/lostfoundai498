@@ -143,7 +143,7 @@ const AIChatSearch = () => {
                                                                     size="sm"
                                                                     variant="ghost"
                                                                     className="mt-4 text-emerald-600 font-bold justify-start p-0 h-auto hover:bg-transparent hover:translate-x-1 transition-all"
-                                                                    onClick={() => navigate(`/items/${item._id}`)}
+                                                                    onClick={() => navigate(`/item/${item._id}`)}
                                                                 >
                                                                     ดูรายละเอียดรายการนี้ <ArrowRight size={14} className="ml-2" />
                                                                 </Button>
