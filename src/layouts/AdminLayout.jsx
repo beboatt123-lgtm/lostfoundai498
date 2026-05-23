@@ -35,11 +35,6 @@ const AdminLayout = ({ children }) => {
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
 
-    // Security Check: Redirect to admin login if not logged in or not admin/staff
-    if (!loading && (!user || (user.role !== 'admin' && user.role !== 'staff'))) {
-        navigate('/admin/login');
-        return null;
-    }
 
     if (loading) {
         return <div className="h-screen w-full flex items-center justify-center bg-[#0F172A] text-white">กำลังโหลด...</div>;

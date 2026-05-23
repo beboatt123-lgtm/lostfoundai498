@@ -18,8 +18,8 @@ const AdminLogin = () => {
         e.preventDefault();
         const res = await login(email, password);
         if (res.success) {
-            // Check if user has admin/staff role
-            if (res.user?.role === 'admin' || res.user?.role === 'staff') {
+            // Check if user has admin/staff/superadmin role
+            if (res.user?.role === 'admin' || res.user?.role === 'staff' || res.user?.role === 'superadmin') {
                 navigate('/admin');
             } else {
                 // If not admin, logout or show error? For now, we'll logout and show an error.

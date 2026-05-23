@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import {
     Table,
     TableBody,
@@ -19,6 +20,7 @@ import {
     UserPlus,
     Mail,
     KeyRound,
+    Trash2,
     Loader2,
     RefreshCw
 } from "lucide-react";
@@ -51,6 +53,7 @@ import {
 import api from '../../lib/axios';
 
 const AdminStaff = () => {
+    const { user: currentUser } = useAuth();
     const [staffMembers, setStaffMembers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -88,7 +91,7 @@ const AdminStaff = () => {
             // Fetch all users and filter by role admin/staff on the frontend 
             // OR we can adjust the API. For now, let's fetch all and filter for roles.
             const res = await api.get('/admin/users');
-            const filteredStaff = res.data.filter(u => u.role === 'admin' || u.role === 'staff');
+            const filteredStaff = res.data.filter(u => u.role === 'admin' || u.role === 'staff' || u.role === 'superadmin');
             setStaffMembers(filteredStaff);
         } catch (err) {
             console.error("Failed to fetch staff members", err);
@@ -109,7 +112,8 @@ const AdminStaff = () => {
 
     const getRoleBadge = (role) => {
         switch (role) {
-            case 'admin': return <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200 shadow-sm font-bold uppercase text-[10px]"><ShieldAlert size={12} className="mr-1.5" /> Super Admin</Badge>;
+            case 'superadmin': return <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-200 border-rose-200 shadow-sm font-bold uppercase text-[10px]"><ShieldAlert size={12} className="mr-1.5" /> Super Admin</Badge>;
+            case 'admin': return <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200 shadow-sm font-bold uppercase text-[10px]"><ShieldAlert size={12} className="mr-1.5" /> Admin</Badge>;
             case 'staff': return <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-indigo-200 shadow-sm font-bold uppercase text-[10px]"><ShieldCheck size={12} className="mr-1.5" /> Staff (Editor)</Badge>;
             default: return <Badge variant="outline" className="text-slate-500 font-bold uppercase text-[10px]">Staff</Badge>;
         }
@@ -122,6 +126,18 @@ const AdminStaff = () => {
                 fetchStaff();
             } catch (err) {
                 console.error("Update failed", err);
+            }
+        }
+    };
+
+    const handleDeleteUser = async (userId) => {
+        if (window.confirm('คำเตือน: คุณต้องการลบบัญชีผู้ดูแลนี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้')) {
+            try {
+                await api.delete(`/admin/users/${userId}`);
+                fetchStaff();
+            } catch (err) {
+                console.error("Delete failed", err);
+                alert(err.response?.data?.message || "ไม่สามารถลบผู้ดูแลได้");
             }
         }
     };
@@ -209,7 +225,10 @@ const AdminStaff = () => {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="staff">Staff (เจ้าหน้าที่)</SelectItem>
-                                        <SelectItem value="admin">Admin (ผู้ดูแลระบบสูงสุด)</SelectItem>
+                                        <SelectItem value="admin">Admin (ผู้ดูแลระบบ)</SelectItem>
+                                        {currentUser?.role === 'superadmin' && (
+                                            <SelectItem value="superadmin">Super Admin (สิทธิ์สูงสุด)</SelectItem>
+                                        )}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -324,11 +343,19 @@ const AdminStaff = () => {
                                                         </DropdownMenuItem>
                                                         <DropdownMenuSeparator className="bg-slate-100" />
                                                         <DropdownMenuItem
-                                                            className={`cursor-pointer py-2.5 rounded-lg font-bold ${!staff.isSuspended ? 'text-rose-600 focus:text-rose-700 focus:bg-rose-50' : 'text-emerald-600 focus:text-emerald-700 focus:bg-emerald-50'}`}
+                                                            className={`cursor-pointer py-2.5 rounded-lg font-bold ${!staff.isSuspended ? 'text-amber-600 focus:text-amber-700 focus:bg-amber-50' : 'text-emerald-600 focus:text-emerald-700 focus:bg-emerald-50'}`}
                                                             onClick={() => handleUpdateUserStatus(staff._id, !staff.isSuspended)}
                                                         >
                                                             {!staff.isSuspended ? 'ระงับสิทธิ์การใช้งาน' : 'ยกเลิกการระงับสิทธิ์'}
                                                         </DropdownMenuItem>
+                                                        {currentUser?.role === 'superadmin' && staff._id !== currentUser._id && (
+                                                            <DropdownMenuItem
+                                                                className="cursor-pointer py-2.5 rounded-lg font-bold text-rose-600 focus:text-rose-700 focus:bg-rose-50"
+                                                                onClick={() => handleDeleteUser(staff._id)}
+                                                            >
+                                                                <Trash2 className="mr-3 h-4 w-4" /> ลบบัญชีถาวร
+                                                            </DropdownMenuItem>
+                                                        )}
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
                                             </TableCell>

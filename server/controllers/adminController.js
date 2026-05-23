@@ -198,9 +198,36 @@ const createUser = asyncHandler(async (req, res) => {
     }
 });
 
+// @desc    Delete a user
+// @route   DELETE /api/admin/users/:id
+// @access  Private/Admin (Superadmin only)
+const deleteUser = asyncHandler(async (req, res) => {
+    if (req.user.role !== 'superadmin') {
+        res.status(403);
+        throw new Error('Not authorized to delete users. Superadmin role required.');
+    }
+
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    if (user._id.toString() === req.user._id.toString()) {
+        res.status(400);
+        throw new Error('You cannot delete your own account');
+    }
+
+    await user.deleteOne();
+
+    res.status(200).json({ message: 'User removed successfully' });
+});
+
 module.exports = {
     getStats,
     getAllUsers,
     updateUser,
-    createUser
+    createUser,
+    deleteUser
 };

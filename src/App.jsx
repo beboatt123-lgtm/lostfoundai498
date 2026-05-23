@@ -55,7 +55,7 @@ const AdminRoute = ({ children }) => {
         </div>
     );
     
-    if (!user || (user.role !== 'admin' && user.role !== 'staff')) {
+    if (!user || (user.role !== 'admin' && user.role !== 'staff' && user.role !== 'superadmin')) {
         return <Navigate to="/login" replace />;
     }
     
