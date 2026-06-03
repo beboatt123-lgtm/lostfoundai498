@@ -114,7 +114,7 @@ const getItems = asyncHandler(async (req, res) => {
     // 2. If requester is a regular user, they only see THEIR OWN items.
     // 3. If guest (not logged in), they see NOTHING (or we could show all, but user requested 'only see own').
     
-    if (req.user && (req.user.role === 'admin' || req.user.role === 'staff')) {
+    if (req.user && (req.user.role === 'admin' || req.user.role === 'staff' || req.user.role === 'superadmin')) {
         if (user) {
             query.user = user;
         }
@@ -186,8 +186,8 @@ const updateItem = asyncHandler(async (req, res) => {
         throw new Error('User not found');
     }
 
-    // Ensure logged in user matches the item user or is admin
-    if (item.user.toString() !== req.user.id && req.user.role !== 'admin') {
+    // Ensure logged in user matches the item user or is admin/staff/superadmin
+    if (item.user.toString() !== req.user.id && req.user.role !== 'admin' && req.user.role !== 'staff' && req.user.role !== 'superadmin') {
         res.status(401);
         throw new Error('User not authorized');
     }
@@ -233,8 +233,8 @@ const deleteItem = asyncHandler(async (req, res) => {
         throw new Error('Item not found');
     }
 
-    // Ensure logged in user matches the item user or is admin
-    if (item.user.toString() !== req.user.id && req.user.role !== 'admin') {
+    // Ensure logged in user matches the item user or is admin/staff/superadmin
+    if (item.user.toString() !== req.user.id && req.user.role !== 'admin' && req.user.role !== 'staff' && req.user.role !== 'superadmin') {
         res.status(401);
         throw new Error('User not authorized');
     }
@@ -257,7 +257,7 @@ const aiSearch = asyncHandler(async (req, res) => {
 
     // Filter items based on user role
     let itemQuery = { status: 'open' };
-    if (req.user && (req.user.role === 'admin' || req.user.role === 'staff')) {
+    if (req.user && (req.user.role === 'admin' || req.user.role === 'staff' || req.user.role === 'superadmin')) {
         // Admin sees all open items
     } else if (req.user) {
         // User only searches their own open items
