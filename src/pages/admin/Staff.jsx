@@ -31,6 +31,10 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
+    DropdownMenuSub,
+    DropdownMenuSubTrigger,
+    DropdownMenuSubContent,
+    DropdownMenuPortal
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -126,6 +130,18 @@ const AdminStaff = () => {
                 fetchStaff();
             } catch (err) {
                 console.error("Update failed", err);
+            }
+        }
+    };
+
+    const handleUpdateRole = async (userId, newRole) => {
+        if (window.confirm(`ยืนยันการเปลี่ยนสิทธิ์ให้เป็น ${newRole} ใช่หรือไม่?`)) {
+            try {
+                await api.put(`/admin/users/${userId}`, { role: newRole });
+                fetchStaff();
+            } catch (err) {
+                console.error("Role update failed", err);
+                alert("ไม่สามารถเปลี่ยนสิทธิ์ได้");
             }
         }
     };
@@ -349,12 +365,33 @@ const AdminStaff = () => {
                                                             {!staff.isSuspended ? 'ระงับสิทธิ์การใช้งาน' : 'ยกเลิกการระงับสิทธิ์'}
                                                         </DropdownMenuItem>
                                                         {currentUser?.role === 'superadmin' && staff._id !== currentUser._id && (
-                                                            <DropdownMenuItem
-                                                                className="cursor-pointer py-2.5 rounded-lg font-bold text-rose-600 focus:text-rose-700 focus:bg-rose-50"
-                                                                onClick={() => handleDeleteUser(staff._id)}
-                                                            >
-                                                                <Trash2 className="mr-3 h-4 w-4" /> ลบบัญชีถาวร
-                                                            </DropdownMenuItem>
+                                                            <>
+                                                                <DropdownMenuSub>
+                                                                    <DropdownMenuSubTrigger className="cursor-pointer py-2.5 rounded-lg">
+                                                                        <Shield className="mr-3 h-4 w-4 text-slate-400" /> ปรับระดับสิทธิ์ (Role)
+                                                                    </DropdownMenuSubTrigger>
+                                                                    <DropdownMenuPortal>
+                                                                        <DropdownMenuSubContent className="w-48 rounded-xl shadow-xl p-2 border-slate-200">
+                                                                            <DropdownMenuItem onClick={() => handleUpdateRole(staff._id, 'superadmin')} className="cursor-pointer font-bold text-rose-600 focus:bg-rose-50">
+                                                                                <ShieldAlert size={14} className="mr-2" /> เลื่อนเป็น Superadmin
+                                                                            </DropdownMenuItem>
+                                                                            <DropdownMenuItem onClick={() => handleUpdateRole(staff._id, 'admin')} className="cursor-pointer font-bold text-purple-600 focus:bg-purple-50">
+                                                                                <ShieldAlert size={14} className="mr-2" /> ปรับเป็น Admin
+                                                                            </DropdownMenuItem>
+                                                                            <DropdownMenuItem onClick={() => handleUpdateRole(staff._id, 'staff')} className="cursor-pointer font-bold text-indigo-600 focus:bg-indigo-50">
+                                                                                <ShieldCheck size={14} className="mr-2" /> ลดขั้นเป็น Staff
+                                                                            </DropdownMenuItem>
+                                                                        </DropdownMenuSubContent>
+                                                                    </DropdownMenuPortal>
+                                                                </DropdownMenuSub>
+                                                                <DropdownMenuSeparator className="bg-slate-100" />
+                                                                <DropdownMenuItem
+                                                                    className="cursor-pointer py-2.5 rounded-lg font-bold text-rose-600 focus:text-rose-700 focus:bg-rose-50"
+                                                                    onClick={() => handleDeleteUser(staff._id)}
+                                                                >
+                                                                    <Trash2 className="mr-3 h-4 w-4" /> ลบบัญชีถาวร
+                                                                </DropdownMenuItem>
+                                                            </>
                                                         )}
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
