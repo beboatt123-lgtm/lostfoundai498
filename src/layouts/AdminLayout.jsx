@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '@/lib/axios';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -34,7 +35,25 @@ const AdminLayout = ({ children }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
+    const [pendingItems, setPendingItems] = useState([]);
 
+    useEffect(() => {
+        const fetchPendingItems = async () => {
+            try {
+                const res = await api.get('/items?status=pending');
+                setPendingItems(res.data || []);
+            } catch (err) {
+                console.error("Failed to fetch pending items:", err);
+            }
+        };
+
+        if (!loading && user && (user.role === 'admin' || user.role === 'staff' || user.role === 'superadmin')) {
+            fetchPendingItems();
+            // Poll every 30 seconds for new notifications
+            const interval = setInterval(fetchPendingItems, 30000);
+            return () => clearInterval(interval);
+        }
+    }, [user, loading]);
 
     if (loading) {
         return <div className="h-screen w-full flex items-center justify-center bg-[#0F172A] text-white">กำลังโหลด...</div>;
@@ -169,10 +188,52 @@ const AdminLayout = ({ children }) => {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" className="relative text-slate-500 hover:bg-slate-100/80 hover:text-slate-700 w-10 h-10 rounded-full">
-                            <Bell size={20} />
-                            <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-rose-500 rounded-full border-2 border-white ring-1 ring-rose-500/20"></span>
-                        </Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="relative text-slate-500 hover:bg-slate-100/80 hover:text-slate-700 w-10 h-10 rounded-full">
+                                    <Bell size={20} />
+                                    {pendingItems.length > 0 && (
+                                        <span className="absolute top-2 right-2 h-2.5 w-2.5 bg-rose-500 rounded-full border-2 border-white ring-1 ring-rose-500/20"></span>
+                                    )}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-80 mt-2 p-0 rounded-xl overflow-hidden shadow-xl border-slate-100">
+                                <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                                    <span className="font-bold text-slate-700 text-sm">การแจ้งเตือนใหม่</span>
+                                    {pendingItems.length > 0 && (
+                                        <span className="bg-rose-100 text-rose-600 text-xs font-bold px-2 py-0.5 rounded-full">{pendingItems.length} รายการ</span>
+                                    )}
+                                </div>
+                                <div className="max-h-80 overflow-y-auto">
+                                    {pendingItems.length === 0 ? (
+                                        <div className="p-6 text-center text-slate-500 text-sm">ไม่มีการแจ้งเตือนใหม่</div>
+                                    ) : (
+                                        pendingItems.map((item) => (
+                                            <DropdownMenuItem 
+                                                key={item._id} 
+                                                className="cursor-pointer p-4 border-b border-slate-50 hover:bg-slate-50 flex gap-3 items-start rounded-none"
+                                                onClick={() => navigate(`/admin/${item.type === 'lost' ? 'lost' : 'found'}`)}
+                                            >
+                                                <div className={`w-2 h-2 mt-1.5 rounded-full shrink-0 ${item.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500'}`}></div>
+                                                <div className="flex flex-col gap-1 overflow-hidden w-full">
+                                                    <span className="font-bold text-sm text-slate-700 truncate">{item.title}</span>
+                                                    <span className="text-xs text-slate-500 truncate">มีผู้แจ้ง{item.type === 'lost' ? 'ของหาย' : 'พบของ'}ใหม่ รอการอนุมัติ</span>
+                                                    <span className="text-[10px] text-slate-400 mt-1">{new Date(item.createdAt).toLocaleString('th-TH')}</span>
+                                                </div>
+                                            </DropdownMenuItem>
+                                        ))
+                                    )}
+                                </div>
+                                {pendingItems.length > 0 && (
+                                    <div 
+                                        className="bg-slate-50 p-3 text-center text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-slate-100 cursor-pointer transition-colors"
+                                        onClick={() => navigate('/admin/lost')}
+                                    >
+                                        ดูการจัดการทั้งหมด
+                                    </div>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         <div className="h-6 w-px bg-slate-200 mx-2"></div>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
