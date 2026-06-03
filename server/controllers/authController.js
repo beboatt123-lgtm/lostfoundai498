@@ -87,9 +87,15 @@ const loginUser = asyncHandler(async (req, res) => {
     const user = await User.findOne({ email });
 
     if (user && (await bcrypt.compare(password, user.password))) {
-        if (!user.isVerified) {
+        // Skip email verification for admin/staff/superadmin accounts
+        if (!user.isVerified && user.role === 'user') {
             res.status(401);
             throw new Error('กรุณายืนยันอีเมลของคุณก่อนเข้าสู่ระบบ');
+        }
+
+        if (user.isSuspended) {
+            res.status(401);
+            throw new Error('บัญชีของคุณถูกระงับ กรุณาติดต่อผู้ดูแลระบบ');
         }
 
         res.json({

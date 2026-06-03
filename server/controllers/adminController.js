@@ -181,7 +181,8 @@ const createUser = asyncHandler(async (req, res) => {
         lastname,
         email,
         password: hashedPassword,
-        role: role || 'staff'
+        role: role || 'staff',
+        isVerified: true  // Admin-created accounts skip email verification
     });
 
     if (user) {
