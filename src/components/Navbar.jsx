@@ -48,7 +48,7 @@ const Navbar = () => {
                 <div className="hidden md:flex gap-8">
                     <Link to="/" className="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">หน้าแรก</Link>
                     <Link to="/search" className="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">ค้นหาของหาย</Link>
-                    {(!user || (user.role !== 'admin' && user.role !== 'staff')) && (
+                    {(!user || (user.role !== 'admin' && user.role !== 'staff' && user.role !== 'superadmin')) && (
                         <>
                             <Link to="/report/lost" className="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">ประกาศตามหาของ</Link>
                             <Link to="/report/found" className="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">แจ้งพบสิ่งของ</Link>
@@ -90,7 +90,7 @@ const Navbar = () => {
                                     <User className="mr-3 h-4 w-4 text-slate-400" />
                                     <span>โปรไฟล์ของฉัน</span>
                                 </DropdownMenuItem>
-                                {user.role === 'admin' && (
+                                {(user.role === 'admin' || user.role === 'staff' || user.role === 'superadmin') && (
                                     <DropdownMenuItem onClick={() => navigate('/admin')} className="rounded-lg py-2 font-semibold">
                                         <Settings className="mr-3 h-4 w-4 text-slate-400" />
                                         <span>ระบบจัดการ (Admin)</span>
@@ -154,7 +154,7 @@ const Navbar = () => {
                                 </div>
                                 <span>ค้นหาของหาย</span>
                             </Link>
-                            {(!user || (user.role !== 'admin' && user.role !== 'staff')) && (
+                            {(!user || (user.role !== 'admin' && user.role !== 'staff' && user.role !== 'superadmin')) && (
                                 <>
                                     <Link to="/report/lost" onClick={() => setIsOpen(false)} className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-slate-50 transition-all font-bold text-slate-600 hover:text-slate-900 text-rose-600">
                                         <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center text-rose-500">
@@ -169,6 +169,15 @@ const Navbar = () => {
                                         <span>แจ้งพบสิ่งของ (Found)</span>
                                     </Link>
                                 </>
+                            )}
+                            
+                            {(user && (user.role === 'admin' || user.role === 'staff' || user.role === 'superadmin')) && (
+                                <Link to="/admin" onClick={() => setIsOpen(false)} className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-slate-50 transition-all font-bold text-slate-600 hover:text-slate-900 text-indigo-600">
+                                    <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500">
+                                        <Settings size={18} />
+                                    </div>
+                                    <span>ระบบจัดการ (Admin Dashboard)</span>
+                                </Link>
                             )}
 
 
