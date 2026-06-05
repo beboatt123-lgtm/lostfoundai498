@@ -4,12 +4,12 @@ import { useAuth } from "../context/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-    Search, Filter, MapPin, Calendar, Loader2, Sparkles, 
-    Smartphone, Shirt, Wallet, Briefcase, Gem, Glasses, 
-    FileBadge, BookText, HeartPulse, PawPrint, Trophy, 
+import {
+    Search, Filter, MapPin, Calendar, Loader2, Sparkles,
+    Smartphone, Shirt, Wallet, Briefcase, Gem, Glasses,
+    FileBadge, BookText, HeartPulse, PawPrint, Trophy,
     Music, Wrench, ToyBrick, Boxes, LayoutGrid, ArrowRight,
-    ChevronDown, SlidersHorizontal, Grid, List, SortAsc, SortDesc
+    ChevronDown, SlidersHorizontal, Grid, List, SortAsc, SortDesc, X
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../lib/axios';

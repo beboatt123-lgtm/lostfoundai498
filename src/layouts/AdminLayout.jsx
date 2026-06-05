@@ -47,7 +47,7 @@ const AdminLayout = ({ children }) => {
             }
         };
 
-        if (!loading && user && (user.role === 'admin' || user.role === 'staff' || user.role === 'superadmin')) {
+        if (!loading && user && (user.role === 'admin' || user.role === 'staff')) {
             fetchPendingItems();
             // Poll every 30 seconds for new notifications
             const interval = setInterval(fetchPendingItems, 30000);

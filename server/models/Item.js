@@ -92,6 +92,10 @@ const itemSchema = mongoose.Schema({
     },
     expirationDate: {
         type: Date
+    },
+    notes: {
+        type: String,
+        default: ''
     }
 }, {
     timestamps: true

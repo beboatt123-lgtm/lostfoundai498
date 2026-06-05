@@ -20,8 +20,26 @@ import {
     Shield,
     Calendar,
     MapPin,
-    XCircle
+    XCircle,
+    Pencil,
+    Loader2
 } from "lucide-react";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -40,6 +58,10 @@ const AdminItems = () => {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [editItem, setEditItem] = useState(null);
+    const [editOpen, setEditOpen] = useState(false);
+    const [editLoading, setEditLoading] = useState(false);
+    const [editForm, setEditForm] = useState({});
 
     const fetchItems = async () => {
         try {
@@ -93,6 +115,35 @@ const AdminItems = () => {
         return type === 'lost'
             ? <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200 font-bold">แจ้งหาย</Badge>
             : <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-bold">เจอของ</Badge>;
+    };
+
+    const openEdit = (item) => {
+        setEditItem(item);
+        setEditForm({
+            title: item.title || '',
+            description: item.description || '',
+            category: item.category || '',
+            locationMain: item.locationMain || '',
+            locationDetail: item.locationDetail || '',
+            storagePosition: item.storagePosition || '',
+            notes: item.notes || '',
+            date: item.date ? new Date(item.date).toISOString().split('T')[0] : '',
+        });
+        setEditOpen(true);
+    };
+
+    const handleEditSave = async () => {
+        setEditLoading(true);
+        try {
+            await api.put(`/items/${editItem._id}`, editForm);
+            setEditOpen(false);
+            fetchItems();
+        } catch (err) {
+            console.error('Edit failed:', err);
+            alert(err.response?.data?.message || 'ไม่สามารถแก้ไขข้อมูลได้');
+        } finally {
+            setEditLoading(false);
+        }
     };
 
     const handleExport = async () => {
@@ -212,6 +263,9 @@ const AdminItems = () => {
                                                 <DropdownMenuItem className="cursor-pointer font-medium py-2" onClick={() => navigate(`/item/${item._id}`)}>
                                                     <Eye className="mr-2 h-4 w-4 text-slate-500" /> ดูรายละเอียด
                                                 </DropdownMenuItem>
+                                                <DropdownMenuItem className="cursor-pointer font-medium py-2 text-blue-600 focus:text-blue-700 focus:bg-blue-50" onClick={() => openEdit(item)}>
+                                                    <Pencil className="mr-2 h-4 w-4" /> แก้ไขข้อมูล
+                                                </DropdownMenuItem>
                                                 
                                                 {item.status === 'pending' && (
                                                     <>
@@ -250,6 +304,69 @@ const AdminItems = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Edit Modal */}
+            <Dialog open={editOpen} onOpenChange={setEditOpen}>
+                <DialogContent className="sm:max-w-[560px] rounded-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                            <Pencil className="text-blue-600" size={20} /> แก้ไขข้อมูลรายการ
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-2 max-h-[65vh] overflow-y-auto pr-1">
+                        <div className="space-y-1.5">
+                            <Label className="text-sm font-bold text-slate-700">ชื่อสิ่งของ</Label>
+                            <Input value={editForm.title || ''} onChange={e => setEditForm(f => ({...f, title: e.target.value}))} className="h-10" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-sm font-bold text-slate-700">รายละเอียด</Label>
+                            <Textarea value={editForm.description || ''} onChange={e => setEditForm(f => ({...f, description: e.target.value}))} className="h-24" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-sm font-bold text-slate-700">หมวดหมู่</Label>
+                            <Select value={editForm.category || ''} onValueChange={v => setEditForm(f => ({...f, category: v}))}>
+                                <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    {['electronics','wallet','clothing','bag','jewelry','glasses','documents','stationery','health','pets','sports','music','tools','toy','others'].map(c => (
+                                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label className="text-sm font-bold text-slate-700">สถานที่หลัก</Label>
+                                <Input value={editForm.locationMain || ''} onChange={e => setEditForm(f => ({...f, locationMain: e.target.value}))} className="h-10" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-sm font-bold text-slate-700">รายละเอียดสถานที่</Label>
+                                <Input value={editForm.locationDetail || ''} onChange={e => setEditForm(f => ({...f, locationDetail: e.target.value}))} className="h-10" />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label className="text-sm font-bold text-slate-700">วันที่</Label>
+                                <Input type="date" value={editForm.date || ''} onChange={e => setEditForm(f => ({...f, date: e.target.value}))} className="h-10" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-sm font-bold text-slate-700">ตำแหน่งจัดเก็บ</Label>
+                                <Input value={editForm.storagePosition || ''} onChange={e => setEditForm(f => ({...f, storagePosition: e.target.value}))} className="h-10" placeholder="เช่น ตู้ A ชั้น 1" />
+                            </div>
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-sm font-bold text-slate-700">หมายเหตุ</Label>
+                            <Textarea value={editForm.notes || ''} onChange={e => setEditForm(f => ({...f, notes: e.target.value}))} className="h-20" />
+                        </div>
+                    </div>
+                    <DialogFooter className="gap-2 pt-2">
+                        <Button variant="outline" onClick={() => setEditOpen(false)} className="font-bold">ยกเลิก</Button>
+                        <Button onClick={handleEditSave} disabled={editLoading} className="bg-blue-600 hover:bg-blue-700 text-white font-bold">
+                            {editLoading ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : null}
+                            บันทึกการแก้ไข
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

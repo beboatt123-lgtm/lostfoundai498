@@ -24,7 +24,7 @@ const Login = () => {
             const res = await googleLogin(tokenResponse.access_token);
             if (res.success) {
                 // Requirement 4: Admin Redirect
-                if (res.user?.role === 'admin' || res.user?.role === 'staff' || res.user?.role === 'superadmin') {
+                if (res.user?.role === 'admin' || res.user?.role === 'staff') {
                     navigate('/admin');
                 } else {
                     navigate('/');
@@ -39,7 +39,7 @@ const Login = () => {
         const res = await login(email, password);
         if (res.success) {
             // Requirement 4: Admin Redirect
-            if (res.user?.role === 'admin' || res.user?.role === 'staff' || res.user?.role === 'superadmin') {
+            if (res.user?.role === 'admin' || res.user?.role === 'staff') {
                 navigate('/admin');
             } else {
                 navigate('/');

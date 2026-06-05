@@ -66,7 +66,8 @@ const ReportItem = () => {
         date: '',
         reporterIdCard: '',
         reporterPhone: '',
-        storagePosition: ''
+        storagePosition: '',
+        notes: ''
     });
 
     useEffect(() => {
@@ -247,6 +248,7 @@ const ReportItem = () => {
             data.append('reporterIdCard', cleanedIdCard);
             data.append('reporterPhone', cleanedPhone);
             data.append('type', type);
+            data.append('notes', formData.notes || '');
             
             if (user.role === 'admin' || user.role === 'staff') {
                 data.append('storagePosition', formData.storagePosition);
@@ -483,6 +485,18 @@ const ReportItem = () => {
                                                     className="h-11 border-slate-200 bg-white"
                                                 />
                                             </div>
+                                        </div>
+
+                                        {/* Notes field */}
+                                        <div className="space-y-2">
+                                            <Label htmlFor="notes" className="text-sm font-bold text-slate-700">หมายเหตุเพิ่มเติม <span className="text-slate-400 font-normal">(ไม่บังคับ)</span></Label>
+                                            <Textarea
+                                                id="notes"
+                                                placeholder={isLost ? "ข้อมูลเพิ่มเติมที่อยากให้เจ้าหน้าที่ทราบ เช่น สภาพของหาย, สิ่งที่อยู่ภายใน..." : "ข้อมูลเพิ่มเติมเกี่ยวกับสิ่งของที่พบ เช่น สภาพของ, จุดที่ฝากไว้..."}
+                                                className="h-24 border-slate-200 rounded-lg p-4 font-medium"
+                                                value={formData.notes}
+                                                onChange={handleChange}
+                                            />
                                         </div>
 
                                         {/* Requirement 10: Position Code (Only for Admin) */}

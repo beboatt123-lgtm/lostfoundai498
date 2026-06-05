@@ -95,7 +95,7 @@ const AdminStaff = () => {
             // Fetch all users and filter by role admin/staff on the frontend 
             // OR we can adjust the API. For now, let's fetch all and filter for roles.
             const res = await api.get('/admin/users');
-            const filteredStaff = res.data.filter(u => u.role === 'admin' || u.role === 'staff' || u.role === 'superadmin');
+            const filteredStaff = res.data.filter(u => u.role === 'admin' || u.role === 'staff');
             setStaffMembers(filteredStaff);
         } catch (err) {
             console.error("Failed to fetch staff members", err);
@@ -116,9 +116,8 @@ const AdminStaff = () => {
 
     const getRoleBadge = (role) => {
         switch (role) {
-            case 'superadmin': return <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-200 border-rose-200 shadow-sm font-bold uppercase text-[10px]"><ShieldAlert size={12} className="mr-1.5" /> Super Admin</Badge>;
             case 'admin': return <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200 shadow-sm font-bold uppercase text-[10px]"><ShieldAlert size={12} className="mr-1.5" /> Admin</Badge>;
-            case 'staff': return <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-indigo-200 shadow-sm font-bold uppercase text-[10px]"><ShieldCheck size={12} className="mr-1.5" /> Staff (Editor)</Badge>;
+            case 'staff': return <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-indigo-200 shadow-sm font-bold uppercase text-[10px]"><ShieldCheck size={12} className="mr-1.5" /> Staff</Badge>;
             default: return <Badge variant="outline" className="text-slate-500 font-bold uppercase text-[10px]">Staff</Badge>;
         }
     };
@@ -242,9 +241,6 @@ const AdminStaff = () => {
                                     <SelectContent>
                                         <SelectItem value="staff">Staff (เจ้าหน้าที่)</SelectItem>
                                         <SelectItem value="admin">Admin (ผู้ดูแลระบบ)</SelectItem>
-                                        {currentUser?.role === 'superadmin' && (
-                                            <SelectItem value="superadmin">Super Admin (สิทธิ์สูงสุด)</SelectItem>
-                                        )}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -364,7 +360,7 @@ const AdminStaff = () => {
                                                         >
                                                             {!staff.isSuspended ? 'ระงับสิทธิ์การใช้งาน' : 'ยกเลิกการระงับสิทธิ์'}
                                                         </DropdownMenuItem>
-                                                        {currentUser?.role === 'superadmin' && staff._id !== currentUser._id && (
+                                                        {currentUser?.role === 'admin' && staff._id !== currentUser._id && (
                                                             <>
                                                                 <DropdownMenuSub>
                                                                     <DropdownMenuSubTrigger className="cursor-pointer py-2.5 rounded-lg">
@@ -372,9 +368,6 @@ const AdminStaff = () => {
                                                                     </DropdownMenuSubTrigger>
                                                                     <DropdownMenuPortal>
                                                                         <DropdownMenuSubContent className="w-48 rounded-xl shadow-xl p-2 border-slate-200">
-                                                                            <DropdownMenuItem onClick={() => handleUpdateRole(staff._id, 'superadmin')} className="cursor-pointer font-bold text-rose-600 focus:bg-rose-50">
-                                                                                <ShieldAlert size={14} className="mr-2" /> เลื่อนเป็น Superadmin
-                                                                            </DropdownMenuItem>
                                                                             <DropdownMenuItem onClick={() => handleUpdateRole(staff._id, 'admin')} className="cursor-pointer font-bold text-purple-600 focus:bg-purple-50">
                                                                                 <ShieldAlert size={14} className="mr-2" /> ปรับเป็น Admin
                                                                             </DropdownMenuItem>

@@ -107,6 +107,13 @@ const ItemDetail = () => {
                         <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">{item.title}</h1>
                         <p className="text-slate-500 text-lg leading-relaxed mb-6">{item.description}</p>
 
+                        {item.notes && (
+                            <div className="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-100">
+                                <p className="text-[10px] text-amber-600 font-black uppercase tracking-widest mb-1">หมายเหตุเพิ่มเติม</p>
+                                <p className="text-slate-700 font-medium text-sm leading-relaxed">{item.notes}</p>
+                            </div>
+                        )}
+
                         {/* Location and Info Grid */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">

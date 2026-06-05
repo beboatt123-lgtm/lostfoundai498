@@ -203,9 +203,9 @@ const createUser = asyncHandler(async (req, res) => {
 // @route   DELETE /api/admin/users/:id
 // @access  Private/Admin (Superadmin only)
 const deleteUser = asyncHandler(async (req, res) => {
-    if (req.user.role !== 'superadmin') {
+    if (req.user.role !== 'admin') {
         res.status(403);
-        throw new Error('Not authorized to delete users. Superadmin role required.');
+        throw new Error('Not authorized to delete users. Admin role required.');
     }
 
     const user = await User.findById(req.params.id);

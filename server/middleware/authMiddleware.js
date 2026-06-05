@@ -51,7 +51,7 @@ const optionalProtect = asyncHandler(async (req, res, next) => {
 });
 
 const admin = (req, res, next) => {
-    if (req.user && (req.user.role === 'admin' || req.user.role === 'staff' || req.user.role === 'superadmin')) {
+    if (req.user && (req.user.role === 'admin' || req.user.role === 'staff')) {
         next();
     } else {
         res.status(401);
