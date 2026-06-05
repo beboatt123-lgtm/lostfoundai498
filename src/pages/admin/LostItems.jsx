@@ -19,7 +19,8 @@ import {
     DialogFooter
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Search, Filter, Calendar, AlertCircle, Loader2, Plus, MoreHorizontal, Eye, XCircle } from "lucide-react";
+import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Search, Filter, Calendar, AlertCircle, Loader2, Plus, MoreHorizontal, Eye, XCircle, FileText } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -55,6 +56,10 @@ const AdminLostItems = () => {
     });
     const [receiverImage, setReceiverImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
+    const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
+    const [notesItemId, setNotesItemId] = useState(null);
+    const [notesValue, setNotesValue] = useState('');
+    const [notesLoading, setNotesLoading] = useState(false);
     const navigate = useNavigate();
 
     const categoryOptions = [
@@ -124,6 +129,25 @@ const AdminLostItems = () => {
             case 'resolved': return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200 shadow-sm">พบนกแล้ว / สำเร็จ</Badge>;
             case 'closed': return <Badge className="bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200 shadow-sm">ปิดประกาศ</Badge>;
             default: return <Badge variant="outline">{status}</Badge>;
+        }
+    };
+
+    const handleNotesClick = (item) => {
+        setNotesItemId(item._id);
+        setNotesValue(item.notes || '');
+        setIsNotesModalOpen(true);
+    };
+
+    const handleNotesSave = async () => {
+        setNotesLoading(true);
+        try {
+            await api.put(`items/${notesItemId}`, { notes: notesValue });
+            setIsNotesModalOpen(false);
+            fetchLostItems();
+        } catch (err) {
+            alert('ไม่สามารถบันทึกหมายเหตุได้');
+        } finally {
+            setNotesLoading(false);
         }
     };
 
@@ -262,6 +286,7 @@ const AdminLostItems = () => {
                                     <TableHead className="font-bold text-slate-800">หมวดหมู่</TableHead>
                                     <TableHead className="font-bold text-slate-800">ผู้แจ้ง</TableHead>
                                     <TableHead className="font-bold text-slate-800">สถานที่</TableHead>
+                                    <TableHead className="font-bold text-slate-800">หมายเหตุ</TableHead>
                                     <TableHead className="font-bold text-slate-800">สถานะ</TableHead>
                                     <TableHead className="text-right font-bold text-slate-800 pr-6">จัดการ</TableHead>
                                 </TableRow>
@@ -327,6 +352,17 @@ const AdminLostItems = () => {
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-slate-600 text-sm font-medium"><div className="truncate max-w-[150px]">{item.location}</div></TableCell>
+                                            <TableCell>
+                                                {item.notes ? (
+                                                    <div className="max-w-[160px] text-xs text-slate-600 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1 truncate cursor-pointer hover:bg-amber-100 transition-colors" onClick={() => handleNotesClick(item)} title={item.notes}>
+                                                        {item.notes}
+                                                    </div>
+                                                ) : (
+                                                    <button onClick={() => handleNotesClick(item)} className="text-xs text-slate-400 hover:text-amber-600 flex items-center gap-1 transition-colors">
+                                                        <FileText size={12} /> เพิ่มหมายเหตุ
+                                                    </button>
+                                                )}
+                                            </TableCell>
                                             <TableCell>{getStatusBadge(item.status)}</TableCell>
                                             <TableCell className="text-right pr-6">
                                                 <DropdownMenu>
@@ -340,6 +376,9 @@ const AdminLostItems = () => {
                                                         <DropdownMenuSeparator />
                                                         <DropdownMenuItem className="cursor-pointer py-2.5" onClick={() => navigate(`/item/${item._id}`)}>
                                                             <Eye className="mr-2.5 h-4 w-4 text-slate-400" /> ดูรายละเอียด
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem className="cursor-pointer py-2.5 text-amber-600 font-bold focus:text-amber-700 focus:bg-amber-50" onClick={() => handleNotesClick(item)}>
+                                                            <FileText className="mr-2.5 h-4 w-4" /> กรอกหมายเหตุ
                                                         </DropdownMenuItem>
                                                         
                                                         {item.status === 'pending' && (
@@ -475,6 +514,35 @@ const AdminLostItems = () => {
                             </Button>
                         </div>
                     </form>
+                </DialogContent>
+            </Dialog>
+            {/* Notes Modal */}
+            <Dialog open={isNotesModalOpen} onOpenChange={setIsNotesModalOpen}>
+                <DialogContent className="max-w-sm rounded-2xl border-none shadow-2xl">
+                    <DialogHeader>
+                        <div className="mx-auto w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mb-2">
+                            <FileText className="h-6 w-6 text-amber-600" />
+                        </div>
+                        <DialogTitle className="text-center text-xl font-black text-slate-800">หมายเหตุรายการ</DialogTitle>
+                        <DialogDescription className="text-center text-slate-500 text-sm">
+                            บันทึกหมายเหตุภายในสำหรับเจ้าหน้าที่
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-3 mt-2">
+                        <Textarea
+                            placeholder="กรอกหมายเหตุ เช่น สถานะการติดตาม, ข้อสังเกตพิเศษ, การติดต่อ..."
+                            className="h-32 resize-none border-slate-200 rounded-xl"
+                            value={notesValue}
+                            onChange={(e) => setNotesValue(e.target.value)}
+                            autoFocus
+                        />
+                    </div>
+                    <div className="flex gap-3 mt-4">
+                        <Button variant="outline" className="flex-1 font-bold rounded-xl" onClick={() => setIsNotesModalOpen(false)}>ยกเลิก</Button>
+                        <Button onClick={handleNotesSave} disabled={notesLoading} className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl">
+                            {notesLoading ? <Loader2 className="animate-spin h-4 w-4" /> : 'บันทึกหมายเหตุ'}
+                        </Button>
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>
