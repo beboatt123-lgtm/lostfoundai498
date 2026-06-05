@@ -19,8 +19,9 @@ import {
     DialogFooter
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Search, Filter, Calendar, AlertCircle, ShieldCheck, Loader2, Plus, MoreHorizontal, Eye, XCircle, Clock, FileText } from "lucide-react";
+import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Search, Filter, Calendar, AlertCircle, ShieldCheck, Loader2, Plus, MoreHorizontal, Eye, XCircle, Clock, FileText, QrCode, Printer } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import QRPrintModal from '@/components/QRPrintModal';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -52,6 +53,8 @@ const AdminFoundItems = () => {
     const [isExpireModalOpen, setIsExpireModalOpen] = useState(false);
     const [expireDate, setExpireDate] = useState('');
     const [expireLoading, setExpireLoading] = useState(false);
+    const [qrItem, setQrItem] = useState(null);
+    const [isQrModalOpen, setIsQrModalOpen] = useState(false);
     const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
     const [notesItemId, setNotesItemId] = useState(null);
     const [notesValue, setNotesValue] = useState('');
@@ -417,6 +420,9 @@ const AdminFoundItems = () => {
                                                         <DropdownMenuItem className="cursor-pointer py-2.5 text-amber-600 font-bold focus:text-amber-700 focus:bg-amber-50" onClick={() => handleNotesClick(item)}>
                                                             <FileText className="mr-2.5 h-4 w-4" /> กรอกหมายเหตุ
                                                         </DropdownMenuItem>
+                                                        <DropdownMenuItem className="cursor-pointer py-2.5 text-indigo-600 font-bold focus:text-indigo-700 focus:bg-indigo-50" onClick={() => { setQrItem(item); setIsQrModalOpen(true); }}>
+                                                            <QrCode className="mr-2.5 h-4 w-4" /> พิมพ์ QR Code
+                                                        </DropdownMenuItem>
                                                         
                                                         {item.status === 'pending' && (
                                                             <>
@@ -605,6 +611,8 @@ const AdminFoundItems = () => {
                     </form>
                 </DialogContent>
             </Dialog>
+            <QRPrintModal item={qrItem} open={isQrModalOpen} onClose={() => setIsQrModalOpen(false)} />
+
             {/* Notes Modal */}
             <Dialog open={isNotesModalOpen} onOpenChange={setIsNotesModalOpen}>
                 <DialogContent className="max-w-sm rounded-2xl border-none shadow-2xl">

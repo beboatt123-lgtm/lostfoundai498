@@ -19,7 +19,8 @@ import {
     DialogFooter
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Search, Filter, Calendar, AlertCircle, Loader2, Plus, MoreHorizontal, Eye, XCircle, FileText } from "lucide-react";
+import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Search, Filter, Calendar, AlertCircle, Loader2, Plus, MoreHorizontal, Eye, XCircle, FileText, QrCode } from "lucide-react";
+import QRPrintModal from '@/components/QRPrintModal';
 import { Textarea } from "@/components/ui/textarea";
 import {
     DropdownMenu,
@@ -60,6 +61,8 @@ const AdminLostItems = () => {
     const [notesItemId, setNotesItemId] = useState(null);
     const [notesValue, setNotesValue] = useState('');
     const [notesLoading, setNotesLoading] = useState(false);
+    const [qrItem, setQrItem] = useState(null);
+    const [isQrModalOpen, setIsQrModalOpen] = useState(false);
     const navigate = useNavigate();
 
     const categoryOptions = [
@@ -380,6 +383,9 @@ const AdminLostItems = () => {
                                                         <DropdownMenuItem className="cursor-pointer py-2.5 text-amber-600 font-bold focus:text-amber-700 focus:bg-amber-50" onClick={() => handleNotesClick(item)}>
                                                             <FileText className="mr-2.5 h-4 w-4" /> กรอกหมายเหตุ
                                                         </DropdownMenuItem>
+                                                        <DropdownMenuItem className="cursor-pointer py-2.5 text-indigo-600 font-bold focus:text-indigo-700 focus:bg-indigo-50" onClick={() => { setQrItem(item); setIsQrModalOpen(true); }}>
+                                                            <QrCode className="mr-2.5 h-4 w-4" /> พิมพ์ QR Code
+                                                        </DropdownMenuItem>
                                                         
                                                         {item.status === 'pending' && (
                                                             <>
@@ -545,6 +551,7 @@ const AdminLostItems = () => {
                     </div>
                 </DialogContent>
             </Dialog>
+            <QRPrintModal item={qrItem} open={isQrModalOpen} onClose={() => setIsQrModalOpen(false)} />
         </div>
     );
 };

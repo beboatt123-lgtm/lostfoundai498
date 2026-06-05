@@ -18,6 +18,7 @@ import AdminStaff from './pages/admin/Staff';
 import AdminLogin from './pages/admin/Login';
 import AdminSettings from './pages/admin/Settings';
 import AdminLocations from './pages/admin/Locations';
+import QRScanner from './pages/admin/QRScanner';
 
 import AIChatSearch from './pages/AIChatSearch';
 import Chat from './pages/Chat';
@@ -113,6 +114,7 @@ function App() {
                         <Route path="/admin/ai-search" element={<AdminRoute><AdminLayout><AIChatSearch /></AdminLayout></AdminRoute>} />
                         <Route path="/admin/settings" element={<AdminRoute><AdminLayout><AdminSettings /></AdminLayout></AdminRoute>} />
                         <Route path="/admin/locations" element={<AdminRoute><AdminLayout><AdminLocations /></AdminLayout></AdminRoute>} />
+                        <Route path="/admin/qr-scanner" element={<AdminRoute><AdminLayout><QRScanner /></AdminLayout></AdminRoute>} />
                     </Routes>
                 </AppLayout>
             </AuthProvider>
