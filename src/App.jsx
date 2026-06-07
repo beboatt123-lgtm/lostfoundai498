@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 
 import Home from './pages/Home';
 import ReportItem from './pages/ReportItem';
+import EditItem from './pages/EditItem';
 import SearchItems from './pages/SearchItems';
 import ItemDetail from './pages/ItemDetail';
 import Login from './pages/Login';
@@ -100,6 +101,7 @@ function App() {
                         <Route path="/search" element={<ProtectedRoute><SearchItems /></ProtectedRoute>} />
                         <Route path="/item/:id" element={<ProtectedRoute><ItemDetail /></ProtectedRoute>} />
                         <Route path="/report/:type" element={<ProtectedRoute><ReportItem /></ProtectedRoute>} />
+                        <Route path="/edit-item/:id" element={<ProtectedRoute><EditItem /></ProtectedRoute>} />
                         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                         <Route path="/chat/:userId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
 

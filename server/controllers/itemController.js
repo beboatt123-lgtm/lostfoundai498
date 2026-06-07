@@ -193,6 +193,11 @@ const updateItem = asyncHandler(async (req, res) => {
     }
 
     const updateData = { ...req.body };
+
+    // Force status to 'pending' if the user is not admin/staff to require re-approval
+    if (req.user.role !== 'admin' && req.user.role !== 'staff') {
+        updateData.status = 'pending';
+    }
     
     if (req.file) {
         updateData.receiverImage = req.file.path;

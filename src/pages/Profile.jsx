@@ -205,9 +205,11 @@ const ItemCard = ({ item, onDelete }) => {
                         <Link to={`/item/${item._id}`}>
                             <Button variant="outline" size="sm" className="h-8">ดูรายละเอียด</Button>
                         </Link>
-                        {/* <Button variant="outline" size="sm" className="h-8">
-                            <Edit size={14} className="mr-1" /> แก้ไข
-                        </Button> */}
+                        <Link to={`/edit-item/${item._id}`}>
+                            <Button variant="outline" size="sm" className="h-8">
+                                <Edit size={14} className="mr-1" /> แก้ไข
+                            </Button>
+                        </Link>
                         <Button
                             variant="ghost"
                             size="sm"
