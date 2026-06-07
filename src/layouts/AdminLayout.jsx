@@ -219,8 +219,12 @@ const AdminLayout = ({ children }) => {
                                                 <div className={`w-2 h-2 mt-1.5 rounded-full shrink-0 ${item.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500'}`}></div>
                                                 <div className="flex flex-col gap-1 overflow-hidden w-full">
                                                     <span className="font-bold text-sm text-slate-700 truncate">{item.title}</span>
-                                                    <span className="text-xs text-slate-500 truncate">มีผู้แจ้ง{item.type === 'lost' ? 'ของหาย' : 'พบของ'}ใหม่ รอการอนุมัติ</span>
-                                                    <span className="text-[10px] text-slate-400 mt-1">{new Date(item.createdAt).toLocaleString('th-TH')}</span>
+                                                    <span className="text-xs text-slate-500 truncate">
+                                                        {new Date(item.updatedAt).getTime() - new Date(item.createdAt).getTime() > 5000 
+                                                            ? `มีการแก้ไข${item.type === 'lost' ? 'ของหาย' : 'พบของ'} รอการอนุมัติ` 
+                                                            : `มีผู้แจ้ง${item.type === 'lost' ? 'ของหาย' : 'พบของ'}ใหม่ รอการอนุมัติ`}
+                                                    </span>
+                                                    <span className="text-[10px] text-slate-400 mt-1">{new Date(item.updatedAt || item.createdAt).toLocaleString('th-TH')}</span>
                                                 </div>
                                             </DropdownMenuItem>
                                         ))

@@ -8,11 +8,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Loader2, MapPin, Calendar, Smartphone, Shirt, Wallet, Briefcase, Gem, Glasses, FileBadge, 
-    BookText, HeartPulse, PawPrint, Trophy, Music, Wrench, ToyBrick, Boxes, AlertCircle, Edit
+    BookText, HeartPulse, PawPrint, Trophy, Music, Wrench, ToyBrick, Boxes, AlertCircle, Edit, Clock
 } from 'lucide-react';
 import api from '../lib/axios';
 import { useAuth } from '../context/AuthContext';
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogTitle,
+} from "@/components/ui/dialog";
 
 const EditItem = () => {
     const { id } = useParams();
@@ -22,6 +28,7 @@ const EditItem = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [mainLocations, setMainLocations] = useState([]);
     const [locationsLoading, setLocationsLoading] = useState(false);
     const [itemData, setItemData] = useState(null);
@@ -128,8 +135,7 @@ const EditItem = () => {
 
         try {
             await api.put(`/items/${id}`, formData);
-            alert("บันทึกการแก้ไขเรียบร้อยแล้ว สถานะของรายการจะถูกเปลี่ยนเป็น 'รอแอดมินอนุมัติ' เพื่อตรวจสอบความถูกต้อง");
-            navigate('/profile');
+            setShowSuccessModal(true);
         } catch (err) {
             setError(err.response?.data?.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
         } finally {
@@ -307,6 +313,43 @@ const EditItem = () => {
                     </CardContent>
                 </Card>
             </div>
+
+            <Dialog open={showSuccessModal} onOpenChange={(open) => {
+                if (!open) {
+                    setShowSuccessModal(false);
+                    navigate('/profile');
+                }
+            }}>
+                <DialogContent className="max-w-md p-0 border-none rounded-2xl shadow-2xl overflow-hidden font-sans">
+                    <div className="p-8 text-center space-y-6">
+                        <div className="mx-auto h-20 w-20 bg-amber-50 rounded-full flex items-center justify-center border border-amber-100 shadow-sm animate-pulse">
+                            <Clock className="h-10 w-10 text-amber-600" />
+                        </div>
+                        <div className="space-y-2">
+                            <DialogTitle className="text-2xl font-black text-slate-800">
+                                บันทึกการแก้ไขสำเร็จ!
+                            </DialogTitle>
+                            <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">
+                                อยู่ระหว่างรอผู้ดูแลระบบตรวจสอบ
+                            </p>
+                        </div>
+                        <DialogDescription className="text-sm text-slate-600 leading-relaxed font-medium">
+                            การแก้ไขข้อมูลของคุณเรียบร้อยแล้ว สถานะของรายการจะถูกเปลี่ยนเป็น "รอแอดมินอนุมัติ" เพื่อตรวจสอบความถูกต้องอีกครั้งก่อนนำไปเผยแพร่
+                        </DialogDescription>
+                    </div>
+                    <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-center">
+                        <Button 
+                            className="w-full text-white font-bold py-2.5 rounded-xl shadow-md transition-all active:scale-95 bg-blue-600 hover:bg-blue-700"
+                            onClick={() => {
+                                setShowSuccessModal(false);
+                                navigate('/profile');
+                            }}
+                        >
+                            ตกลง
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
