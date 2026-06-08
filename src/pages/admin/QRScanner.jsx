@@ -16,47 +16,49 @@ const QRScanner = () => {
     const [searching, setSearching] = useState(false);
     const [foundItem, setFoundItem] = useState(null);
 
-    const startScanner = async () => {
+    const startScanner = () => {
         setError(null);
         setResult(null);
         setFoundItem(null);
+        setScanning(true); // Show the div first so Html5Qrcode can calculate dimensions
 
-        try {
-            const html5QrCode = new Html5Qrcode('qr-reader');
-            scannerRef.current = html5QrCode;
-
-            await html5QrCode.start(
-                { facingMode: 'environment' },
-                { fps: 10, qrbox: { width: 250, height: 250 } },
-                async (decodedText) => {
-                    await html5QrCode.stop();
-                    setScanning(false);
-                    await handleQRResult(decodedText);
-                },
-                () => {}
-            );
-            setScanning(true);
-        } catch (err) {
-            console.error("Environment camera failed, trying any camera:", err);
+        // Wait a short moment for React to render the div without 'hidden' class
+        setTimeout(async () => {
             try {
-                // Fallback to any camera (useful for laptops/PCs)
-                await scannerRef.current.start(
-                    { facingMode: 'user' },
+                const html5QrCode = new Html5Qrcode('qr-reader');
+                scannerRef.current = html5QrCode;
+
+                await html5QrCode.start(
+                    { facingMode: 'environment' },
                     { fps: 10, qrbox: { width: 250, height: 250 } },
                     async (decodedText) => {
-                        await scannerRef.current.stop();
+                        await html5QrCode.stop();
                         setScanning(false);
                         await handleQRResult(decodedText);
                     },
                     () => {}
                 );
-                setScanning(true);
-            } catch (fallbackErr) {
-                console.error("Camera fallback failed:", fallbackErr);
-                setError(`ไม่สามารถเปิดกล้องได้: ${err?.message || err} (กรุณาอนุญาตกล้องและใช้งานผ่าน HTTPS)`);
-                setScanning(false);
+            } catch (err) {
+                console.error("Environment camera failed, trying any camera:", err);
+                try {
+                    // Fallback to any camera (useful for laptops/PCs)
+                    await scannerRef.current.start(
+                        { facingMode: 'user' },
+                        { fps: 10, qrbox: { width: 250, height: 250 } },
+                        async (decodedText) => {
+                            await scannerRef.current.stop();
+                            setScanning(false);
+                            await handleQRResult(decodedText);
+                        },
+                        () => {}
+                    );
+                } catch (fallbackErr) {
+                    console.error("Camera fallback failed:", fallbackErr);
+                    setError(`ไม่สามารถเปิดกล้องได้: ${err?.message || err} (กรุณาอนุญาตกล้องและใช้งานผ่าน HTTPS)`);
+                    setScanning(false);
+                }
             }
-        }
+        }, 100);
     };
 
     const stopScanner = async () => {
