@@ -37,8 +37,25 @@ const QRScanner = () => {
             );
             setScanning(true);
         } catch (err) {
-            setError('ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการใช้งานกล้องในเบราว์เซอร์');
-            setScanning(false);
+            console.error("Environment camera failed, trying any camera:", err);
+            try {
+                // Fallback to any camera (useful for laptops/PCs)
+                await scannerRef.current.start(
+                    { facingMode: 'user' },
+                    { fps: 10, qrbox: { width: 250, height: 250 } },
+                    async (decodedText) => {
+                        await scannerRef.current.stop();
+                        setScanning(false);
+                        await handleQRResult(decodedText);
+                    },
+                    () => {}
+                );
+                setScanning(true);
+            } catch (fallbackErr) {
+                console.error("Camera fallback failed:", fallbackErr);
+                setError(`ไม่สามารถเปิดกล้องได้: ${err?.message || err} (กรุณาอนุญาตกล้องและใช้งานผ่าน HTTPS)`);
+                setScanning(false);
+            }
         }
     };
 
