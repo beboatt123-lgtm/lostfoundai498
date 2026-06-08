@@ -289,7 +289,7 @@ const aiSearch = asyncHandler(async (req, res) => {
         console.log("AI Search Triggered with query:", query);
         const { GoogleGenerativeAI } = require("@google/generative-ai");
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const itemsContext = items.map(item => ({
             id: item._id,
