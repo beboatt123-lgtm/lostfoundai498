@@ -110,9 +110,9 @@ const AdminLostItems = () => {
     }, []);
 
     const filteredItems = items.filter(item => {
-        const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                               item.location.toLowerCase().includes(searchTerm.toLowerCase());
-        
+
         let matchesDate = true;
         if (filterDate) {
             const itemDate = new Date(item.date).toISOString().split('T')[0];
@@ -200,42 +200,80 @@ const AdminLostItems = () => {
         }
     };
 
+    const ItemActionMenu = ({ item }) => (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-9 w-9 p-0 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors">
+                    <MoreHorizontal className="h-5 w-5" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-xl border-slate-200">
+                <DropdownMenuLabel className="font-bold text-slate-500">จัดการข้อมูล</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="cursor-pointer py-2.5" onClick={() => navigate(`/item/${item._id}`)}>
+                    <Eye className="mr-2.5 h-4 w-4 text-slate-400" /> ดูรายละเอียด
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer py-2.5 text-amber-600 font-bold focus:text-amber-700 focus:bg-amber-50" onClick={() => handleNotesClick(item)}>
+                    <FileText className="mr-2.5 h-4 w-4" /> กรอกหมายเหตุ
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer py-2.5 text-indigo-600 font-bold focus:text-indigo-700 focus:bg-indigo-50" onClick={() => { setQrItem(item); setIsQrModalOpen(true); }}>
+                    <QrCode className="mr-2.5 h-4 w-4" /> พิมพ์ QR Code
+                </DropdownMenuItem>
+                {item.status === 'pending' && (
+                    <>
+                        <DropdownMenuItem className="cursor-pointer py-2.5 text-emerald-600 font-bold focus:text-emerald-700 focus:bg-emerald-50" onClick={() => handleStatusUpdate(item._id, 'open')}>
+                            <CheckCircle className="mr-2.5 h-4 w-4" /> อนุมัติเผยแพร่
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="cursor-pointer py-2.5 text-rose-600 font-bold focus:text-rose-700 focus:bg-rose-50" onClick={() => handleStatusUpdate(item._id, 'rejected')}>
+                            <XCircle className="mr-2.5 h-4 w-4" /> ปฏิเสธโพสต์
+                        </DropdownMenuItem>
+                    </>
+                )}
+                {item.status === 'open' && (
+                    <DropdownMenuItem className="cursor-pointer py-2.5 text-emerald-600 font-bold focus:text-emerald-700 focus:bg-emerald-50" onClick={() => handleResolveClick(item._id)}>
+                        <CheckCircle className="mr-2.5 h-4 w-4" /> ปิดรับ (ส่งคืนสำเร็จ)
+                    </DropdownMenuItem>
+                )}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+
     return (
         <div className="space-y-6 max-w-7xl mx-auto font-sans pb-10">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-4">
-                        <div className="p-2.5 bg-rose-100 rounded-2xl shadow-sm">
-                            <AlertCircle className="text-rose-600 h-7 w-7" />
+                    <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-3">
+                        <div className="p-2.5 bg-rose-100 rounded-2xl shadow-sm shrink-0">
+                            <AlertCircle className="text-rose-600 h-6 w-6 sm:h-7 sm:w-7" />
                         </div>
                         จัดการของหาย (Lost Items)
                     </h2>
-                    <p className="text-slate-500 mt-2 ml-1">รายการแจ้งของหายทั้งหมดที่ต้องการความช่วยเหลือในระบบ</p>
+                    <p className="text-slate-500 mt-2 ml-1 text-sm">รายการแจ้งของหายทั้งหมดที่ต้องการความช่วยเหลือในระบบ</p>
                 </div>
             </div>
 
             <div className="bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/40 overflow-hidden">
                 {/* Toolbar */}
-                <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row gap-4 justify-between items-center">
-                    <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-4">
-                        <div className="relative w-full sm:w-80 group">
+                <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="relative flex-1 group">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-rose-500 transition-colors" />
                             <Input
                                 placeholder="ค้นหาชื่อของหาย หรือ สถานที่..."
-                                className="pl-10 h-11 bg-white border-slate-200 focus-visible:ring-rose-500/20 shadow-sm rounded-xl font-medium"
+                                className="pl-10 h-11 bg-white border-slate-200 focus-visible:ring-rose-500/20 shadow-sm rounded-xl font-medium w-full"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <div className="relative w-full sm:w-48 group">
+                        <div className="relative w-full sm:w-44 group">
                             <Input
                                 type="date"
-                                className="h-11 bg-white border-slate-200 focus-visible:ring-rose-500/20 shadow-sm rounded-xl font-medium"
+                                className="h-11 bg-white border-slate-200 focus-visible:ring-rose-500/20 shadow-sm rounded-xl font-medium w-full"
                                 value={filterDate}
                                 onChange={(e) => setFilterDate(e.target.value)}
                             />
                             {filterDate && (
-                                <button 
+                                <button
                                     onClick={() => setFilterDate('')}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                                 >
@@ -243,9 +281,9 @@ const AdminLostItems = () => {
                                 </button>
                             )}
                         </div>
-                        <div className="relative w-full sm:w-48 group">
+                        <div className="w-full sm:w-48">
                             <Select value={filterCategory} onValueChange={setFilterCategory}>
-                                <SelectTrigger className="h-11 bg-white border-slate-200 focus-visible:ring-rose-500/20 shadow-sm rounded-xl font-medium">
+                                <SelectTrigger className="h-11 bg-white border-slate-200 shadow-sm rounded-xl font-medium w-full">
                                     <SelectValue placeholder="เลือกหมวดหมู่" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -258,49 +296,116 @@ const AdminLostItems = () => {
                             </Select>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <div className="flex items-center gap-2 sm:gap-3">
                         <Button
                             variant="outline"
                             onClick={fetchLostItems}
-                            className="gap-2 bg-white text-slate-600 hover:text-rose-600 border-slate-200 h-11 rounded-xl px-5 transition-all"
+                            className="flex-1 sm:flex-none gap-2 bg-white text-slate-600 hover:text-rose-600 border-slate-200 h-10 rounded-xl px-4 transition-all text-sm"
                         >
                             รีเฟรชข้อมูล
                         </Button>
                         <Button
                             onClick={() => navigate('/report/lost')}
-                            className="gap-2 bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-200 h-11 rounded-xl px-5 transition-all font-bold"
+                            className="flex-1 sm:flex-none gap-2 bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-200 h-10 rounded-xl px-4 transition-all font-bold text-sm"
                         >
-                            <Plus size={18} /> เพิ่มรายการของหาย
+                            <Plus size={16} /> เพิ่มรายการ
                         </Button>
                     </div>
                 </div>
 
-                <div className="relative w-full overflow-auto">
-                    {loading ? (
-                        <div className="p-20 flex flex-col items-center justify-center gap-4">
-                            <Loader2 className="h-10 w-10 animate-spin text-rose-500" />
-                            <p className="text-slate-400 font-medium">กำลังโหลดข้อมูลจริง...</p>
+                {loading ? (
+                    <div className="p-20 flex flex-col items-center justify-center gap-4">
+                        <Loader2 className="h-10 w-10 animate-spin text-rose-500" />
+                        <p className="text-slate-400 font-medium">กำลังโหลดข้อมูลจริง...</p>
+                    </div>
+                ) : filteredItems.length === 0 ? (
+                    <div className="p-16 flex flex-col items-center justify-center text-slate-400 font-medium">
+                        ไม่พบรายการแจ้งของหายในขณะนี้
+                    </div>
+                ) : (
+                    <>
+                        {/* Mobile Card View */}
+                        <div className="md:hidden divide-y divide-slate-100">
+                            {filteredItems.map((item) => (
+                                <div key={item._id} className="p-4 space-y-3">
+                                    <div className="flex items-start gap-3">
+                                        <div
+                                            className="h-14 w-14 rounded-xl overflow-hidden bg-slate-100 border border-slate-100 shrink-0 cursor-pointer"
+                                            onClick={() => navigate(`/item/${item._id}`)}
+                                        >
+                                            <img src={item.images?.[0] || 'https://via.placeholder.com/150'} alt="" className="w-full h-full object-cover" />
+                                        </div>
+                                        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/item/${item._id}`)}>
+                                            <p className="font-bold text-slate-900 text-sm leading-tight line-clamp-2">{item.title}</p>
+                                            <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                                                <Calendar size={11} />
+                                                {new Date(item.date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}
+                                            </p>
+                                        </div>
+                                        <ItemActionMenu item={item} />
+                                    </div>
+
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        {getStatusBadge(item.status)}
+                                        <Badge variant="outline" className="text-slate-500 bg-slate-50 border-slate-200 capitalize text-xs px-2 py-0.5">{item.category}</Badge>
+                                    </div>
+
+                                    <div className="flex items-start gap-1.5 text-xs text-slate-500">
+                                        <span className="shrink-0 font-semibold text-slate-400 mt-0.5">สถานที่:</span>
+                                        <span>{item.location}</span>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <Avatar className="h-6 w-6 border border-slate-100 shadow-sm shrink-0">
+                                            <AvatarImage src={item.user && typeof item.user === 'object' ? item.user.avatar : ''} />
+                                            <AvatarFallback className="text-[9px] bg-rose-50 text-rose-600 font-bold">
+                                                {item.user && typeof item.user === 'object' && item.user.firstname ? item.user.firstname.charAt(0) : 'U'}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <span className="text-xs font-bold text-slate-700">
+                                            {item.user && typeof item.user === 'object' && item.user.firstname
+                                                ? `${item.user.firstname} ${item.user.lastname || ''}`.trim()
+                                                : 'ไม่ระบุชื่อ'}
+                                        </span>
+                                        {item.reporterPhone && (
+                                            <span className="text-[10px] text-slate-500 bg-slate-100 rounded-lg px-2 py-0.5 flex items-center gap-1">
+                                                <Phone size={9} />{item.reporterPhone}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {item.notes ? (
+                                        <div
+                                            className="text-xs text-slate-600 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1.5 cursor-pointer hover:bg-amber-100 transition-colors line-clamp-2"
+                                            onClick={() => handleNotesClick(item)}
+                                        >
+                                            {item.notes}
+                                        </div>
+                                    ) : (
+                                        <button onClick={() => handleNotesClick(item)} className="text-xs text-slate-400 hover:text-amber-600 flex items-center gap-1 transition-colors">
+                                            <FileText size={12} /> เพิ่มหมายเหตุ
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
                         </div>
-                    ) : (
-                        <Table>
-                            <TableHeader className="bg-slate-50/80 sticky top-0 z-10 backdrop-blur-md">
-                                <TableRow className="hover:bg-transparent border-slate-200 h-14">
-                                    <TableHead className="font-bold text-slate-800 px-6">รายการ</TableHead>
-                                    <TableHead className="font-bold text-slate-800">หมวดหมู่</TableHead>
-                                    <TableHead className="font-bold text-slate-800">ผู้แจ้ง</TableHead>
-                                    <TableHead className="font-bold text-slate-800">สถานที่</TableHead>
-                                    <TableHead className="font-bold text-slate-800">หมายเหตุ</TableHead>
-                                    <TableHead className="font-bold text-slate-800">สถานะ</TableHead>
-                                    <TableHead className="text-right font-bold text-slate-800 pr-6">จัดการ</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredItems.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={6} className="h-60 text-center text-slate-400 font-medium">ไม่พบรายการแจ้งของหายในขณะนี้</TableCell>
+
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block relative w-full overflow-auto">
+                            <Table>
+                                <TableHeader className="bg-slate-50/80 sticky top-0 z-10 backdrop-blur-md">
+                                    <TableRow className="hover:bg-transparent border-slate-200 h-14">
+                                        <TableHead className="font-bold text-slate-800 px-6">รายการ</TableHead>
+                                        <TableHead className="font-bold text-slate-800">หมวดหมู่</TableHead>
+                                        <TableHead className="font-bold text-slate-800">ผู้แจ้ง</TableHead>
+                                        <TableHead className="font-bold text-slate-800">สถานที่</TableHead>
+                                        <TableHead className="font-bold text-slate-800">หมายเหตุ</TableHead>
+                                        <TableHead className="font-bold text-slate-800">สถานะ</TableHead>
+                                        <TableHead className="text-right font-bold text-slate-800 pr-6">จัดการ</TableHead>
                                     </TableRow>
-                                ) : (
-                                    filteredItems.map((item) => (
+                                </TableHeader>
+                                <TableBody>
+                                    {filteredItems.map((item) => (
                                         <TableRow key={item._id} className="hover:bg-slate-50/50 transition-all border-b border-slate-100 last:border-0 h-20">
                                             <TableCell className="px-6">
                                                 <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate(`/item/${item._id}`)}>
@@ -323,15 +428,15 @@ const AdminLostItems = () => {
                                                         <Avatar className="h-7 w-7 border border-slate-100 shadow-sm shrink-0">
                                                             <AvatarImage src={item.user && typeof item.user === 'object' ? item.user.avatar : ''} />
                                                             <AvatarFallback className="text-[10px] bg-rose-50 text-rose-600 font-bold">
-                                                                {item.user && typeof item.user === 'object' && item.user.firstname 
-                                                                    ? item.user.firstname.charAt(0) 
+                                                                {item.user && typeof item.user === 'object' && item.user.firstname
+                                                                    ? item.user.firstname.charAt(0)
                                                                     : 'U'}
                                                             </AvatarFallback>
                                                         </Avatar>
                                                         <div className="flex flex-col">
                                                             <span className="text-sm font-bold text-slate-800 leading-none">
-                                                                {item.user && typeof item.user === 'object' && item.user.firstname 
-                                                                    ? `${item.user.firstname} ${item.user.lastname || ''}`.trim() 
+                                                                {item.user && typeof item.user === 'object' && item.user.firstname
+                                                                    ? `${item.user.firstname} ${item.user.lastname || ''}`.trim()
                                                                     : 'ไม่ระบุชื่อ'}
                                                             </span>
                                                             {item.user && typeof item.user === 'object' && item.user.email && (
@@ -368,51 +473,15 @@ const AdminLostItems = () => {
                                             </TableCell>
                                             <TableCell>{getStatusBadge(item.status)}</TableCell>
                                             <TableCell className="text-right pr-6">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" className="h-10 w-10 p-0 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors">
-                                                            <MoreHorizontal className="h-5 w-5" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-xl border-slate-200">
-                                                        <DropdownMenuLabel className="font-bold text-slate-500">จัดการข้อมูล</DropdownMenuLabel>
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem className="cursor-pointer py-2.5" onClick={() => navigate(`/item/${item._id}`)}>
-                                                            <Eye className="mr-2.5 h-4 w-4 text-slate-400" /> ดูรายละเอียด
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem className="cursor-pointer py-2.5 text-amber-600 font-bold focus:text-amber-700 focus:bg-amber-50" onClick={() => handleNotesClick(item)}>
-                                                            <FileText className="mr-2.5 h-4 w-4" /> กรอกหมายเหตุ
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem className="cursor-pointer py-2.5 text-indigo-600 font-bold focus:text-indigo-700 focus:bg-indigo-50" onClick={() => { setQrItem(item); setIsQrModalOpen(true); }}>
-                                                            <QrCode className="mr-2.5 h-4 w-4" /> พิมพ์ QR Code
-                                                        </DropdownMenuItem>
-                                                        
-                                                        {item.status === 'pending' && (
-                                                            <>
-                                                                <DropdownMenuItem className="cursor-pointer py-2.5 text-emerald-600 font-bold focus:text-emerald-700 focus:bg-emerald-50" onClick={() => handleStatusUpdate(item._id, 'open')}>
-                                                                    <CheckCircle className="mr-2.5 h-4 w-4" /> อนุมัติเผยแพร่
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuItem className="cursor-pointer py-2.5 text-rose-600 font-bold focus:text-rose-700 focus:bg-rose-50" onClick={() => handleStatusUpdate(item._id, 'rejected')}>
-                                                                    <XCircle className="mr-2.5 h-4 w-4" /> ปฏิเสธโพสต์
-                                                                </DropdownMenuItem>
-                                                            </>
-                                                        )}
-
-                                                        {item.status === 'open' && (
-                                                            <DropdownMenuItem className="cursor-pointer py-2.5 text-emerald-600 font-bold focus:text-emerald-700 focus:bg-emerald-50" onClick={() => handleResolveClick(item._id)}>
-                                                                <CheckCircle className="mr-2.5 h-4 w-4" /> ปิดรับ (ส่งคืนสำเร็จ)
-                                                            </DropdownMenuItem>
-                                                        )}
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
+                                                <ItemActionMenu item={item} />
                                             </TableCell>
                                         </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    )}
-                </div>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </>
+                )}
             </div>
 
             {/* Resolve Modal (Identity Verification) */}
@@ -434,7 +503,7 @@ const AdminLostItems = () => {
                             <Label htmlFor="receiverName" className="text-xs font-black uppercase tracking-widest text-slate-500">ชื่อ-นามสกุลผู้มารับ</Label>
                             <div className="relative">
                                 <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                <Input 
+                                <Input
                                     id="receiverName"
                                     placeholder="ชื่อและนามสกุล"
                                     className="pl-10 h-10 bg-slate-50 border-slate-200 rounded-xl"
@@ -449,7 +518,7 @@ const AdminLostItems = () => {
                             <Label htmlFor="receiverIdCard" className="text-xs font-black uppercase tracking-widest text-slate-500">เลขบัตรประชาชนผู้มารับ</Label>
                             <div className="relative">
                                 <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                <Input 
+                                <Input
                                     id="receiverIdCard"
                                     placeholder="กรอกเลข 13 หลัก"
                                     className="pl-10 h-10 bg-slate-50 border-slate-200 rounded-xl"
@@ -464,7 +533,7 @@ const AdminLostItems = () => {
                             <Label htmlFor="receiverPhone" className="text-xs font-black uppercase tracking-widest text-slate-500">เบอร์โทรศัพท์ติดต่อ</Label>
                             <div className="relative">
                                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                <Input 
+                                <Input
                                     id="receiverPhone"
                                     placeholder="08X-XXX-XXXX"
                                     className="pl-10 h-10 bg-slate-50 border-slate-200 rounded-xl"
@@ -477,7 +546,7 @@ const AdminLostItems = () => {
 
                         <div className="space-y-2">
                             <Label className="text-xs font-black uppercase tracking-widest text-slate-500">รูปถ่ายหลักฐานการรับมอบ</Label>
-                            <div 
+                            <div
                                 onClick={() => document.getElementById('receiverImage').click()}
                                 className="border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center cursor-pointer hover:bg-slate-50 transition-all overflow-hidden h-24 flex flex-col items-center justify-center gap-2"
                             >
@@ -492,27 +561,27 @@ const AdminLostItems = () => {
                                     </>
                                 )}
                             </div>
-                            <input 
-                                id="receiverImage" 
-                                type="file" 
-                                accept="image/*" 
-                                className="hidden" 
+                            <input
+                                id="receiverImage"
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
                                 onChange={handleImageChange}
-                                required 
+                                required
                             />
                         </div>
 
                         <div className="flex gap-3 pt-4">
-                            <Button 
-                                type="button" 
-                                variant="outline" 
+                            <Button
+                                type="button"
+                                variant="outline"
                                 className="flex-1 h-10 rounded-xl font-bold"
                                 onClick={() => setIsResolveModalOpen(false)}
                             >
                                 ยกเลิก
                             </Button>
-                            <Button 
-                                type="submit" 
+                            <Button
+                                type="submit"
                                 disabled={resolveLoading}
                                 className="flex-1 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-200"
                             >
@@ -522,6 +591,7 @@ const AdminLostItems = () => {
                     </form>
                 </DialogContent>
             </Dialog>
+
             {/* Notes Modal */}
             <Dialog open={isNotesModalOpen} onOpenChange={setIsNotesModalOpen}>
                 <DialogContent className="max-w-sm rounded-2xl border-none shadow-2xl">
