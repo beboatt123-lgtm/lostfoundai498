@@ -465,16 +465,42 @@ const generateAIImage = asyncHandler(async (req, res) => {
     }
 
     try {
-        const { generateImagePrompt } = require('../utils/aiService');
-        const aiPrompt = await generateImagePrompt(title, description);
+        const { GoogleGenAI } = require('@google/genai');
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-        const seed = Date.now();
-        const encodedPrompt = encodeURIComponent(aiPrompt);
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}`;
+        const prompt = `Create a clear, realistic product photo of: ${title}${description ? `. ${description}` : ''}. Plain white studio background, professional product photography.`;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-3.1-flash-image',
+            contents: prompt,
+        });
+
+        let imageBase64 = null;
+        for (const part of response.candidates[0].content.parts) {
+            if (part.inlineData) {
+                imageBase64 = part.inlineData.data;
+                break;
+            }
+        }
+
+        if (!imageBase64) {
+            throw new Error('Gemini did not return image data');
+        }
+
+        const uploadResponse = await new Promise((resolve, reject) => {
+            cloudinary.uploader.upload(
+                `data:image/png;base64,${imageBase64}`,
+                { folder: 'lostfound_ai' },
+                (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result);
+                }
+            );
+        });
 
         res.status(200).json({
-            imageUrl,
-            prompt: aiPrompt
+            imageUrl: uploadResponse.secure_url,
+            prompt
         });
     } catch (error) {
         console.error("AI Image Generation failed:", error.message);
