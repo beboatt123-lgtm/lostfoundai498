@@ -19,7 +19,7 @@ import {
     DialogFooter
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Search, Filter, Calendar, AlertCircle, Loader2, Plus, MoreHorizontal, Eye, XCircle, FileText, QrCode } from "lucide-react";
+import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Search, Filter, Calendar, AlertCircle, Loader2, Plus, MoreHorizontal, Eye, XCircle, FileText, QrCode, FileDown } from "lucide-react";
 import QRPrintModal from '@/components/QRPrintModal';
 import AdminAddItemModal from '@/components/AdminAddItemModal';
 import AdminItemDetailModal from '@/components/AdminItemDetailModal';
@@ -68,7 +68,25 @@ const AdminLostItems = () => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [detailItemId, setDetailItemId] = useState(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [exporting, setExporting] = useState(false);
     const navigate = useNavigate();
+
+    const handleExport = async () => {
+        setExporting(true);
+        try {
+            const res = await api.get('items/export?type=lost', { responseType: 'blob' });
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `lostfound_lost_${new Date().toISOString().split('T')[0]}.xlsx`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            alert('ไม่สามารถส่งออกข้อมูลได้');
+        } finally {
+            setExporting(false);
+        }
+    };
 
     const categoryOptions = [
         { value: "all", label: "ทุกหมวดหมู่" },
@@ -310,6 +328,15 @@ const AdminLostItems = () => {
                             className="flex-1 sm:flex-none gap-2 bg-white text-slate-600 hover:text-rose-600 border-slate-200 h-10 rounded-xl px-4 transition-all text-sm"
                         >
                             รีเฟรชข้อมูล
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={handleExport}
+                            disabled={exporting}
+                            className="flex-1 sm:flex-none gap-2 bg-white text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 border-emerald-200 h-10 rounded-xl px-4 transition-all font-bold text-sm"
+                        >
+                            {exporting ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
+                            Excel
                         </Button>
                         <Button
                             onClick={() => setIsAddModalOpen(true)}

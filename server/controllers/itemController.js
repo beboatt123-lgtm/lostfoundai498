@@ -424,31 +424,56 @@ const aiSearch = asyncHandler(async (req, res) => {
 // @access  Private (Admin)
 const exportItems = asyncHandler(async (req, res) => {
     const XLSX = require('xlsx');
-    const items = await Item.find({}).populate('user', 'firstname lastname email');
+    const { type } = req.query;
 
-    const data = items.map(item => ({
-        'Unique ID': item.customId,
-        'Title': item.title,
-        'Type': item.type === 'lost' ? 'แจ้งหาย' : 'พบสิ่งของ',
-        'Category': item.category,
-        'Location (Main)': item.locationMain,
-        'Location (Detail)': item.locationDetail,
-        'Storage Position': item.storagePosition,
-        'Reporter Name': `${item.user?.firstname} ${item.user?.lastname}`,
-        'Reporter ID Card': item.reporterIdCard,
-        'Reporter Phone': item.reporterPhone,
-        'Date': new Date(item.date).toLocaleDateString(),
-        'Status': item.status,
-        'Created At': item.createdAt.toLocaleDateString()
+    const query = {};
+    if (type && type !== 'all') query.type = type;
+
+    const statusMap = { pending: 'รออนุมัติ', open: 'เผยแพร่แล้ว', resolved: 'ส่งคืนสำเร็จ', closed: 'ปิดประกาศ', rejected: 'ปฏิเสธ' };
+    const categoryMap = { electronics: 'อุปกรณ์อิเล็กทรอนิกส์', wallet: 'กระเป๋าสตางค์/บัตร', clothing: 'เสื้อผ้า', bag: 'กระเป๋า/เป้', jewelry: 'เครื่องประดับ', glasses: 'แว่นตา', documents: 'เอกสารสำคัญ', stationery: 'เครื่องเขียน/หนังสือ', health: 'อุปกรณ์สุขภาพ', pets: 'สัตว์เลี้ยง', sports: 'อุปกรณ์กีฬา', music: 'เครื่องดนตรี', tools: 'เครื่องมือ', toy: 'ของเล่น', others: 'อื่นๆ' };
+
+    const items = await Item.find(query).populate('user', 'firstname lastname email').sort({ createdAt: -1 });
+
+    const data = items.map((item, i) => ({
+        'ลำดับ': i + 1,
+        'รหัสสิ่งของ': item.customId || '',
+        'ประเภท': item.type === 'lost' ? 'ของหาย' : 'พบสิ่งของ',
+        'สถานะ': statusMap[item.status] || item.status,
+        'ชื่อสิ่งของ': item.title,
+        'หมวดหมู่': categoryMap[item.category] || item.category,
+        'สถานที่หลัก': item.locationMain || '',
+        'รายละเอียดสถานที่': item.locationDetail || '',
+        'ตำแหน่งจัดเก็บ': item.storagePosition || '',
+        'วันที่': item.date ? new Date(item.date).toLocaleDateString('th-TH') : '',
+        'ช่วงเวลา': item.timePeriod || '',
+        'รายละเอียด': item.description || '',
+        'หมายเหตุ': item.notes || '',
+        'ชื่อผู้แจ้ง': `${item.user?.firstname || ''} ${item.user?.lastname || ''}`.trim(),
+        'อีเมลผู้แจ้ง': item.user?.email || '',
+        'เลขบัตรประชาชน': item.reporterIdCard || '',
+        'เบอร์โทรศัพท์': item.reporterPhone || '',
+        'ชื่อผู้รับ': item.receiverName || '',
+        'เลขบัตรผู้รับ': item.receiverIdCard || '',
+        'เบอร์โทรผู้รับ': item.receiverPhone || '',
+        'วันที่แจ้ง': new Date(item.createdAt).toLocaleDateString('th-TH'),
     }));
 
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'LostFound Items');
+
+    // Auto column width
+    const colWidths = Object.keys(data[0] || {}).map(key => ({
+        wch: Math.max(key.length * 2, 12)
+    }));
+    worksheet['!cols'] = colWidths;
+
+    const sheetName = type === 'lost' ? 'ของหาย' : type === 'found' ? 'พบสิ่งของ' : 'ทั้งหมด';
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
 
     const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    const filename = `lostfound_${type || 'all'}_${new Date().toISOString().split('T')[0]}.xlsx`;
 
-    res.setHeader('Content-Disposition', 'attachment; filename=lostfound_report.xlsx');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.send(buffer);
 });
