@@ -122,7 +122,7 @@ const ReportItem = () => {
         bg: 'bg-rose-50',
         icon: AlertCircle,
         title: 'แบบฟอร์มแจ้งทำของหาย',
-        subtitle: 'ระบุข้อมูลสิ่งของที่คุณทำหายเพื่อให้ระบบช่วยทำการค้นหา'
+        subtitle: 'ระบุข้อมูลสิ่งของที่คุณทำหายเพื่อส่งแบบฟอร์มให้กับเจ้าหน้าที่'
     } : {
         primary: 'emerald',
         button: 'bg-emerald-600 hover:bg-emerald-700',
