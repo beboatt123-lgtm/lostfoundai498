@@ -66,7 +66,6 @@ const AdminLayout = ({ children }) => {
         { icon: <Package size={20} className="text-rose-400" />, label: 'จัดการของหาย', path: '/admin/lost' },
         { icon: <MapPin size={20} className="text-emerald-400" />, label: 'จัดการของที่พบ', path: '/admin/found' },
         { icon: <MapPin size={20} className="text-blue-400" />, label: 'จัดการสถานที่', path: '/admin/locations' },
-        { icon: <Search size={20} className="text-purple-400" />, label: 'AI ค้นหาอัจฉริยะ', path: '/admin/ai-search' },
         { icon: <QrCode size={20} className="text-indigo-400" />, label: 'สแกน QR Code', path: '/admin/qr-scanner' },
         { icon: <Users size={20} />, label: 'บัญชีผู้ใช้งาน', path: '/admin/users' },
     ];
