@@ -133,6 +133,15 @@ const updateProfile = asyncHandler(async (req, res) => {
         user.avatar = req.body.avatar || user.avatar;
 
         if (req.body.password) {
+            if (!req.body.currentPassword) {
+                res.status(400);
+                throw new Error('กรุณากรอกรหัสผ่านปัจจุบันเพื่อยืนยัน');
+            }
+            const isMatch = await bcrypt.compare(req.body.currentPassword, user.password);
+            if (!isMatch) {
+                res.status(400);
+                throw new Error('รหัสผ่านปัจจุบันไม่ถูกต้อง');
+            }
             const salt = await bcrypt.genSalt(10);
             user.password = await bcrypt.hash(req.body.password, salt);
         }

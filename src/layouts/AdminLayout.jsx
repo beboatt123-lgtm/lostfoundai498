@@ -29,6 +29,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import AdminProfileModal from '@/components/AdminProfileModal';
 
 const AdminLayout = ({ children }) => {
     const { user, logout, loading } = useAuth();
@@ -36,6 +37,7 @@ const AdminLayout = ({ children }) => {
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
     const [pendingItems, setPendingItems] = useState([]);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
 
     useEffect(() => {
         const fetchPendingItems = async () => {
@@ -251,8 +253,7 @@ const AdminLayout = ({ children }) => {
                             <DropdownMenuContent align="end" className="w-56 mt-2">
                                 <DropdownMenuLabel>บัญชีของฉัน</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem className="cursor-pointer">แก้ไขข้อมูลส่วนตัว</DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer">ตั้งค่าบัญชี</DropdownMenuItem>
+                                <DropdownMenuItem className="cursor-pointer" onClick={() => setIsProfileOpen(true)}>แก้ไขข้อมูลส่วนตัว</DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                     className="text-rose-600 focus:text-rose-700 focus:bg-rose-50 cursor-pointer"
@@ -273,6 +274,8 @@ const AdminLayout = ({ children }) => {
                     {children}
                 </div>
             </main>
+
+            <AdminProfileModal open={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
         </div>
     );
 };

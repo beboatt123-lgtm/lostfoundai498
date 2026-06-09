@@ -95,8 +95,15 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     };
 
+    const refreshUser = async () => {
+        try {
+            const res = await api.get('/auth/me');
+            setUser(res.data);
+        } catch {}
+    };
+
     return (
-        <AuthContext.Provider value={{ user, loading, error, register, login, logout, googleLogin }}>
+        <AuthContext.Provider value={{ user, loading, error, register, login, logout, googleLogin, refreshUser }}>
             {children}
         </AuthContext.Provider>
     );
