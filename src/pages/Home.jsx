@@ -15,11 +15,8 @@ import heroBg from '../assets/hero-bg.png';
 const Home = () => {
     const { user: currentUser } = useAuth();
     
-    // Filter States
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [type, setType] = useState('all');
-    const [category, setCategory] = useState('all');
     const [sortBy, setSortBy] = useState('newest');
 
     const categoryIcons = {
@@ -43,16 +40,11 @@ const Home = () => {
     const fetchItems = async () => {
         setLoading(true);
         try {
-            const params = {};
-            if (type && type !== 'all') params.type = type;
-            if (category && category !== 'all') params.category = category;
-            if (sortBy) params.sort = sortBy;
-
-            const res = await api.get('/items', { params });
+            const res = await api.get('/items');
             let data = res.data;
 
             if (sortBy === 'newest') data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            else if (sortBy === 'oldest') data.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            else data.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
             setItems(data);
         } catch (err) {
@@ -64,7 +56,7 @@ const Home = () => {
 
     useEffect(() => {
         fetchItems();
-    }, [type, category, sortBy]);
+    }, [sortBy]);
 
     return (
         <div className="min-h-screen bg-[#060b18] font-sans text-slate-100 antialiased selection:bg-emerald-500/30 mobile-optimized">
@@ -81,36 +73,6 @@ const Home = () => {
                         ตามหาสิ่งของที่หายไป <br/>
                         <span className="text-emerald-500 uppercase tracking-widest text-xl md:text-2xl mt-2 block">Search Intelligent</span>
                     </h1>
-
-                    {/* Filter Shortcuts */}
-                    <div className="flex flex-wrap items-center justify-center gap-2">
-                        <Select value={type} onValueChange={setType}>
-                            <SelectTrigger className="h-9 w-32 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest rounded-lg">
-                                <SelectValue placeholder="ประเภท" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-[#0f172a] border-white/10 text-white">
-                                <SelectItem value="all">ทุกประเภท</SelectItem>
-                                <SelectItem value="lost" className="text-rose-400">ของหาย</SelectItem>
-                                <SelectItem value="found" className="text-emerald-400">พบสิ่งของ</SelectItem>
-                            </SelectContent>
-                        </Select>
-
-                        <Select value={category} onValueChange={setCategory}>
-                            <SelectTrigger className="h-9 w-40 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest rounded-lg">
-                                <SelectValue placeholder="หมวดหมู่" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-[#0f172a] border-white/10 text-white max-h-[300px]">
-                                <SelectItem value="all">ทุกหมวดหมู่</SelectItem>
-                                {Object.entries(categoryIcons).map(([key, Icon]) => (
-                                    <SelectItem key={key} value={key}>
-                                        <div className="flex items-center gap-2 uppercase tracking-tight text-[10px]">
-                                            <Icon size={12} /> {key}
-                                        </div>
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
 
                     {/* Requirement 2: Quick Actions (Hidded if not logged in - though here they are protected routes anyway) */}
                     {currentUser && (
@@ -169,7 +131,7 @@ const Home = () => {
                         </div>
                         <h3 className="text-xl font-bold text-white mb-2">ไม่พบรายการที่ต้องการ</h3>
                         <p className="text-slate-500 text-sm font-medium">ลองค้นหาด้วยคำอื่นๆ หรือเลือกดูหมวดหมู่อื่นดูนะครับ</p>
-                        <Button variant="ghost" onClick={() => { setSearchQuery(''); setType('all'); setCategory('all'); }} className="mt-6 text-emerald-500 font-bold">
+                        <Button variant="ghost" onClick={() => { setSortBy('newest'); }} className="mt-6 text-emerald-500 font-bold">
                             ล้างการค้นหาทั้งหมด
                         </Button>
                     </div>
