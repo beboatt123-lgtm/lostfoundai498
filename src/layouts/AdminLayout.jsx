@@ -15,7 +15,6 @@ import {
     ChevronDown,
     MessageSquare,
     ShieldCheck,
-    ExternalLink,
     QrCode
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -62,7 +61,6 @@ const AdminLayout = ({ children }) => {
 
     const menuItems = [
         { icon: <LayoutDashboard size={20} />, label: 'ภาพรวมระบบ', path: '/admin' },
-        { icon: <ExternalLink size={20} className="text-blue-400" />, label: 'ไปหน้าหลักของเว็บ', path: '/' },
         { icon: <Package size={20} className="text-rose-400" />, label: 'จัดการของหาย', path: '/admin/lost' },
         { icon: <MapPin size={20} className="text-emerald-400" />, label: 'จัดการของที่พบ', path: '/admin/found' },
         { icon: <MapPin size={20} className="text-blue-400" />, label: 'จัดการสถานที่', path: '/admin/locations' },
@@ -181,11 +179,6 @@ const AdminLayout = ({ children }) => {
                             />
                         </div>
 
-                        <Link to="/">
-                            <Button variant="ghost" size="sm" className="hidden xl:flex gap-2 font-bold text-slate-500 hover:text-emerald-600 hover:bg-emerald-50">
-                                <ExternalLink size={14} /> ไปหน้าหลักของเว็บ
-                            </Button>
-                        </Link>
                     </div>
 
                     <div className="flex items-center gap-2">
