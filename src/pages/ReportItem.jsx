@@ -621,7 +621,7 @@ const ReportItem = () => {
                                                 กำลังบันทึก...
                                             </>
                                         ) : (
-                                            'โพสต์'
+                                            'Submit'
                                         )}
                                     </Button>
                                 </div>
