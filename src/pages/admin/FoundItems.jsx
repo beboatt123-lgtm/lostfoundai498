@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Search, Filter, Calendar, AlertCircle, ShieldCheck, Loader2, Plus, MoreHorizontal, Eye, XCircle, Clock, FileText, QrCode, Printer } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import QRPrintModal from '@/components/QRPrintModal';
+import AdminAddItemModal from '@/components/AdminAddItemModal';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -55,6 +56,7 @@ const AdminFoundItems = () => {
     const [expireLoading, setExpireLoading] = useState(false);
     const [qrItem, setQrItem] = useState(null);
     const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
     const [notesItemId, setNotesItemId] = useState(null);
     const [notesValue, setNotesValue] = useState('');
@@ -339,7 +341,7 @@ const AdminFoundItems = () => {
                             รีเฟรชข้อมูล
                         </Button>
                         <Button
-                            onClick={() => navigate('/report/found')}
+                            onClick={() => setIsAddModalOpen(true)}
                             className="flex-1 sm:flex-none gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200 h-10 rounded-xl px-4 transition-all font-bold text-sm"
                         >
                             <Plus size={16} /> เพิ่มรายการ
@@ -690,6 +692,12 @@ const AdminFoundItems = () => {
             </Dialog>
 
             <QRPrintModal item={qrItem} open={isQrModalOpen} onClose={() => setIsQrModalOpen(false)} />
+            <AdminAddItemModal
+                open={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                type="found"
+                onSuccess={() => { setIsAddModalOpen(false); fetchFoundItems(); }}
+            />
 
             {/* Notes Modal */}
             <Dialog open={isNotesModalOpen} onOpenChange={setIsNotesModalOpen}>

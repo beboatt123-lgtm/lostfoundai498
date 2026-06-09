@@ -21,6 +21,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Search, Filter, Calendar, AlertCircle, Loader2, Plus, MoreHorizontal, Eye, XCircle, FileText, QrCode } from "lucide-react";
 import QRPrintModal from '@/components/QRPrintModal';
+import AdminAddItemModal from '@/components/AdminAddItemModal';
 import { Textarea } from "@/components/ui/textarea";
 import {
     DropdownMenu,
@@ -63,6 +64,7 @@ const AdminLostItems = () => {
     const [notesLoading, setNotesLoading] = useState(false);
     const [qrItem, setQrItem] = useState(null);
     const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const navigate = useNavigate();
 
     const categoryOptions = [
@@ -305,7 +307,7 @@ const AdminLostItems = () => {
                             รีเฟรชข้อมูล
                         </Button>
                         <Button
-                            onClick={() => navigate('/report/lost')}
+                            onClick={() => setIsAddModalOpen(true)}
                             className="flex-1 sm:flex-none gap-2 bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-200 h-10 rounded-xl px-4 transition-all font-bold text-sm"
                         >
                             <Plus size={16} /> เพิ่มรายการ
@@ -622,6 +624,12 @@ const AdminLostItems = () => {
                 </DialogContent>
             </Dialog>
             <QRPrintModal item={qrItem} open={isQrModalOpen} onClose={() => setIsQrModalOpen(false)} />
+            <AdminAddItemModal
+                open={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                type="lost"
+                onSuccess={() => { setIsAddModalOpen(false); fetchLostItems(); }}
+            />
         </div>
     );
 };
