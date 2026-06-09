@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { MapPin, Menu, User, LogOut, Settings, PlusCircle, LayoutDashboard, LogIn, UserPlus, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -24,7 +24,13 @@ import { useState } from 'react';
 const Navbar = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const [isOpen, setIsOpen] = useState(false);
+
+    const isActive = (path) => {
+        if (path === '/') return location.pathname === '/';
+        return location.pathname.startsWith(path);
+    };
 
     const handleLogout = () => {
         logout();
@@ -46,11 +52,11 @@ const Navbar = () => {
                 </Link>
 
                 <div className="hidden md:flex gap-8">
-                    <Link to="/" className="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">หน้าแรก</Link>
+                    <Link to="/" className={`text-sm font-semibold transition-colors relative pb-0.5 ${isActive('/') ? 'text-emerald-600 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-emerald-500 after:rounded-full' : 'text-slate-600 hover:text-emerald-600'}`}>หน้าแรก</Link>
                     {(!user || (user.role !== 'admin' && user.role !== 'staff')) && (
                         <>
-                            <Link to="/report/lost" className="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">แจ้งทำของหาย</Link>
-                            <Link to="/report/found" className="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">แจ้งเจอของ</Link>
+                            <Link to="/report/lost" className={`text-sm font-semibold transition-colors relative pb-0.5 ${isActive('/report/lost') ? 'text-emerald-600 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-emerald-500 after:rounded-full' : 'text-slate-600 hover:text-emerald-600'}`}>แจ้งทำของหาย</Link>
+                            <Link to="/report/found" className={`text-sm font-semibold transition-colors relative pb-0.5 ${isActive('/report/found') ? 'text-emerald-600 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-emerald-500 after:rounded-full' : 'text-slate-600 hover:text-emerald-600'}`}>แจ้งเจอของ</Link>
                         </>
                     )}
                 </div>
@@ -133,22 +139,22 @@ const Navbar = () => {
                         </SheetHeader>
 
                         <div className="flex-1 overflow-y-auto py-6 px-4 space-y-2">
-                            <Link to="/" onClick={() => setIsOpen(false)} className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-slate-50 transition-all font-bold text-slate-600 hover:text-slate-900">
-                                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">
+                            <Link to="/" onClick={() => setIsOpen(false)} className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all font-bold ${isActive('/') ? 'bg-emerald-50 text-emerald-700' : 'hover:bg-slate-50 text-slate-600 hover:text-slate-900'}`}>
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive('/') ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
                                     <LayoutDashboard size={18} />
                                 </div>
                                 <span>หน้าแรก</span>
                             </Link>
                                 {(!user || (user.role !== 'admin' && user.role !== 'staff')) && (
                                 <>
-                                    <Link to="/report/lost" onClick={() => setIsOpen(false)} className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-slate-50 transition-all font-bold text-slate-600 hover:text-slate-900 text-rose-600">
-                                        <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center text-rose-500">
+                                    <Link to="/report/lost" onClick={() => setIsOpen(false)} className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all font-bold ${isActive('/report/lost') ? 'bg-rose-50 text-rose-700' : 'hover:bg-slate-50 text-slate-600 hover:text-slate-900'}`}>
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive('/report/lost') ? 'bg-rose-100 text-rose-600' : 'bg-rose-50 text-rose-500'}`}>
                                             <PlusCircle size={18} />
                                         </div>
                                         <span>แจ้งทำของหาย</span>
                                     </Link>
-                                    <Link to="/report/found" onClick={() => setIsOpen(false)} className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-slate-50 transition-all font-bold text-slate-600 hover:text-slate-900 text-emerald-600">
-                                        <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500">
+                                    <Link to="/report/found" onClick={() => setIsOpen(false)} className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all font-bold ${isActive('/report/found') ? 'bg-emerald-50 text-emerald-700' : 'hover:bg-slate-50 text-slate-600 hover:text-slate-900'}`}>
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive('/report/found') ? 'bg-emerald-100 text-emerald-600' : 'bg-emerald-50 text-emerald-500'}`}>
                                             <PlusCircle size={18} />
                                         </div>
                                         <span>แจ้งเจอของ</span>
