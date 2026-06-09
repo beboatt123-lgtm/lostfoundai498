@@ -4,7 +4,6 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import ReportItem from './pages/ReportItem';
 import EditItem from './pages/EditItem';
-import SearchItems from './pages/SearchItems';
 import ItemDetail from './pages/ItemDetail';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -97,7 +96,6 @@ function App() {
 
                         {/* Protected User Routes */}
                         <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-                        <Route path="/search" element={<ProtectedRoute><SearchItems /></ProtectedRoute>} />
                         <Route path="/item/:id" element={<ProtectedRoute><ItemDetail /></ProtectedRoute>} />
                         <Route path="/report/:type" element={<ProtectedRoute><ReportItem /></ProtectedRoute>} />
                         <Route path="/edit-item/:id" element={<ProtectedRoute><EditItem /></ProtectedRoute>} />

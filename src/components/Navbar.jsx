@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Search, MapPin, Menu, User, LogOut, Settings, Sparkles, PlusCircle, LayoutDashboard, LogIn, UserPlus, X } from 'lucide-react';
+import { MapPin, Menu, User, LogOut, Settings, PlusCircle, LayoutDashboard, LogIn, UserPlus, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import {
     DropdownMenu,
@@ -47,25 +47,16 @@ const Navbar = () => {
 
                 <div className="hidden md:flex gap-8">
                     <Link to="/" className="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">หน้าแรก</Link>
-                    <Link to="/search" className="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">ค้นหาของหาย</Link>
                     {(!user || (user.role !== 'admin' && user.role !== 'staff')) && (
                         <>
-                            <Link to="/report/lost" className="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">ประกาศตามหาของ</Link>
-                            <Link to="/report/found" className="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">แจ้งพบสิ่งของ</Link>
+                            <Link to="/report/lost" className="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">แจ้งทำของหาย</Link>
+                            <Link to="/report/found" className="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors">แจ้งเจอของ</Link>
                         </>
                     )}
-
                 </div>
             </div>
 
             <div className="flex items-center gap-2 md:gap-4">
-                <Link to="/search" className="hidden sm:block">
-                    <Button variant="ghost" size="icon" className="text-slate-500 hover:bg-slate-100 rounded-full">
-                        <Search size={20} />
-                    </Button>
-                </Link>
-
-                <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>
 
                 {user ? (
                     <DropdownMenu>
@@ -148,25 +139,19 @@ const Navbar = () => {
                                 </div>
                                 <span>หน้าแรก</span>
                             </Link>
-                            <Link to="/search" onClick={() => setIsOpen(false)} className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-slate-50 transition-all font-bold text-slate-600 hover:text-slate-900">
-                                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">
-                                    <Search size={18} />
-                                </div>
-                                <span>ค้นหาของหาย</span>
-                            </Link>
-                            {(!user || (user.role !== 'admin' && user.role !== 'staff')) && (
+                                {(!user || (user.role !== 'admin' && user.role !== 'staff')) && (
                                 <>
                                     <Link to="/report/lost" onClick={() => setIsOpen(false)} className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-slate-50 transition-all font-bold text-slate-600 hover:text-slate-900 text-rose-600">
                                         <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center text-rose-500">
                                             <PlusCircle size={18} />
                                         </div>
-                                        <span>ประกาศตามหาของ (Searching)</span>
+                                        <span>แจ้งทำของหาย</span>
                                     </Link>
                                     <Link to="/report/found" onClick={() => setIsOpen(false)} className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-slate-50 transition-all font-bold text-slate-600 hover:text-slate-900 text-emerald-600">
                                         <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500">
                                             <PlusCircle size={18} />
                                         </div>
-                                        <span>แจ้งพบสิ่งของ (Found)</span>
+                                        <span>แจ้งเจอของ</span>
                                     </Link>
                                 </>
                             )}

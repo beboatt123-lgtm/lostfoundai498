@@ -1,27 +1,23 @@
 import { Button } from "@/components/ui/button";
-import { 
-    ArrowRight, Search, AlertCircle, CheckCircle2, Sparkles, MapPin, 
-    Globe, Shield, Activity, Smartphone, Wallet, Shirt, Briefcase, 
-    Gem, Glasses, FileBadge, BookText, HeartPulse, PawPrint, Trophy, 
-    Music, Wrench, ToyBrick, Boxes, Calendar, Loader2, Filter, X, SortAsc
+import {
+    Search, AlertCircle, CheckCircle2, MapPin,
+    Activity, Smartphone, Wallet, Shirt, Briefcase,
+    Gem, Glasses, FileBadge, BookText, HeartPulse, PawPrint, Trophy,
+    Music, Wrench, ToyBrick, Boxes, Calendar, Loader2, SortAsc
 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Input } from "@/components/ui/input";
+import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../lib/axios';
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import heroBg from '../assets/hero-bg.png';
 
 const Home = () => {
-    const navigate = useNavigate();
     const { user: currentUser } = useAuth();
     
-    // Search & Filter States
+    // Filter States
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
     const [type, setType] = useState('all');
     const [category, setCategory] = useState('all');
     const [sortBy, setSortBy] = useState('newest');
@@ -48,15 +44,13 @@ const Home = () => {
         setLoading(true);
         try {
             const params = {};
-            if (searchQuery) params.search = searchQuery;
             if (type && type !== 'all') params.type = type;
             if (category && category !== 'all') params.category = category;
             if (sortBy) params.sort = sortBy;
 
             const res = await api.get('/items', { params });
             let data = res.data;
-            
-            // Client-side sorting
+
             if (sortBy === 'newest') data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             else if (sortBy === 'oldest') data.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
@@ -71,17 +65,6 @@ const Home = () => {
     useEffect(() => {
         fetchItems();
     }, [type, category, sortBy]);
-
-    const handleSearch = (e) => {
-        e?.preventDefault();
-        fetchItems();
-    };
-
-    const handleKeyDown = (e) => {
-        if (e.key === 'Enter') {
-            handleSearch();
-        }
-    };
 
     return (
         <div className="min-h-screen bg-[#060b18] font-sans text-slate-100 antialiased selection:bg-emerald-500/30 mobile-optimized">
@@ -99,55 +82,34 @@ const Home = () => {
                         <span className="text-emerald-500 uppercase tracking-widest text-xl md:text-2xl mt-2 block">Search Intelligent</span>
                     </h1>
 
-                    {/* Requirement 5: Integrated Search Bar */}
-                    <div className="w-full max-w-2xl mx-auto space-y-4">
-                        <form onSubmit={handleSearch} className="relative group">
-                            <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/30 to-blue-500/30 rounded-2xl blur-md opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
-                            <div className="relative flex items-center bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-1.5 focus-within:border-emerald-500/30 transition-all shadow-2xl">
-                                <Search className="ml-4 text-emerald-500/60" size={20} />
-                                <Input 
-                                    type="text" 
-                                    placeholder="ค้นหาชื่อสิ่งของ หรือสถานที่..." 
-                                    className="border-none focus-visible:ring-0 text-slate-100 text-sm md:text-base font-bold h-12 bg-transparent placeholder:text-slate-500"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    onKeyDown={handleKeyDown}
-                                />
-                                <Button type="submit" className="h-10 px-8 bg-emerald-500 hover:bg-emerald-600 text-[#060b18] font-black text-xs rounded-xl shadow-lg transition-all active:scale-95">
-                                    ค้นหา
-                                </Button>
-                            </div>
-                        </form>
+                    {/* Filter Shortcuts */}
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                        <Select value={type} onValueChange={setType}>
+                            <SelectTrigger className="h-9 w-32 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest rounded-lg">
+                                <SelectValue placeholder="ประเภท" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#0f172a] border-white/10 text-white">
+                                <SelectItem value="all">ทุกประเภท</SelectItem>
+                                <SelectItem value="lost" className="text-rose-400">ของหาย</SelectItem>
+                                <SelectItem value="found" className="text-emerald-400">พบสิ่งของ</SelectItem>
+                            </SelectContent>
+                        </Select>
 
-                        {/* Filter Shortcuts */}
-                        <div className="flex flex-wrap items-center justify-center gap-2">
-                             <Select value={type} onValueChange={setType}>
-                                <SelectTrigger className="h-9 w-32 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest rounded-lg">
-                                    <SelectValue placeholder="ประเภท" />
-                                </SelectTrigger>
-                                <SelectContent className="bg-[#0f172a] border-white/10 text-white">
-                                    <SelectItem value="all">ทุกประเภท</SelectItem>
-                                    <SelectItem value="lost" className="text-rose-400">ของหาย</SelectItem>
-                                    <SelectItem value="found" className="text-emerald-400">พบสิ่งของ</SelectItem>
-                                </SelectContent>
-                            </Select>
-
-                            <Select value={category} onValueChange={setCategory}>
-                                <SelectTrigger className="h-9 w-40 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest rounded-lg">
-                                    <SelectValue placeholder="หมวดหมู่" />
-                                </SelectTrigger>
-                                <SelectContent className="bg-[#0f172a] border-white/10 text-white max-h-[300px]">
-                                    <SelectItem value="all">ทุกหมวดหมู่</SelectItem>
-                                    {Object.entries(categoryIcons).map(([key, Icon]) => (
-                                        <SelectItem key={key} value={key}>
-                                            <div className="flex items-center gap-2 uppercase tracking-tight text-[10px]">
-                                                <Icon size={12} /> {key}
-                                            </div>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        <Select value={category} onValueChange={setCategory}>
+                            <SelectTrigger className="h-9 w-40 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest rounded-lg">
+                                <SelectValue placeholder="หมวดหมู่" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#0f172a] border-white/10 text-white max-h-[300px]">
+                                <SelectItem value="all">ทุกหมวดหมู่</SelectItem>
+                                {Object.entries(categoryIcons).map(([key, Icon]) => (
+                                    <SelectItem key={key} value={key}>
+                                        <div className="flex items-center gap-2 uppercase tracking-tight text-[10px]">
+                                            <Icon size={12} /> {key}
+                                        </div>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     {/* Requirement 2: Quick Actions (Hidded if not logged in - though here they are protected routes anyway) */}
@@ -155,12 +117,12 @@ const Home = () => {
                         <div className="flex items-center justify-center gap-3 mt-10">
                             <Link to="/report/lost">
                                 <Button className="h-11 px-8 rounded-xl font-black bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500/20 text-xs uppercase tracking-widest transition-all">
-                                    <AlertCircle size={16} className="mr-2" /> ประกาศของหาย
+                                    <AlertCircle size={16} className="mr-2" /> แจ้งทำของหาย
                                 </Button>
                             </Link>
                             <Link to="/report/found">
                                 <Button className="h-11 px-8 rounded-xl font-black bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500/20 text-xs uppercase tracking-widest transition-all">
-                                    <CheckCircle2 size={16} className="mr-2" /> แจ้งพบของ
+                                    <CheckCircle2 size={16} className="mr-2" /> แจ้งเจอของ
                                 </Button>
                             </Link>
                         </div>
