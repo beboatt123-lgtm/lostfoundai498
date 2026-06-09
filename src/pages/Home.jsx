@@ -129,11 +129,8 @@ const Home = () => {
                         <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center text-slate-600 mx-auto mb-6">
                             <Search size={40} />
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-2">ไม่พบรายการที่ต้องการ</h3>
-                        <p className="text-slate-500 text-sm font-medium">ลองค้นหาด้วยคำอื่นๆ หรือเลือกดูหมวดหมู่อื่นดูนะครับ</p>
-                        <Button variant="ghost" onClick={() => { setSortBy('newest'); }} className="mt-6 text-emerald-500 font-bold">
-                            ล้างการค้นหาทั้งหมด
-                        </Button>
+                        <h3 className="text-xl font-bold text-white mb-2">ยังไม่มีรายการประกาศ</h3>
+                        <p className="text-slate-500 text-sm font-medium">ยังไม่มีรายการที่ได้รับการอนุมัติในขณะนี้</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-10">
