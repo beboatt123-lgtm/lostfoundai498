@@ -275,7 +275,7 @@ const updateItem = asyncHandler(async (req, res) => {
 
 // @desc    Delete item
 // @route   DELETE /api/items/:id
-// @access  Private
+// @access  Private (admin/staff only, pending/rejected items only)
 const deleteItem = asyncHandler(async (req, res) => {
     const item = await Item.findById(req.params.id);
 
@@ -284,9 +284,15 @@ const deleteItem = asyncHandler(async (req, res) => {
         throw new Error('Item not found');
     }
 
-    if (item.user.toString() !== req.user.id && req.user.role !== 'admin' && req.user.role !== 'staff') {
-        res.status(401);
-        throw new Error('User not authorized');
+    if (req.user.role !== 'admin' && req.user.role !== 'staff') {
+        res.status(403);
+        throw new Error('เฉพาะเจ้าหน้าที่เท่านั้นที่สามารถลบรายการได้');
+    }
+
+    const deletableStatuses = ['pending', 'rejected'];
+    if (!deletableStatuses.includes(item.status)) {
+        res.status(400);
+        throw new Error('ไม่สามารถลบรายการที่อนุมัติแล้วได้ กรุณาปิดประกาศแทน');
     }
 
     await item.deleteOne();

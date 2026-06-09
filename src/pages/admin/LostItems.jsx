@@ -19,7 +19,7 @@ import {
     DialogFooter
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Search, Filter, Calendar, AlertCircle, Loader2, Plus, MoreHorizontal, Eye, XCircle, FileText, QrCode, FileDown } from "lucide-react";
+import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Search, Filter, Calendar, AlertCircle, Loader2, Plus, MoreHorizontal, Eye, XCircle, FileText, QrCode, FileDown, Trash2 } from "lucide-react";
 import QRPrintModal from '@/components/QRPrintModal';
 import AdminAddItemModal from '@/components/AdminAddItemModal';
 import AdminItemDetailModal from '@/components/AdminItemDetailModal';
@@ -69,6 +69,8 @@ const AdminLostItems = () => {
     const [detailItemId, setDetailItemId] = useState(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [exporting, setExporting] = useState(false);
+    const [deleteTargetItem, setDeleteTargetItem] = useState(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleExport = async () => {
@@ -166,6 +168,20 @@ const AdminLostItems = () => {
         setIsNotesModalOpen(true);
     };
 
+    const handleDelete = async () => {
+        if (!deleteTargetItem) return;
+        setDeleteLoading(true);
+        try {
+            await api.delete(`items/${deleteTargetItem._id}`);
+            setDeleteTargetItem(null);
+            fetchLostItems();
+        } catch (err) {
+            alert(err.response?.data?.message || 'ไม่สามารถลบรายการได้');
+        } finally {
+            setDeleteLoading(false);
+        }
+    };
+
     const handleNotesSave = async () => {
         setNotesLoading(true);
         try {
@@ -258,6 +274,14 @@ const AdminLostItems = () => {
                     <DropdownMenuItem className="cursor-pointer py-2.5 text-emerald-600 font-bold focus:text-emerald-700 focus:bg-emerald-50" onClick={() => handleResolveClick(item._id)}>
                         <CheckCircle className="mr-2.5 h-4 w-4" /> ปิดรับ (ส่งคืนสำเร็จ)
                     </DropdownMenuItem>
+                )}
+                {(item.status === 'pending' || item.status === 'rejected') && (
+                    <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="cursor-pointer py-2.5 text-rose-600 font-bold focus:text-rose-700 focus:bg-rose-50" onClick={() => setDeleteTargetItem(item)}>
+                            <Trash2 className="mr-2.5 h-4 w-4" /> ลบรายการ
+                        </DropdownMenuItem>
+                    </>
                 )}
             </DropdownMenuContent>
         </DropdownMenu>
@@ -667,6 +691,40 @@ const AdminLostItems = () => {
                 open={isDetailModalOpen}
                 onClose={() => setIsDetailModalOpen(false)}
             />
+
+            {/* Delete Confirm Dialog */}
+            <Dialog open={!!deleteTargetItem} onOpenChange={() => setDeleteTargetItem(null)}>
+                <DialogContent className="max-w-sm rounded-2xl border-none shadow-2xl p-0 overflow-hidden">
+                    <div className="bg-rose-600 p-6 text-center text-white">
+                        <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <Trash2 size={28} />
+                        </div>
+                        <DialogTitle className="text-xl font-black">ยืนยันการลบรายการ</DialogTitle>
+                        <DialogDescription className="text-rose-200 text-sm mt-1">
+                            การลบไม่สามารถย้อนกลับได้
+                        </DialogDescription>
+                    </div>
+                    <div className="p-5 bg-white space-y-4">
+                        <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 text-center">
+                            <p className="font-bold text-slate-800 text-sm">{deleteTargetItem?.title}</p>
+                            <p className="text-xs text-slate-400 mt-0.5">{deleteTargetItem?.customId}</p>
+                        </div>
+                        <p className="text-sm text-slate-500 text-center">คุณแน่ใจว่าต้องการลบรายการนี้ออกจากระบบ?</p>
+                        <div className="flex gap-3">
+                            <Button variant="outline" className="flex-1 font-bold rounded-xl" onClick={() => setDeleteTargetItem(null)}>
+                                ยกเลิก
+                            </Button>
+                            <Button
+                                onClick={handleDelete}
+                                disabled={deleteLoading}
+                                className="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-lg shadow-rose-200"
+                            >
+                                {deleteLoading ? <Loader2 className="animate-spin h-4 w-4" /> : 'ลบรายการ'}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
