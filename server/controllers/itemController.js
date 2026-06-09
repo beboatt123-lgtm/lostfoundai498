@@ -12,7 +12,7 @@ const User = require('../models/User');
 const createItem = asyncHandler(async (req, res) => {
     const {
         title, description, type, category, locationMain,
-        locationDetail, date, reporterIdCard, reporterPhone, storagePosition, notes
+        locationDetail, date, timePeriod, reporterIdCard, reporterPhone, storagePosition, notes
     } = req.body;
 
     let images = req.files ? req.files.map(file => file.path) : [];
@@ -41,6 +41,7 @@ const createItem = asyncHandler(async (req, res) => {
         reporterPhone,
         storagePosition: storagePosition || '',
         notes: notes || '',
+        timePeriod: timePeriod || '',
         images,
         status: (req.user.role === 'admin' || req.user.role === 'staff') ? 'open' : 'pending'
     });
@@ -100,6 +101,51 @@ const createItem = asyncHandler(async (req, res) => {
         });
     } catch (err) {
         console.error("Failed to send item creation email:", err);
+    }
+
+    // Notify all admins and staff
+    try {
+        const admins = await User.find({ role: { $in: ['admin', 'staff'] } }).select('email firstname');
+        if (admins.length > 0) {
+            const typeText = type === 'lost' ? '🔴 ของหาย' : '🟢 พบสิ่งของ';
+            const statusText = (req.user.role === 'admin' || req.user.role === 'staff') ? 'เผยแพร่แล้ว (Admin)' : 'รอการอนุมัติ';
+            const timePeriodMap = {
+                morning: 'ช่วงเช้า (06:00 – 12:00)',
+                afternoon: 'ช่วงกลางวัน – บ่าย (12:00 – 17:00)',
+                evening: 'ช่วงเย็น (17:00 – 20:00)',
+                night: 'ช่วงกลางคืน (20:00 – 06:00)',
+                unknown: 'ไม่แน่ใจ'
+            };
+            const timePeriodText = timePeriod ? (timePeriodMap[timePeriod] || timePeriod) : '-';
+
+            const html = `
+                <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#f8fafc;padding:24px;border-radius:12px;">
+                    <div style="background:#059669;color:white;padding:16px 24px;border-radius:8px;margin-bottom:20px;">
+                        <h2 style="margin:0;font-size:18px;">แจ้งเตือน: มีรายการใหม่เข้าระบบ</h2>
+                        <p style="margin:4px 0 0;font-size:13px;opacity:0.9;">${typeText}</p>
+                    </div>
+                    <table style="width:100%;border-collapse:collapse;background:white;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+                        <tr style="background:#f1f5f9;"><td style="padding:10px 16px;font-weight:bold;font-size:13px;width:40%;">ชื่อสิ่งของ</td><td style="padding:10px 16px;font-size:13px;">${title}</td></tr>
+                        <tr><td style="padding:10px 16px;font-weight:bold;font-size:13px;">หมวดหมู่</td><td style="padding:10px 16px;font-size:13px;">${category}</td></tr>
+                        <tr style="background:#f1f5f9;"><td style="padding:10px 16px;font-weight:bold;font-size:13px;">สถานที่หลัก</td><td style="padding:10px 16px;font-size:13px;">${locationMain}</td></tr>
+                        <tr><td style="padding:10px 16px;font-weight:bold;font-size:13px;">รายละเอียดสถานที่</td><td style="padding:10px 16px;font-size:13px;">${locationDetail || '-'}</td></tr>
+                        <tr style="background:#f1f5f9;"><td style="padding:10px 16px;font-weight:bold;font-size:13px;">วันที่</td><td style="padding:10px 16px;font-size:13px;">${new Date(date).toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}</td></tr>
+                        <tr><td style="padding:10px 16px;font-weight:bold;font-size:13px;">ช่วงเวลา</td><td style="padding:10px 16px;font-size:13px;">${timePeriodText}</td></tr>
+                        <tr style="background:#f1f5f9;"><td style="padding:10px 16px;font-weight:bold;font-size:13px;">ผู้แจ้ง</td><td style="padding:10px 16px;font-size:13px;">${req.user.firstname} ${req.user.lastname || ''}<br/><span style="color:#64748b;">${req.user.email}</span></td></tr>
+                        <tr><td style="padding:10px 16px;font-weight:bold;font-size:13px;">สถานะ</td><td style="padding:10px 16px;font-size:13px;color:${statusText.includes('รอ') ? '#d97706' : '#059669'};font-weight:bold;">${statusText}</td></tr>
+                    </table>
+                    <p style="margin-top:16px;font-size:12px;color:#94a3b8;text-align:center;">Lost&Found AI System — แจ้งเตือนอัตโนมัติ</p>
+                </div>
+            `;
+
+            await Promise.all(admins.map(admin => sendEmail({
+                to: admin.email,
+                subject: `[Lost&Found] ${typeText} ใหม่: "${title}" — ${statusText}`,
+                html
+            })));
+        }
+    } catch (err) {
+        console.error("Failed to send admin notification email:", err);
     }
 });
 

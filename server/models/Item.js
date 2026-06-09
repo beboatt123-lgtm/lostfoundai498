@@ -96,6 +96,10 @@ const itemSchema = mongoose.Schema({
     notes: {
         type: String,
         default: ''
+    },
+    timePeriod: {
+        type: String,
+        default: ''
     }
 }, {
     timestamps: true
