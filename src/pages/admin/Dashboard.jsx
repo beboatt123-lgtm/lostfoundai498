@@ -29,6 +29,7 @@ const AdminDashboard = () => {
     const [endDate, setEndDate] = useState(getToday());
     const [statsData, setStatsData] = useState(null);
     const [chartData, setChartData] = useState([]);
+    const [recentActivity, setRecentActivity] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const fetchStats = async () => {
@@ -39,6 +40,7 @@ const AdminDashboard = () => {
             });
             setStatsData(res.data.stats);
             setChartData(res.data.chartData);
+            setRecentActivity(res.data.recentActivity || []);
         } catch (err) {
             console.error('Failed to fetch stats:', err);
         } finally {
@@ -170,35 +172,63 @@ const AdminDashboard = () => {
                     </CardContent>
                 </Card>
 
-                <Card className="col-span-3 shadow-xl shadow-slate-200/40 border-slate-200">
+                <Card className="col-span-3 shadow-xl shadow-slate-200/40 border-slate-200 relative overflow-hidden">
+                    {loading && (
+                        <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] z-20 flex items-center justify-center">
+                            <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+                        </div>
+                    )}
                     <CardHeader className="border-b border-slate-50 bg-slate-50/50">
                         <CardTitle className="text-lg font-bold text-slate-800">กิจกรรมล่าสุด</CardTitle>
                         <CardDescription className="text-slate-500">ความเคลื่อนไหวล่าสุดในระบบ</CardDescription>
                     </CardHeader>
                     <CardContent className="p-0">
-                        <div className="divide-y divide-slate-100">
-                            {[
-                                { text: 'ยืนยันรับคืน "iPhone 15 Pro" แล้ว', user: 'สมชาย ใจดี', time: '2 นาทีที่แล้ว', type: 'success' },
-                                { text: 'แจ้งพบ "กระเป๋าสตางค์ Coach"', user: 'วิภาดา รักดี', time: '15 นาทีที่แล้ว', type: 'info' },
-                                { text: 'Admin อนุมัติโพสต์ "กุญแจรถ"', user: 'System Admin', time: '1 ชั่วโมงที่แล้ว', type: 'admin' },
-                                { text: 'แจ้งของหาย "iPad Air 5"', user: 'กิตติศักดิ์', time: '3 ชั่วโมงที่แล้ว', type: 'alert' }
-                            ].map((item, i) => (
-                                <div key={i} className="flex gap-4 items-start p-5 hover:bg-slate-50/50 transition-colors group">
-                                    <div className={`mt-1 h-2.5 w-2.5 rounded-full ring-4 ${item.type === 'success' ? 'bg-emerald-500 ring-emerald-100' :
-                                        item.type === 'info' ? 'bg-blue-500 ring-blue-100' :
-                                            item.type === 'admin' ? 'bg-indigo-500 ring-indigo-100' : 'bg-rose-500 ring-rose-100'
-                                        }`}></div>
-                                    <div className="space-y-1">
-                                        <p className="text-sm font-medium text-slate-900 leading-tight group-hover:text-emerald-700 transition-colors">
-                                            {item.text}
-                                        </p>
-                                        <p className="text-xs text-slate-500 font-medium">
-                                            โดย <span className="text-slate-700">{item.user}</span> • {item.time}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                        {recentActivity.length === 0 && !loading ? (
+                            <div className="py-12 text-center text-slate-400 text-sm font-medium">
+                                ยังไม่มีกิจกรรมในระบบ
+                            </div>
+                        ) : (
+                            <div className="divide-y divide-slate-100 max-h-[420px] overflow-y-auto">
+                                {recentActivity.map((act, i) => {
+                                    const dotColor = {
+                                        amber:   'bg-amber-400 ring-amber-100',
+                                        emerald: 'bg-emerald-500 ring-emerald-100',
+                                        rose:    'bg-rose-500 ring-rose-100',
+                                        blue:    'bg-blue-500 ring-blue-100',
+                                        slate:   'bg-slate-400 ring-slate-100',
+                                    }[act.color] || 'bg-slate-400 ring-slate-100';
+
+                                    const relativeTime = (() => {
+                                        const diff = Date.now() - new Date(act.updatedAt).getTime();
+                                        const mins = Math.floor(diff / 60000);
+                                        if (mins < 1) return 'เมื่อกี้';
+                                        if (mins < 60) return `${mins} นาทีที่แล้ว`;
+                                        const hrs = Math.floor(mins / 60);
+                                        if (hrs < 24) return `${hrs} ชั่วโมงที่แล้ว`;
+                                        const days = Math.floor(hrs / 24);
+                                        if (days < 7) return `${days} วันที่แล้ว`;
+                                        return new Date(act.updatedAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+                                    })();
+
+                                    return (
+                                        <div key={i} className="flex gap-3 items-start px-5 py-4 hover:bg-slate-50/50 transition-colors group">
+                                            <div className={`mt-1.5 h-2.5 w-2.5 rounded-full ring-4 shrink-0 ${dotColor}`} />
+                                            <div className="space-y-0.5 min-w-0">
+                                                <p className="text-sm font-semibold text-slate-900 leading-snug group-hover:text-emerald-700 transition-colors line-clamp-2">
+                                                    {act.text}
+                                                </p>
+                                                <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5 flex-wrap">
+                                                    <span className="font-mono text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded text-[10px]">{act.customId}</span>
+                                                    <span>โดย <span className="text-slate-600">{act.user}</span></span>
+                                                    <span>•</span>
+                                                    <span>{relativeTime}</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>

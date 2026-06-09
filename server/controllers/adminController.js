@@ -92,6 +92,37 @@ const getStats = asyncHandler(async (req, res) => {
         }
     }
     
+    // Recent activity: last 8 items by updatedAt
+    const recentItems = await Item.find({})
+        .sort({ updatedAt: -1 })
+        .limit(8)
+        .populate('user', 'firstname lastname')
+        .select('title type status customId updatedAt createdAt user');
+
+    const statusActionMap = {
+        pending:  { text: (type) => type === 'lost' ? 'ส่งแบบฟอร์มแจ้งทำของหายใหม่' : 'ส่งแบบฟอร์มแจ้งพบของใหม่', color: 'amber' },
+        open:     { text: () => 'อนุมัติเผยแพร่แล้ว',   color: 'emerald' },
+        rejected: { text: () => 'ปฏิเสธโพสต์แล้ว',     color: 'rose' },
+        resolved: { text: () => 'ส่งคืนสำเร็จแล้ว',    color: 'blue' },
+        closed:   { text: () => 'ปิดประกาศแล้ว',        color: 'slate' },
+    };
+
+    const recentActivity = recentItems.map(item => {
+        const action = statusActionMap[item.status] || { text: () => item.status, color: 'slate' };
+        const userName = item.user
+            ? `${item.user.firstname || ''} ${item.user.lastname || ''}`.trim() || 'ผู้ใช้งาน'
+            : 'ผู้ใช้งาน';
+        return {
+            text: `${action.text(item.type)} "${item.title}"`,
+            user: userName,
+            customId: item.customId,
+            status: item.status,
+            type: item.type,
+            color: action.color,
+            updatedAt: item.updatedAt,
+        };
+    });
+
     res.status(200).json({
         stats: {
             totalItems,
@@ -100,7 +131,8 @@ const getStats = asyncHandler(async (req, res) => {
             resolvedItems,
             totalUsers
         },
-        chartData
+        chartData,
+        recentActivity
     });
 });
 
