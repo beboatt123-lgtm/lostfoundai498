@@ -105,22 +105,21 @@ const itemSchema = mongoose.Schema({
     timestamps: true
 });
 
-// Requirement 9: Unique ID Generation (LOST-2026-001)
 itemSchema.pre('save', async function(next) {
     if (!this.isNew) return next();
 
     try {
         const lastItem = await this.constructor.findOne(
-            { customId: /^BU\d+$/ }
-        ).sort({ createdAt: -1 });
+            { customId: /^L\d+$/ }
+        ).sort({ customId: -1 });
 
         let sequence = 1;
         if (lastItem && lastItem.customId) {
-            const num = parseInt(lastItem.customId.replace('BU', ''));
+            const num = parseInt(lastItem.customId.replace('L', ''));
             if (!isNaN(num)) sequence = num + 1;
         }
 
-        this.customId = `BU${sequence.toString().padStart(4, '0')}`;
+        this.customId = `L${sequence.toString().padStart(5, '0')}`;
         next();
     } catch (err) {
         next(err);
