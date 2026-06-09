@@ -17,7 +17,9 @@ import {
     Download,
     UserCog,
     Ban,
-    Mail
+    Mail,
+    Calendar,
+    Users
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -67,96 +69,151 @@ const AdminUsers = () => {
         }
     };
 
+    const UserActionMenu = ({ user }) => (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-full">
+                    <MoreHorizontal className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 shadow-xl border-slate-200">
+                <DropdownMenuItem className="cursor-pointer font-medium py-2">
+                    <UserCog className="mr-2 h-4 w-4 text-slate-500" /> แก้ไขข้อมูล
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer font-medium py-2">
+                    <Mail className="mr-2 h-4 w-4 text-slate-500" /> ส่งข้อความ
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="cursor-pointer font-medium py-2 text-rose-600 focus:text-rose-700 focus:bg-rose-50">
+                    <Ban className="mr-2 h-4 w-4" /> ระงับการใช้งาน
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+
     return (
         <div className="space-y-6 max-w-7xl mx-auto font-sans">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">จัดการผู้ใช้งาน (Users)</h2>
-                    <p className="text-slate-500 mt-1">รายชื่อผู้ใช้งานทั้งหมดและสิทธิ์การเข้าถึง</p>
+                    <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-3">
+                        <div className="p-2.5 bg-indigo-100 rounded-2xl shadow-sm shrink-0">
+                            <Users className="text-indigo-600 h-6 w-6 sm:h-7 sm:w-7" />
+                        </div>
+                        จัดการผู้ใช้งาน
+                    </h2>
+                    <p className="text-slate-500 mt-1 ml-1 text-sm">รายชื่อผู้ใช้งานทั้งหมดและสิทธิ์การเข้าถึง</p>
                 </div>
-                <Button variant="outline" className="gap-2 bg-white hover:bg-slate-50 border-slate-300 shadow-sm text-slate-700 font-medium">
+                <Button variant="outline" className="gap-2 bg-white hover:bg-slate-50 border-slate-300 shadow-sm text-slate-700 font-medium w-full sm:w-auto">
                     <Download size={16} /> Export Users
                 </Button>
             </div>
 
             <div className="bg-white rounded-xl border border-slate-200 shadow-lg shadow-slate-200/40 overflow-hidden">
-                <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row gap-4 justify-between items-center">
-                    <div className="relative w-full sm:w-96 group">
+                {/* Toolbar */}
+                <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center">
+                    <div className="relative flex-1 group">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                         <Input
                             placeholder="ค้นหาชื่อ, อีเมล, หรือ ID..."
-                            className="pl-10 bg-white border-slate-200 focus-visible:ring-indigo-500/20 shadow-sm"
+                            className="pl-10 bg-white border-slate-200 focus-visible:ring-indigo-500/20 shadow-sm w-full"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <Button variant="outline" size="sm" className="gap-2 bg-white border-dashed border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-400 font-medium">
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" className="flex-1 sm:flex-none gap-2 bg-white border-dashed border-slate-300 text-slate-600 hover:bg-slate-50 font-medium">
                             <Filter size={14} /> สถานะ
                         </Button>
-                        <Button variant="outline" size="sm" className="gap-2 bg-white border-dashed border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-400 font-medium">
+                        <Button variant="outline" size="sm" className="flex-1 sm:flex-none gap-2 bg-white border-dashed border-slate-300 text-slate-600 hover:bg-slate-50 font-medium">
                             <UserCog size={14} /> บทบาท
                         </Button>
                     </div>
                 </div>
 
-                <div className="relative w-full overflow-auto">
-                    <Table>
-                        <TableHeader className="bg-slate-50/80 sticky top-0 z-10 backdrop-blur-sm">
-                            <TableRow className="hover:bg-transparent border-slate-200">
-                                <TableHead className="font-bold text-slate-700 w-[80px]">ID</TableHead>
-                                <TableHead className="font-bold text-slate-700">ผู้ใช้งาน</TableHead>
-                                <TableHead className="font-bold text-slate-700">บทบาท</TableHead>
-                                <TableHead className="font-bold text-slate-700">วันที่สมัคร</TableHead>
-                                <TableHead className="font-bold text-slate-700">สถานะ</TableHead>
-                                <TableHead className="text-right font-bold text-slate-700">จัดการ</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
+                {loading ? (
+                    <div className="p-16 flex items-center justify-center text-slate-400 font-medium">
+                        กำลังโหลด...
+                    </div>
+                ) : users.length === 0 ? (
+                    <div className="p-16 flex items-center justify-center text-slate-400 font-medium">
+                        ไม่พบผู้ใช้งาน
+                    </div>
+                ) : (
+                    <>
+                        {/* Mobile Card View */}
+                        <div className="md:hidden divide-y divide-slate-100">
                             {users.map((user) => (
-                                <TableRow key={user._id} className="hover:bg-slate-50 transition-all border-b border-slate-100 last:border-0">
-                                    <TableCell className="font-mono text-[10px] font-semibold text-slate-500">{user._id.substring(0, 8)}...</TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-3">
-                                            <Avatar className="h-9 w-9 border border-slate-200">
-                                                <AvatarImage src={user.avatar} />
-                                                <AvatarFallback className="bg-slate-100 text-slate-600 font-bold">{user.firstname.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-slate-800 text-sm">{user.firstname} {user.lastname}</span>
-                                                <span className="text-xs text-slate-500">{user.email}</span>
-                                            </div>
+                                <div key={user._id} className="p-4 space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-11 w-11 border border-slate-200 shrink-0">
+                                            <AvatarImage src={user.avatar} />
+                                            <AvatarFallback className="bg-slate-100 text-slate-600 font-bold">{user.firstname.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-bold text-slate-800 text-sm truncate">{user.firstname} {user.lastname}</p>
+                                            <p className="text-xs text-slate-500 truncate">{user.email}</p>
                                         </div>
-                                    </TableCell>
-                                    <TableCell>{getRoleBadge(user.role)}</TableCell>
-                                    <TableCell className="text-sm text-slate-600">{new Date(user.createdAt).toLocaleDateString()}</TableCell>
-                                    <TableCell>{getStatusBadge(user.isSuspended)}</TableCell>
-                                    <TableCell className="text-right">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-full">
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="w-48 shadow-xl border-slate-200">
-                                                <DropdownMenuItem className="cursor-pointer font-medium py-2">
-                                                    <UserCog className="mr-2 h-4 w-4 text-slate-500" /> แก้ไขข้อมูล
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem className="cursor-pointer font-medium py-2">
-                                                    <Mail className="mr-2 h-4 w-4 text-slate-500" /> ส่งข้อความ
-                                                </DropdownMenuItem>
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuItem className="cursor-pointer font-medium py-2 text-rose-600 focus:text-rose-700 focus:bg-rose-50">
-                                                    <Ban className="mr-2 h-4 w-4" /> ระงับการใช้งาน
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                </TableRow>
+                                        <UserActionMenu user={user} />
+                                    </div>
+
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        {getRoleBadge(user.role)}
+                                        {getStatusBadge(user.isSuspended)}
+                                    </div>
+
+                                    <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                                        <Calendar size={11} />
+                                        <span>สมัครเมื่อ {new Date(user.createdAt).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}</span>
+                                        <span className="ml-2 font-mono text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-400">
+                                            {user._id.substring(0, 8)}...
+                                        </span>
+                                    </div>
+                                </div>
                             ))}
-                        </TableBody>
-                    </Table>
-                </div>
+                        </div>
+
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block relative w-full overflow-auto">
+                            <Table>
+                                <TableHeader className="bg-slate-50/80 sticky top-0 z-10 backdrop-blur-sm">
+                                    <TableRow className="hover:bg-transparent border-slate-200">
+                                        <TableHead className="font-bold text-slate-700 w-[80px]">ID</TableHead>
+                                        <TableHead className="font-bold text-slate-700">ผู้ใช้งาน</TableHead>
+                                        <TableHead className="font-bold text-slate-700">บทบาท</TableHead>
+                                        <TableHead className="font-bold text-slate-700">วันที่สมัคร</TableHead>
+                                        <TableHead className="font-bold text-slate-700">สถานะ</TableHead>
+                                        <TableHead className="text-right font-bold text-slate-700">จัดการ</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {users.map((user) => (
+                                        <TableRow key={user._id} className="hover:bg-slate-50 transition-all border-b border-slate-100 last:border-0">
+                                            <TableCell className="font-mono text-[10px] font-semibold text-slate-500">{user._id.substring(0, 8)}...</TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-3">
+                                                    <Avatar className="h-9 w-9 border border-slate-200">
+                                                        <AvatarImage src={user.avatar} />
+                                                        <AvatarFallback className="bg-slate-100 text-slate-600 font-bold">{user.firstname.charAt(0)}</AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-slate-800 text-sm">{user.firstname} {user.lastname}</span>
+                                                        <span className="text-xs text-slate-500">{user.email}</span>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>{getRoleBadge(user.role)}</TableCell>
+                                            <TableCell className="text-sm text-slate-600">{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                                            <TableCell>{getStatusBadge(user.isSuspended)}</TableCell>
+                                            <TableCell className="text-right">
+                                                <UserActionMenu user={user} />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );
