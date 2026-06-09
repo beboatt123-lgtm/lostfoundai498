@@ -3,7 +3,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 import {
     QrCode, Camera, CameraOff, Search, Loader2, CheckCircle2,
     AlertCircle, MapPin, Calendar, Clock, Phone, CreditCard,
-    Warehouse, RefreshCw, XCircle, CheckCircle, User as UserIcon, Sparkles
+    Warehouse, RefreshCw, XCircle, CheckCircle, User as UserIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
