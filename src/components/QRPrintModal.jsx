@@ -1,5 +1,5 @@
 import { QRCodeSVG } from 'qrcode.react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Printer, X } from 'lucide-react';
 
@@ -13,6 +13,8 @@ const QRPrintModal = ({ item, open, onClose }) => {
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="max-w-sm rounded-2xl border-none shadow-2xl p-0 overflow-hidden">
+                <DialogTitle className="sr-only">QR Code — {item?.title}</DialogTitle>
+                <DialogDescription className="sr-only">QR Code สำหรับพิมพ์ติดสิ่งของ</DialogDescription>
                 {/* Print area */}
                 <div id="print-area" className="p-8 bg-white text-center space-y-4">
                     <div className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Lost &amp; Found System</div>
@@ -23,7 +25,7 @@ const QRPrintModal = ({ item, open, onClose }) => {
                                 value={item.customId || item._id}
                                 size={180}
                                 level="H"
-                                includeMargin={false}
+                                marginSize={0}
                             />
                         </div>
                     </div>

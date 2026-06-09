@@ -29,6 +29,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -312,6 +313,7 @@ const AdminItems = () => {
                         <DialogTitle className="text-xl font-bold flex items-center gap-2">
                             <Pencil className="text-blue-600" size={20} /> แก้ไขข้อมูลรายการ
                         </DialogTitle>
+                        <DialogDescription className="sr-only">แก้ไขข้อมูลรายการสิ่งของในระบบ</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-2 max-h-[65vh] overflow-y-auto pr-1">
                         <div className="space-y-1.5">
