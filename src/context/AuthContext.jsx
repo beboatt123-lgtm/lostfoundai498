@@ -8,17 +8,31 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const isTokenExpired = (token) => {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return payload.exp * 1000 < Date.now();
+        } catch {
+            return true;
+        }
+    };
+
     // Check if user is logged in
     useEffect(() => {
         const checkUser = async () => {
             const token = localStorage.getItem('token');
             if (token) {
-                try {
-                    const res = await api.get('/auth/me');
-                    setUser(res.data);
-                } catch (err) {
+                if (isTokenExpired(token)) {
                     localStorage.removeItem('token');
                     setUser(null);
+                } else {
+                    try {
+                        const res = await api.get('/auth/me');
+                        setUser(res.data);
+                    } catch {
+                        localStorage.removeItem('token');
+                        setUser(null);
+                    }
                 }
             }
             setLoading(false);
