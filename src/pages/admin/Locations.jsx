@@ -9,16 +9,16 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-    MapPin, 
-    Plus, 
-    Search, 
-    Loader2, 
-    MoreHorizontal, 
-    Edit, 
-    Trash2, 
-    CheckCircle2, 
-    XCircle 
+import {
+    MapPin,
+    Plus,
+    Search,
+    Loader2,
+    MoreHorizontal,
+    Edit,
+    Trash2,
+    CheckCircle2,
+    XCircle
 } from "lucide-react";
 import {
     Dialog,
@@ -44,13 +44,9 @@ const AdminLocations = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
+    const [modalMode, setModalMode] = useState('add');
     const [selectedLocation, setSelectedLocation] = useState(null);
-    const [formData, setFormData] = useState({
-        name: '',
-        description: '',
-        isActive: true
-    });
+    const [formData, setFormData] = useState({ name: '', description: '', isActive: true });
     const [submitLoading, setSubmitLoading] = useState(false);
 
     const fetchLocations = async () => {
@@ -73,11 +69,7 @@ const AdminLocations = () => {
         setModalMode(mode);
         if (mode === 'edit' && location) {
             setSelectedLocation(location);
-            setFormData({
-                name: location.name,
-                description: location.description || '',
-                isActive: location.isActive
-            });
+            setFormData({ name: location.name, description: location.description || '', isActive: location.isActive });
         } else {
             setSelectedLocation(null);
             setFormData({ name: '', description: '', isActive: true });
@@ -120,103 +112,127 @@ const AdminLocations = () => {
         loc.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const StatusBadge = ({ isActive }) => isActive ? (
+        <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-xs bg-emerald-50 w-fit px-2.5 py-1 rounded-full border border-emerald-100">
+            <CheckCircle2 size={12} /> เปิดใช้งาน
+        </div>
+    ) : (
+        <div className="flex items-center gap-1.5 text-slate-400 font-bold text-xs bg-slate-50 w-fit px-2.5 py-1 rounded-full border border-slate-100">
+            <XCircle size={12} /> ปิดใช้งาน
+        </div>
+    );
+
+    const LocationActionMenu = ({ loc }) => (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-9 w-9 p-0 text-slate-400 hover:text-slate-900 rounded-full transition-colors">
+                    <MoreHorizontal className="h-5 w-5" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40 rounded-xl shadow-xl border-slate-200">
+                <DropdownMenuLabel className="font-bold text-slate-500">จัดการข้อมูล</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="cursor-pointer py-2.5" onClick={() => handleOpenModal('edit', loc)}>
+                    <Edit className="mr-2.5 h-4 w-4 text-blue-500" /> แก้ไขข้อมูล
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer py-2.5 text-rose-600 focus:text-rose-700 focus:bg-rose-50" onClick={() => handleDelete(loc._id)}>
+                    <Trash2 className="mr-2.5 h-4 w-4" /> ลบสถานที่
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+
     return (
         <div className="space-y-6 max-w-5xl mx-auto font-sans pb-10">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-4">
-                        <div className="p-2.5 bg-blue-100 rounded-2xl shadow-sm">
-                            <MapPin className="text-blue-600 h-7 w-7" />
+                    <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-3">
+                        <div className="p-2.5 bg-blue-100 rounded-2xl shadow-sm shrink-0">
+                            <MapPin className="text-blue-600 h-6 w-6 sm:h-7 sm:w-7" />
                         </div>
-                        จัดการสถานที่ (Locations)
+                        จัดการสถานที่
                     </h2>
-                    <p className="text-slate-500 mt-2 ml-1">จัดการรายชื่อสถานที่หลักสำหรับเลือกในระบบแจ้งของหาย</p>
+                    <p className="text-slate-500 mt-2 ml-1 text-sm">จัดการรายชื่อสถานที่หลักสำหรับเลือกในระบบแจ้งของหาย</p>
                 </div>
-                <Button 
+                <Button
                     onClick={() => handleOpenModal('add')}
-                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-12 px-6 font-bold shadow-lg shadow-blue-200 gap-2"
+                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-11 px-5 font-bold shadow-lg shadow-blue-200 gap-2 w-full sm:w-auto"
                 >
-                    <Plus size={20} /> เพิ่มสถานที่ใหม่
+                    <Plus size={18} /> เพิ่มสถานที่ใหม่
                 </Button>
             </div>
 
             <div className="bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/40 overflow-hidden">
                 {/* Toolbar */}
-                <div className="p-5 border-b border-slate-100 bg-slate-50/50">
+                <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/50">
                     <div className="relative w-full sm:w-96">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input
                             placeholder="ค้นหาชื่อสถานที่..."
-                            className="pl-10 h-11 bg-white border-slate-200 focus-visible:ring-blue-500/20 shadow-sm rounded-xl font-medium"
+                            className="pl-10 h-11 bg-white border-slate-200 focus-visible:ring-blue-500/20 shadow-sm rounded-xl font-medium w-full"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
                 </div>
 
-                <div className="relative w-full overflow-auto">
-                    {loading ? (
-                        <div className="p-20 flex flex-col items-center justify-center gap-4">
-                            <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
-                            <p className="text-slate-400 font-medium">กำลังโหลดรายชื่อสถานที่...</p>
+                {loading ? (
+                    <div className="p-20 flex flex-col items-center justify-center gap-4">
+                        <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
+                        <p className="text-slate-400 font-medium">กำลังโหลดรายชื่อสถานที่...</p>
+                    </div>
+                ) : filteredLocations.length === 0 ? (
+                    <div className="p-16 flex items-center justify-center text-slate-400 font-medium">
+                        ยังไม่มีข้อมูลสถานที่ในระบบ
+                    </div>
+                ) : (
+                    <>
+                        {/* Mobile Card View */}
+                        <div className="md:hidden divide-y divide-slate-100">
+                            {filteredLocations.map((loc) => (
+                                <div key={loc._id} className="p-4 flex items-center gap-3">
+                                    <div className="h-9 w-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
+                                        <MapPin size={16} className="text-blue-500" />
+                                    </div>
+                                    <div className="flex-1 min-w-0 space-y-1">
+                                        <p className="font-bold text-slate-900 text-sm truncate">{loc.name}</p>
+                                        {loc.description && (
+                                            <p className="text-xs text-slate-500 truncate">{loc.description}</p>
+                                        )}
+                                        <StatusBadge isActive={loc.isActive} />
+                                    </div>
+                                    <LocationActionMenu loc={loc} />
+                                </div>
+                            ))}
                         </div>
-                    ) : (
-                        <Table>
-                            <TableHeader className="bg-slate-50/80 sticky top-0 z-10 backdrop-blur-md">
-                                <TableRow className="hover:bg-transparent border-slate-200 h-14">
-                                    <TableHead className="font-bold text-slate-800 px-6">ชื่อสถานที่</TableHead>
-                                    <TableHead className="font-bold text-slate-800">คำอธิบาย</TableHead>
-                                    <TableHead className="font-bold text-slate-800">สถานะ</TableHead>
-                                    <TableHead className="text-right font-bold text-slate-800 pr-6">จัดการ</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredLocations.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={4} className="h-60 text-center text-slate-400 font-medium">ยังไม่มีข้อมูลสถานที่ในระบบ</TableCell>
+
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block relative w-full overflow-auto">
+                            <Table>
+                                <TableHeader className="bg-slate-50/80 sticky top-0 z-10 backdrop-blur-md">
+                                    <TableRow className="hover:bg-transparent border-slate-200 h-14">
+                                        <TableHead className="font-bold text-slate-800 px-6">ชื่อสถานที่</TableHead>
+                                        <TableHead className="font-bold text-slate-800">คำอธิบาย</TableHead>
+                                        <TableHead className="font-bold text-slate-800">สถานะ</TableHead>
+                                        <TableHead className="text-right font-bold text-slate-800 pr-6">จัดการ</TableHead>
                                     </TableRow>
-                                ) : (
-                                    filteredLocations.map((loc) => (
+                                </TableHeader>
+                                <TableBody>
+                                    {filteredLocations.map((loc) => (
                                         <TableRow key={loc._id} className="hover:bg-slate-50/50 transition-all border-b border-slate-100 last:border-0 h-16">
                                             <TableCell className="px-6 font-bold text-slate-900">{loc.name}</TableCell>
                                             <TableCell className="text-slate-500 text-sm">{loc.description || '-'}</TableCell>
-                                            <TableCell>
-                                                {loc.isActive ? (
-                                                    <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-xs bg-emerald-50 w-fit px-2.5 py-1 rounded-full border border-emerald-100">
-                                                        <CheckCircle2 size={12} /> เปิดใช้งาน
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex items-center gap-1.5 text-slate-400 font-bold text-xs bg-slate-50 w-fit px-2.5 py-1 rounded-full border border-slate-100">
-                                                        <XCircle size={12} /> ปิดใช้งาน
-                                                    </div>
-                                                )}
-                                            </TableCell>
+                                            <TableCell><StatusBadge isActive={loc.isActive} /></TableCell>
                                             <TableCell className="text-right pr-6">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" className="h-9 w-9 p-0 text-slate-400 hover:text-slate-900 rounded-full transition-colors">
-                                                            <MoreHorizontal className="h-5 w-5" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" className="w-40 rounded-xl shadow-xl border-slate-200">
-                                                        <DropdownMenuLabel className="font-bold text-slate-500">จัดการข้อมูล</DropdownMenuLabel>
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem className="cursor-pointer py-2.5" onClick={() => handleOpenModal('edit', loc)}>
-                                                            <Edit className="mr-2.5 h-4 w-4 text-blue-500" /> แก้ไขข้อมูล
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem className="cursor-pointer py-2.5 text-rose-600 focus:text-rose-700 focus:bg-rose-50" onClick={() => handleDelete(loc._id)}>
-                                                            <Trash2 className="mr-2.5 h-4 w-4" /> ลบสถานที่
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
+                                                <LocationActionMenu loc={loc} />
                                             </TableCell>
                                         </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    )}
-                </div>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </>
+                )}
             </div>
 
             {/* Add/Edit Modal */}
@@ -230,7 +246,7 @@ const AdminLocations = () => {
                     <form onSubmit={handleSubmit} className="space-y-5 mt-4">
                         <div className="space-y-2">
                             <Label htmlFor="name" className="text-xs font-black uppercase tracking-widest text-slate-500">ชื่อสถานที่ (เช่น ตึก A6)</Label>
-                            <Input 
+                            <Input
                                 id="name"
                                 placeholder="เช่น ตึก A6 ชั้น 1"
                                 className="h-12 bg-slate-50 border-slate-200 rounded-xl font-bold"
@@ -242,7 +258,7 @@ const AdminLocations = () => {
 
                         <div className="space-y-2">
                             <Label htmlFor="description" className="text-xs font-black uppercase tracking-widest text-slate-500">คำอธิบายเพิ่มเติม (ถ้ามี)</Label>
-                            <Input 
+                            <Input
                                 id="description"
                                 placeholder="คำอธิบายสั้นๆ..."
                                 className="h-12 bg-slate-50 border-slate-200 rounded-xl"
@@ -252,8 +268,8 @@ const AdminLocations = () => {
                         </div>
 
                         <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                            <input 
-                                type="checkbox" 
+                            <input
+                                type="checkbox"
                                 id="isActive"
                                 className="w-5 h-5 rounded-md accent-blue-600 cursor-pointer"
                                 checked={formData.isActive}
@@ -263,16 +279,16 @@ const AdminLocations = () => {
                         </div>
 
                         <DialogFooter className="gap-3 pt-4 sm:justify-between">
-                            <Button 
-                                type="button" 
-                                variant="outline" 
+                            <Button
+                                type="button"
+                                variant="outline"
                                 className="flex-1 h-12 rounded-xl font-bold"
                                 onClick={() => setIsModalOpen(false)}
                             >
                                 ยกเลิก
                             </Button>
-                            <Button 
-                                type="submit" 
+                            <Button
+                                type="submit"
                                 disabled={submitLoading}
                                 className="flex-1 h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-200"
                             >
