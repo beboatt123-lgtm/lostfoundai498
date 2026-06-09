@@ -64,6 +64,7 @@ const ReportItem = () => {
         locationMain: '',
         locationDetail: '',
         date: '',
+        timePeriod: '',
         reporterIdCard: '',
         reporterPhone: '',
         storagePosition: '',
@@ -142,6 +143,10 @@ const ReportItem = () => {
 
     const handleLocationMainChange = (value) => {
         setFormData({ ...formData, locationMain: value });
+    };
+
+    const handleTimePeriodChange = (value) => {
+        setFormData({ ...formData, timePeriod: value });
     };
 
     const handleImageChange = (e) => {
@@ -245,6 +250,7 @@ const ReportItem = () => {
             data.append('locationMain', formData.locationMain);
             data.append('locationDetail', formData.locationDetail);
             data.append('date', formData.date);
+            if (isLost) data.append('timePeriod', formData.timePeriod || '');
             data.append('reporterIdCard', cleanedIdCard);
             data.append('reporterPhone', cleanedPhone);
             data.append('type', type);
@@ -425,7 +431,7 @@ const ReportItem = () => {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="date" className="text-sm font-bold text-slate-700">{isLost ? 'วันที่หาย' : 'วันที่พบ'} <span className="text-rose-500">*</span></Label>
+                                            <Label htmlFor="date" className="text-sm font-bold text-slate-700">{isLost ? 'วันที่คิดว่าทำหาย' : 'วันที่พบ'} <span className="text-rose-500">*</span></Label>
                                             <div className="relative">
                                                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                                                 <Input
@@ -438,6 +444,29 @@ const ReportItem = () => {
                                                 />
                                             </div>
                                         </div>
+
+                                        {isLost && (
+                                            <div className="space-y-2">
+                                                <Label className="text-sm font-bold text-slate-700">
+                                                    ช่วงเวลาไหนที่คิดว่าหาย <span className="text-slate-400 font-normal">(ไม่บังคับ)</span>
+                                                </Label>
+                                                <Select onValueChange={handleTimePeriodChange} value={formData.timePeriod}>
+                                                    <SelectTrigger className="h-11 border-slate-200 rounded-lg font-medium">
+                                                        <div className="flex items-center gap-2">
+                                                            <Clock size={16} className="text-slate-400" />
+                                                            <SelectValue placeholder="เลือกช่วงเวลา..." />
+                                                        </div>
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="morning">ช่วงเช้า (06:00 – 12:00)</SelectItem>
+                                                        <SelectItem value="afternoon">ช่วงกลางวัน – บ่าย (12:00 – 17:00)</SelectItem>
+                                                        <SelectItem value="evening">ช่วงเย็น (17:00 – 20:00)</SelectItem>
+                                                        <SelectItem value="night">ช่วงกลางคืน (20:00 – 06:00)</SelectItem>
+                                                        <SelectItem value="unknown">ไม่แน่ใจ</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="space-y-6">
