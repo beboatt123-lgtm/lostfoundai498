@@ -120,7 +120,7 @@ const ReportItem = () => {
         text: 'text-rose-600',
         bg: 'bg-rose-50',
         icon: AlertCircle,
-        title: 'แบบฟอร์มแจ้งของหาย',
+        title: 'แบบฟอร์มแจ้งทำของหาย',
         subtitle: 'ระบุข้อมูลสิ่งของที่คุณทำหายเพื่อให้ระบบช่วยทำการค้นหา'
     } : {
         primary: 'emerald',
@@ -128,7 +128,7 @@ const ReportItem = () => {
         text: 'text-emerald-600',
         bg: 'bg-emerald-50',
         icon: CheckCircle2,
-        title: 'แบบฟอร์มแจ้งพบสิ่งของ',
+        title: 'แบบฟอร์มแจ้งเจอของ',
         subtitle: 'ระบุรายละเอียดสิ่งของที่คุณพบเพื่อส่งคืนเจ้าของ'
     };
 
