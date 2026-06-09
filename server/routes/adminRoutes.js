@@ -7,15 +7,17 @@ const {
     createUser,
     deleteUser
 } = require('../controllers/adminController');
-const { protect, admin } = require('../middleware/authMiddleware');
+const { protect, admin, adminOnly } = require('../middleware/authMiddleware');
 
 router.get('/stats', protect, admin, getStats);
+
+// User management — admin only (staff cannot access)
 router.route('/users')
-    .get(protect, admin, getAllUsers)
-    .post(protect, admin, createUser);
+    .get(protect, adminOnly, getAllUsers)
+    .post(protect, adminOnly, createUser);
 
 router.route('/users/:id')
-    .put(protect, admin, updateUser)
-    .delete(protect, admin, deleteUser);
+    .put(protect, adminOnly, updateUser)
+    .delete(protect, adminOnly, deleteUser);
 
 module.exports = router;

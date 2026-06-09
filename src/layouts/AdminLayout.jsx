@@ -60,19 +60,32 @@ const AdminLayout = ({ children }) => {
         return <div className="h-screen w-full flex items-center justify-center bg-[#0F172A] text-white">กำลังโหลด...</div>;
     }
 
-    const menuItems = [
+    const isAdminOnly = user?.role === 'admin';
+
+    const allMenuItems = [
         { icon: <LayoutDashboard size={20} />, label: 'ภาพรวมระบบ', path: '/admin' },
         { icon: <Package size={20} className="text-rose-400" />, label: 'จัดการของหาย', path: '/admin/lost' },
         { icon: <MapPin size={20} className="text-emerald-400" />, label: 'จัดการของที่พบ', path: '/admin/found' },
-        { icon: <MapPin size={20} className="text-blue-400" />, label: 'จัดการสถานที่', path: '/admin/locations' },
+        { icon: <MapPin size={20} className="text-blue-400" />, label: 'จัดการสถานที่', path: '/admin/locations', adminOnly: true },
         { icon: <QrCode size={20} className="text-indigo-400" />, label: 'สแกน QR Code', path: '/admin/qr-scanner' },
-        { icon: <Users size={20} />, label: 'บัญชีผู้ใช้งาน', path: '/admin/users' },
+        { icon: <Users size={20} />, label: 'บัญชีผู้ใช้งาน', path: '/admin/users', adminOnly: true },
     ];
 
-    const settingItems = [
-        { icon: <ShieldCheck size={20} />, label: 'จัดการผู้ดูแล (Staff)', path: '/admin/staff' },
-        { icon: <Settings size={20} />, label: 'ตั้งค่าระบบ', path: '/admin/settings' },
+    const allSettingItems = [
+        { icon: <ShieldCheck size={20} />, label: 'จัดการผู้ดูแล (Staff)', path: '/admin/staff', adminOnly: true },
+        { icon: <Settings size={20} />, label: 'ตั้งค่าระบบ', path: '/admin/settings', adminOnly: true },
     ];
+
+    const menuItems = allMenuItems.filter(item => !item.adminOnly || isAdminOnly);
+    const settingItems = allSettingItems.filter(item => !item.adminOnly || isAdminOnly);
+
+    // Redirect staff away from admin-only pages
+    const adminOnlyPaths = ['/admin/locations', '/admin/users', '/admin/staff', '/admin/settings'];
+    useEffect(() => {
+        if (user && user.role === 'staff' && adminOnlyPaths.some(p => location.pathname.startsWith(p))) {
+            navigate('/admin');
+        }
+    }, [location.pathname, user]);
 
     const isActive = (path) => {
         if (path === '/admin' && location.pathname === '/admin') return true;

@@ -41,9 +41,10 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import api from '../../lib/axios';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 const AdminFoundItems = () => {
+    const { user: currentUser } = useAuth();
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -91,7 +92,6 @@ const AdminFoundItems = () => {
     });
     const [receiverImage, setReceiverImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
-    const navigate = useNavigate();
 
     const categoryOptions = [
         { value: "all", label: "ทุกหมวดหมู่" },
@@ -387,15 +387,17 @@ const AdminFoundItems = () => {
                         >
                             รีเฟรชข้อมูล
                         </Button>
-                        <Button
-                            variant="outline"
-                            onClick={handleExport}
-                            disabled={exporting}
-                            className="flex-1 sm:flex-none gap-2 bg-white text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 border-emerald-200 h-10 rounded-xl px-4 transition-all font-bold text-sm"
-                        >
-                            {exporting ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
-                            Excel
-                        </Button>
+                        {currentUser?.role === 'admin' && (
+                            <Button
+                                variant="outline"
+                                onClick={handleExport}
+                                disabled={exporting}
+                                className="flex-1 sm:flex-none gap-2 bg-white text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 border-emerald-200 h-10 rounded-xl px-4 transition-all font-bold text-sm"
+                            >
+                                {exporting ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
+                                Excel
+                            </Button>
+                        )}
                         <Button
                             onClick={() => setIsAddModalOpen(true)}
                             className="flex-1 sm:flex-none gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200 h-10 rounded-xl px-4 transition-all font-bold text-sm"

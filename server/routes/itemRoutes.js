@@ -13,11 +13,11 @@ const {
     generateAIImage
 } = require('../controllers/itemController');
 
-const { protect, optionalProtect, admin } = require('../middleware/authMiddleware');
+const { protect, optionalProtect, adminOnly } = require('../middleware/authMiddleware');
 
 const upload = multer({ storage });
 
-router.get('/export', protect, admin, exportItems);
+router.get('/export', protect, adminOnly, exportItems);
 router.post('/ai-search', optionalProtect, aiSearch);
 router.post('/generate-image', protect, generateAIImage);
 
