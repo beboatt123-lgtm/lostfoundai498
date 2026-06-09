@@ -23,6 +23,7 @@ import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Searc
 import { Textarea } from "@/components/ui/textarea";
 import QRPrintModal from '@/components/QRPrintModal';
 import AdminAddItemModal from '@/components/AdminAddItemModal';
+import AdminItemDetailModal from '@/components/AdminItemDetailModal';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -57,6 +58,8 @@ const AdminFoundItems = () => {
     const [qrItem, setQrItem] = useState(null);
     const [isQrModalOpen, setIsQrModalOpen] = useState(false);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [detailItemId, setDetailItemId] = useState(null);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
     const [notesItemId, setNotesItemId] = useState(null);
     const [notesValue, setNotesValue] = useState('');
@@ -241,8 +244,8 @@ const AdminFoundItems = () => {
             <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-xl border-slate-200">
                 <DropdownMenuLabel className="font-bold text-slate-500">จัดการข้อมูล</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer py-2.5" onClick={() => navigate(`/item/${item._id}`)}>
-                    <Eye className="mr-2.5 h-4 w-4 text-slate-400" /> ดูรายละเอียดจริง
+                <DropdownMenuItem className="cursor-pointer py-2.5" onClick={() => { setDetailItemId(item._id); setIsDetailModalOpen(true); }}>
+                    <Eye className="mr-2.5 h-4 w-4 text-slate-400" /> ดูรายละเอียด
                 </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer py-2.5 text-amber-600 font-bold focus:text-amber-700 focus:bg-amber-50" onClick={() => handleNotesClick(item)}>
                     <FileText className="mr-2.5 h-4 w-4" /> กรอกหมายเหตุ
@@ -367,11 +370,11 @@ const AdminFoundItems = () => {
                                     <div className="flex items-start gap-3">
                                         <div
                                             className="h-14 w-14 rounded-xl overflow-hidden bg-slate-100 border border-slate-100 shrink-0 cursor-pointer"
-                                            onClick={() => navigate(`/item/${item._id}`)}
+                                            onClick={() => { setDetailItemId(item._id); setIsDetailModalOpen(true); }}
                                         >
                                             <img src={item.images?.[0] || 'https://via.placeholder.com/150'} alt="" className="w-full h-full object-cover" />
                                         </div>
-                                        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/item/${item._id}`)}>
+                                        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => { setDetailItemId(item._id); setIsDetailModalOpen(true); }}>
                                             <p className="font-bold text-slate-900 text-sm leading-tight line-clamp-2">{item.title}</p>
                                             <div className="flex items-center gap-2 mt-1 flex-wrap">
                                                 <span className="text-xs text-slate-400 flex items-center gap-1">
@@ -452,7 +455,7 @@ const AdminFoundItems = () => {
                                     {filteredItems.map((item) => (
                                         <TableRow key={item._id} className="hover:bg-slate-50/50 transition-all border-b border-slate-100 last:border-0 h-20">
                                             <TableCell className="px-6">
-                                                <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate(`/item/${item._id}`)}>
+                                                <div className="flex items-center gap-4 cursor-pointer" onClick={() => { setDetailItemId(item._id); setIsDetailModalOpen(true); }}>
                                                     <div className="h-12 w-12 rounded-xl overflow-hidden bg-slate-100 border border-slate-100 shrink-0">
                                                         <img src={item.images?.[0] || 'https://via.placeholder.com/150'} alt="" className="w-full h-full object-cover" />
                                                     </div>
@@ -697,6 +700,11 @@ const AdminFoundItems = () => {
                 onClose={() => setIsAddModalOpen(false)}
                 type="found"
                 onSuccess={() => { setIsAddModalOpen(false); fetchFoundItems(); }}
+            />
+            <AdminItemDetailModal
+                itemId={detailItemId}
+                open={isDetailModalOpen}
+                onClose={() => setIsDetailModalOpen(false)}
             />
 
             {/* Notes Modal */}
