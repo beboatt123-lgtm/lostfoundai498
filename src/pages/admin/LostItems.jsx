@@ -89,15 +89,15 @@ const AdminLostItems = () => {
         { value: "others", label: "อื่นๆ" },
     ];
 
-    const fetchLostItems = async () => {
+    const fetchLostItems = async (silent = false) => {
         try {
-            setLoading(true);
+            if (!silent) setLoading(true);
             const res = await api.get('items?type=lost&status=all');
             setItems(res.data);
         } catch (err) {
             console.error("Failed to fetch lost items", err);
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 
@@ -111,14 +111,14 @@ const AdminLostItems = () => {
     };
 
     useEffect(() => {
-        fetchLostItems();
-        const interval = setInterval(fetchLostItems, 15000);
+        fetchLostItems(false);
+        const interval = setInterval(() => fetchLostItems(true), 15000);
         return () => clearInterval(interval);
     }, []);
 
     const filteredItems = items.filter(item => {
         const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                              item.location.toLowerCase().includes(searchTerm.toLowerCase());
+                              (item.location || item.locationMain || '').toLowerCase().includes(searchTerm.toLowerCase());
 
         let matchesDate = true;
         if (filterDate) {
