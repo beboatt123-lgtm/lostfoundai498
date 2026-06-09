@@ -49,8 +49,7 @@ const AdminLayout = ({ children }) => {
 
         if (!loading && user && (user.role === 'admin' || user.role === 'staff')) {
             fetchPendingItems();
-            // Poll every 30 seconds for new notifications
-            const interval = setInterval(fetchPendingItems, 30000);
+            const interval = setInterval(fetchPendingItems, 10000);
             return () => clearInterval(interval);
         }
     }, [user, loading]);
@@ -187,7 +186,9 @@ const AdminLayout = ({ children }) => {
                                 <Button variant="ghost" size="icon" className="relative text-slate-500 hover:bg-slate-100/80 hover:text-slate-700 w-10 h-10 rounded-full">
                                     <Bell size={20} />
                                     {pendingItems.length > 0 && (
-                                        <span className="absolute top-2 right-2 h-2.5 w-2.5 bg-rose-500 rounded-full border-2 border-white ring-1 ring-rose-500/20"></span>
+                                        <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 border-2 border-white">
+                                            {pendingItems.length > 99 ? '99+' : pendingItems.length}
+                                        </span>
                                     )}
                                 </Button>
                             </DropdownMenuTrigger>

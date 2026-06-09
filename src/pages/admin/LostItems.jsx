@@ -112,6 +112,8 @@ const AdminLostItems = () => {
 
     useEffect(() => {
         fetchLostItems();
+        const interval = setInterval(fetchLostItems, 15000);
+        return () => clearInterval(interval);
     }, []);
 
     const filteredItems = items.filter(item => {
