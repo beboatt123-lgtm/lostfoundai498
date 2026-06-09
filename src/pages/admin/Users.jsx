@@ -25,7 +25,6 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -69,7 +68,7 @@ const AdminUsers = () => {
         }
     };
 
-    const UserActionMenu = ({ user }) => (
+    const UserActionMenu = () => (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-full">
@@ -153,7 +152,7 @@ const AdminUsers = () => {
                                             <p className="font-bold text-slate-800 text-sm truncate">{user.firstname} {user.lastname}</p>
                                             <p className="text-xs text-slate-500 truncate">{user.email}</p>
                                         </div>
-                                        <UserActionMenu user={user} />
+                                        <UserActionMenu />
                                     </div>
 
                                     <div className="flex items-center gap-2 flex-wrap">
@@ -205,7 +204,7 @@ const AdminUsers = () => {
                                             <TableCell className="text-sm text-slate-600">{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                                             <TableCell>{getStatusBadge(user.isSuspended)}</TableCell>
                                             <TableCell className="text-right">
-                                                <UserActionMenu user={user} />
+                                                <UserActionMenu />
                                             </TableCell>
                                         </TableRow>
                                     ))}
