@@ -64,7 +64,6 @@ const AdminStaff = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [addLoading, setAddLoading] = useState(false);
-    const [emailError, setEmailError] = useState('');
     const [formData, setFormData] = useState({
         firstname: '',
         lastname: '',
@@ -75,7 +74,6 @@ const AdminStaff = () => {
 
     const handleAddStaff = async (e) => {
         e.preventDefault();
-        setEmailError('');
         setAddLoading(true);
         try {
             await api.post('/admin/users', formData);
