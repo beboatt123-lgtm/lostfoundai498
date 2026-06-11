@@ -5,219 +5,235 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import {
-    Settings,
-    Bell,
-    Globe,
-    Shield,
-    Save,
-    Database,
-    Zap,
-    Mail,
-    MonitorDot,
-    Loader2
-} from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Settings, Globe, Save, Database, Loader2, Trash2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import api from "@/lib/axios";
 
 const AdminSettings = () => {
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [purging, setPurging] = useState(false);
     const [saved, setSaved] = useState(false);
+    const [purgeResult, setPurgeResult] = useState(null);
+    const [error, setError] = useState('');
 
-    const handleSave = () => {
-        setLoading(true);
-        // Simulate API call
-        setTimeout(() => {
-            setLoading(false);
+    const [form, setForm] = useState({
+        orgName: '',
+        contactPhone: '',
+        contactEmail: '',
+        requireApproval: true,
+        maintenanceMode: false,
+    });
+
+    useEffect(() => {
+        api.get('/admin/settings')
+            .then(res => setForm(res.data))
+            .catch(() => setError('โหลดการตั้งค่าไม่สำเร็จ'))
+            .finally(() => setLoading(false));
+    }, []);
+
+    const handleSave = async () => {
+        setSaving(true);
+        setError('');
+        try {
+            const res = await api.put('/admin/settings', form);
+            setForm(res.data);
             setSaved(true);
             setTimeout(() => setSaved(false), 3000);
-        }, 1500);
+        } catch {
+            setError('บันทึกไม่สำเร็จ กรุณาลองใหม่');
+        } finally {
+            setSaving(false);
+        }
     };
 
+    const handlePurge = async () => {
+        if (!window.confirm('ยืนยันการลบข้อมูลรายการที่ส่งคืนแล้ว/ปิดแล้ว ที่เก่าเกิน 12 เดือน?')) return;
+        setPurging(true);
+        setPurgeResult(null);
+        try {
+            const res = await api.delete('/admin/settings/purge?months=12');
+            setPurgeResult(res.data.deleted);
+        } catch {
+            setError('ลบข้อมูลไม่สำเร็จ');
+        } finally {
+            setPurging(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-64 text-slate-400">
+                <Loader2 className="animate-spin mr-2" /> กำลังโหลด...
+            </div>
+        );
+    }
+
     return (
-        <div className="space-y-8 max-w-5xl mx-auto font-sans pb-20">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-8 max-w-3xl mx-auto font-sans pb-20">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">ตั้งค่าระบบ (System Settings)</h2>
-                    <p className="text-slate-500 mt-2 text-base">ปรับแต่งการทำงานเบื้องหลังและนโยบายของระบบ Lost&Found AI</p>
+                    <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-3">
+                        <div className="p-2.5 bg-slate-100 rounded-2xl shadow-sm shrink-0">
+                            <Settings className="text-slate-600 h-6 w-6" />
+                        </div>
+                        ตั้งค่าระบบ
+                    </h2>
+                    <p className="text-slate-500 mt-1 ml-1 text-sm">ปรับแต่งการทำงานของระบบ Lost &amp; Found</p>
                 </div>
                 {saved && (
-                    <Alert className="bg-emerald-50 border-emerald-200 text-emerald-700 h-10 py-0 flex items-center animate-in fade-in slide-in-from-top-4">
-                        <AlertDescription className="font-bold flex items-center gap-2">
-                            บันทึกการตั้งค่าเรียบร้อยแล้ว
-                        </AlertDescription>
+                    <Alert className="bg-emerald-50 border-emerald-200 text-emerald-700 py-2 flex items-center gap-2 animate-in fade-in slide-in-from-top-4">
+                        <CheckCircle2 size={16} />
+                        <AlertDescription className="font-bold">บันทึกเรียบร้อยแล้ว</AlertDescription>
+                    </Alert>
+                )}
+                {error && (
+                    <Alert className="bg-rose-50 border-rose-200 text-rose-700 py-2">
+                        <AlertDescription className="font-medium">{error}</AlertDescription>
                     </Alert>
                 )}
             </div>
 
-            <Tabs defaultValue="general" className="w-full">
-                <TabsList className="bg-slate-100 p-1 mb-8 h-12 rounded-xl">
-                    <TabsTrigger value="general" className="rounded-lg px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">หลัก</TabsTrigger>
-                    <TabsTrigger value="notifications" className="rounded-lg px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">แจ้งเตือน</TabsTrigger>
-                    <TabsTrigger value="security" className="rounded-lg px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">ความปลอดภัย</TabsTrigger>
-                    <TabsTrigger value="ai" className="rounded-lg px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">AI Engine</TabsTrigger>
-                </TabsList>
+            {/* ── Card 1: ข้อมูลองค์กร ── */}
+            <Card className="border-slate-200 shadow-lg shadow-slate-200/40">
+                <CardHeader className="pb-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                            <Globe size={20} />
+                        </div>
+                        <div>
+                            <CardTitle className="text-lg">ข้อมูลองค์กร</CardTitle>
+                            <CardDescription>ชื่อและช่องทางติดต่อที่แสดงในระบบ</CardDescription>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-5 pt-2">
+                    <div className="space-y-2">
+                        <Label htmlFor="orgName">ชื่อองค์กร / หน่วยงาน</Label>
+                        <Input
+                            id="orgName"
+                            value={form.orgName}
+                            onChange={e => setForm(f => ({ ...f, orgName: e.target.value }))}
+                            className="h-11 bg-slate-50 border-slate-200 focus:bg-white"
+                        />
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                            <Label htmlFor="contactPhone">เบอร์โทรติดต่อ</Label>
+                            <Input
+                                id="contactPhone"
+                                value={form.contactPhone}
+                                onChange={e => setForm(f => ({ ...f, contactPhone: e.target.value }))}
+                                placeholder="0XX-XXX-XXXX"
+                                className="h-11 bg-slate-50 border-slate-200 focus:bg-white"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="contactEmail">อีเมลติดต่อ</Label>
+                            <Input
+                                id="contactEmail"
+                                type="email"
+                                value={form.contactEmail}
+                                onChange={e => setForm(f => ({ ...f, contactEmail: e.target.value }))}
+                                placeholder="example@email.com"
+                                className="h-11 bg-slate-50 border-slate-200 focus:bg-white"
+                            />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
 
-                {/* General Settings */}
-                <TabsContent value="general" className="space-y-6">
-                    <Card className="border-slate-200 shadow-xl shadow-slate-200/40">
-                        <CardHeader className="pb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                                    <Globe size={20} />
-                                </div>
-                                <CardTitle className="text-lg">ข้อมูลพื้นฐานเว็บไซต์</CardTitle>
-                            </div>
-                            <CardDescription>จัดการข้อมูลทั่วไปที่ปรากฏบนหน้าบ้าน</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6 pt-2">
-                            <div className="grid md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <Label htmlFor="siteName">ชื่อเว็บไซต์</Label>
-                                    <Input id="siteName" defaultValue="Lost&Found AI" className="h-11 bg-slate-50 border-slate-200 focus:bg-white transition-all" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="supportEmail">อีเมลแอดมิน (Contact Support)</Label>
-                                    <Input id="supportEmail" defaultValue="support@lostfound.com" className="h-11 bg-slate-50 border-slate-200 focus:bg-white transition-all" />
-                                </div>
-                            </div>
-                            <Separator className="bg-slate-100" />
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label className="text-base">โหมดปิดปรับปรุง (Maintenance Mode)</Label>
-                                    <p className="text-sm text-slate-500">ปิดการใช้งานโปรแกรมชั่วคราวเพื่อให้เฉพาะแอดมินเข้าถึงได้</p>
-                                </div>
-                                <Switch />
-                            </div>
-                        </CardContent>
-                    </Card>
+            {/* ── Card 2: นโยบายระบบ ── */}
+            <Card className="border-slate-200 shadow-lg shadow-slate-200/40">
+                <CardHeader className="pb-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                            <Settings size={20} />
+                        </div>
+                        <div>
+                            <CardTitle className="text-lg">นโยบายระบบ</CardTitle>
+                            <CardDescription>ควบคุมการทำงานหลักของระบบ</CardDescription>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-5 pt-2">
+                    <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                            <Label className="text-base font-semibold">อนุมัติรายการก่อนเผยแพร่</Label>
+                            <p className="text-sm text-slate-500">รายการใหม่จะอยู่ในสถานะ "รอตรวจสอบ" จนกว่าเจ้าหน้าที่จะอนุมัติ</p>
+                        </div>
+                        <Switch
+                            checked={form.requireApproval}
+                            onCheckedChange={v => setForm(f => ({ ...f, requireApproval: v }))}
+                        />
+                    </div>
+                    <Separator className="bg-slate-100" />
+                    <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                            <Label className="text-base font-semibold text-amber-700">ปิดปรับปรุงระบบ (Maintenance Mode)</Label>
+                            <p className="text-sm text-slate-500">ผู้ใช้งานทั่วไปจะเห็นหน้าปิดปรับปรุง เฉพาะ Admin/Staff เข้าได้ปกติ</p>
+                        </div>
+                        <Switch
+                            checked={form.maintenanceMode}
+                            onCheckedChange={v => setForm(f => ({ ...f, maintenanceMode: v }))}
+                        />
+                    </div>
+                    {form.maintenanceMode && (
+                        <div className="flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-700">
+                            <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+                            <span>ขณะนี้ระบบอยู่ในโหมดปิดปรับปรุง — ผู้ใช้งานทั่วไปจะเข้าระบบไม่ได้</span>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
 
-                    <Card className="border-slate-200 shadow-xl shadow-slate-200/40">
-                        <CardHeader className="pb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
-                                    <Database size={20} />
-                                </div>
-                                <CardTitle className="text-lg">การจัดการฐานข้อมูล</CardTitle>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="space-y-6 pt-2">
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label className="text-base text-rose-600 font-bold">ล้างประวัติที่เก่าเกิน 1 ปี</Label>
-                                    <p className="text-sm text-slate-500">ประวัติการแจ้งของหายที่สำเร็จแล้วจะถูกลบออกจากระบบเพื่อลดภาระเครื่อง</p>
-                                </div>
-                                <Button variant="outline" className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700">ล้างทันที</Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+            {/* ── Card 3: จัดการข้อมูล ── */}
+            <Card className="border-slate-200 shadow-lg shadow-slate-200/40">
+                <CardHeader className="pb-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-rose-50 text-rose-500 rounded-lg">
+                            <Database size={20} />
+                        </div>
+                        <div>
+                            <CardTitle className="text-lg">จัดการข้อมูล</CardTitle>
+                            <CardDescription>ล้างข้อมูลเก่าเพื่อประสิทธิภาพของระบบ</CardDescription>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="pt-2">
+                    <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                            <Label className="text-base font-semibold text-rose-600">ล้างรายการเก่าเกิน 12 เดือน</Label>
+                            <p className="text-sm text-slate-500">ลบรายการที่มีสถานะ "ส่งคืนแล้ว" หรือ "ปิดแล้ว" ที่เก่าเกิน 1 ปี</p>
+                            {purgeResult !== null && (
+                                <p className="text-sm font-medium text-emerald-600 mt-1">
+                                    ลบแล้ว {purgeResult} รายการ
+                                </p>
+                            )}
+                        </div>
+                        <Button
+                            variant="outline"
+                            onClick={handlePurge}
+                            disabled={purging}
+                            className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 shrink-0"
+                        >
+                            {purging ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 size={14} className="mr-2" />}
+                            ล้างทันที
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
 
-                {/* Notifications Settings */}
-                <TabsContent value="notifications" className="space-y-6">
-                    <Card className="border-slate-200 shadow-xl shadow-slate-200/40">
-                        <CardHeader>
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-amber-50 text-amber-600 rounded-lg">
-                                    <Bell size={20} />
-                                </div>
-                                <CardTitle className="text-lg">การแจ้งเตือน (Notifications)</CardTitle>
-                            </div>
-                            <CardDescription>เลือกช่องทางการแจ้งเตือนหลักของระบบ</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label className="text-base">แจ้งเตือนผ่านอีเมล</Label>
-                                    <p className="text-sm text-slate-500">แจ้งผลเมื่อ AI เจอของที่ใกล้เคียงกัน</p>
-                                </div>
-                                <Switch defaultChecked />
-                            </div>
-                            <Separator className="bg-slate-100" />
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label className="text-base">LINE Notify</Label>
-                                    <p className="text-sm text-slate-500">แจ้งเตือนผ่านมือถือทันทีเมื่อมีรายการใหม่</p>
-                                </div>
-                                <Switch />
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                {/* Security Settings */}
-                <TabsContent value="security" className="space-y-6">
-                    <Card className="border-slate-200 shadow-xl shadow-slate-200/40">
-                        <CardHeader>
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-rose-50 text-rose-600 rounded-lg">
-                                    <Shield size={20} />
-                                </div>
-                                <CardTitle className="text-lg">ความปลอดภัย (Security)</CardTitle>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label className="text-base">ระบบอนุมัติโพสต์ (Manual Approval)</Label>
-                                    <p className="text-sm text-slate-500">โพสต์จะยังไม่แสดงผลหน้าบ้านจนกว่าแอดมินจะกดยืนยัน</p>
-                                </div>
-                                <Switch defaultChecked />
-                            </div>
-                            <Separator className="bg-slate-100" />
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label className="text-base">จำกัดการอัปโหลดไฟล์ (File Limit)</Label>
-                                    <p className="text-sm text-slate-500">จำกัดขนาดไฟล์รูปภาพไม่เกิน 5MB ต่อรูป</p>
-                                </div>
-                                <Switch defaultChecked />
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                {/* AI Settings */}
-                <TabsContent value="ai" className="space-y-6">
-                    <Card className="border-slate-200 shadow-xl shadow-slate-200/40">
-                        <CardHeader>
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
-                                    <Zap size={20} />
-                                </div>
-                                <CardTitle className="text-lg">AI Matching System</CardTitle>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="space-y-6 text-sm">
-                            <div className="space-y-2">
-                                <Label className="text-base">Matching Sensitivity (%)</Label>
-                                <p className="text-slate-500 mb-4">เปอร์เซ็นต์ความแม่นยำขั้นต่ำที่จะถือว่า "เจอสิ่งที่น่าจะใช่"</p>
-                                <div className="flex items-center gap-4">
-                                    <Input type="number" defaultValue="75" className="w-32 h-11 bg-slate-50" />
-                                    <span className="font-bold text-slate-600">% ความแม่นยำ</span>
-                                </div>
-                            </div>
-                            <Separator className="bg-slate-100" />
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label className="text-base">Automatic Image Tagging</Label>
-                                    <p className="text-sm text-slate-500">ใช้ AI ช่วยวิเคราะห์และใส่ Tag ให้รูปภาพอัตโนมัติ</p>
-                                </div>
-                                <Switch defaultChecked />
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-            </Tabs>
-
-            <div className="pt-6 border-t border-slate-200 flex justify-end gap-4">
-                <Button variant="ghost" className="font-bold text-slate-500">ยกเลิก</Button>
+            {/* Save button */}
+            <div className="pt-2 flex justify-end gap-3">
                 <Button
                     onClick={handleSave}
-                    disabled={loading}
+                    disabled={saving}
                     className="h-12 px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-200/50 min-w-[200px]"
                 >
-                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    บันทึกการเปลี่ยนแปลงทั้งหมด
+                    {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    บันทึกการตั้งค่า
                 </Button>
             </div>
         </div>

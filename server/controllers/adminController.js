@@ -2,6 +2,7 @@ const asyncHandler = require('express-async-handler');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Item = require('../models/Item');
+const Setting = require('../models/Setting');
 
 // @desc    Get dashboard statistics
 // @route   GET /api/admin/stats
@@ -257,10 +258,66 @@ const deleteUser = asyncHandler(async (req, res) => {
     res.status(200).json({ message: 'User removed successfully' });
 });
 
+// @desc    Get system settings
+// @route   GET /api/admin/settings
+// @access  Private/Admin
+const getSettings = asyncHandler(async (req, res) => {
+    const settings = await Setting.getSingleton();
+    res.status(200).json(settings);
+});
+
+// @desc    Update system settings
+// @route   PUT /api/admin/settings
+// @access  Private/Admin
+const updateSettings = asyncHandler(async (req, res) => {
+    const settings = await Setting.getSingleton();
+    const { orgName, contactPhone, contactEmail, requireApproval, maintenanceMode } = req.body;
+
+    if (orgName !== undefined) settings.orgName = orgName;
+    if (contactPhone !== undefined) settings.contactPhone = contactPhone;
+    if (contactEmail !== undefined) settings.contactEmail = contactEmail;
+    if (typeof requireApproval === 'boolean') settings.requireApproval = requireApproval;
+    if (typeof maintenanceMode === 'boolean') settings.maintenanceMode = maintenanceMode;
+
+    await settings.save();
+    res.status(200).json(settings);
+});
+
+// @desc    Purge resolved/closed items older than cutoff months
+// @route   DELETE /api/admin/settings/purge
+// @access  Private/Admin
+const purgeOldItems = asyncHandler(async (req, res) => {
+    const months = parseInt(req.query.months) || 12;
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - months);
+
+    const result = await Item.deleteMany({
+        status: { $in: ['resolved', 'closed'] },
+        updatedAt: { $lt: cutoff },
+    });
+
+    res.status(200).json({ deleted: result.deletedCount });
+});
+
+// @desc    Public: get maintenance mode flag
+// @route   GET /api/settings/public
+// @access  Public
+const getPublicSettings = asyncHandler(async (req, res) => {
+    const settings = await Setting.getSingleton();
+    res.status(200).json({
+        maintenanceMode: settings.maintenanceMode,
+        orgName: settings.orgName,
+    });
+});
+
 module.exports = {
     getStats,
     getAllUsers,
     updateUser,
     createUser,
-    deleteUser
+    deleteUser,
+    getSettings,
+    updateSettings,
+    purgeOldItems,
+    getPublicSettings,
 };

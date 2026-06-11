@@ -1,5 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import Maintenance from './pages/Maintenance';
+import { useState, useEffect } from 'react';
+import api from './lib/axios';
 
 import Home from './pages/Home';
 import ReportItem from './pages/ReportItem';
@@ -62,6 +65,28 @@ const AdminRoute = ({ children }) => {
     return children;
 };
 
+// Maintenance mode gate — blocks non-admin users when maintenance is on
+const MaintenanceGate = ({ children }) => {
+    const { user } = useAuth();
+    const location = useLocation();
+    const isAdminRoute = location.pathname.startsWith('/admin');
+    const [maintenance, setMaintenance] = useState(null);
+    const [orgName, setOrgName] = useState('');
+
+    useEffect(() => {
+        api.get('/settings/public').then(res => {
+            setMaintenance(res.data.maintenanceMode);
+            setOrgName(res.data.orgName);
+        }).catch(() => setMaintenance(false));
+    }, []);
+
+    if (maintenance === null) return null; // wait for check
+    if (maintenance && !isAdminRoute && user?.role !== 'admin' && user?.role !== 'staff') {
+        return <Maintenance orgName={orgName} />;
+    }
+    return children;
+};
+
 // Layout wrapper to conditionally hide Navbar/Footer
 const AppLayout = ({ children }) => {
     const location = useLocation();
@@ -86,6 +111,7 @@ function App() {
     return (
         <Router>
             <AuthProvider>
+                <MaintenanceGate>
                 <AppLayout>
                     <Routes>
                         {/* Auth Routes */}
@@ -115,6 +141,7 @@ function App() {
                         <Route path="/admin/qr-scanner" element={<AdminRoute><AdminLayout><QRScanner /></AdminLayout></AdminRoute>} />
                     </Routes>
                 </AppLayout>
+                </MaintenanceGate>
             </AuthProvider>
         </Router>
     );

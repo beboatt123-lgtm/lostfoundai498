@@ -34,6 +34,10 @@ app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/locations', require('./routes/locationRoutes'));
 
+// Public settings (maintenance mode check — no auth required)
+const { getPublicSettings } = require('./controllers/adminController');
+app.get('/api/settings/public', getPublicSettings);
+
 // Error Handler
 app.use(errorHandler);
 
