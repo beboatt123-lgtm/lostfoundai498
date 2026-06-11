@@ -68,6 +68,31 @@ const AdminUsers = () => {
         }
     };
 
+    const handleExport = () => {
+        const headers = ['ID', 'ชื่อ', 'นามสกุล', 'อีเมล', 'สถานะ', 'วันที่และเวลาสมัคร'];
+        const rows = users.map(u => [
+            u._id,
+            u.firstname,
+            u.lastname,
+            u.email,
+            u.isSuspended ? 'ระงับการใช้งาน' : 'ใช้งานปกติ',
+            new Date(u.createdAt).toLocaleString('th-TH', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+            }),
+        ]);
+        const csv = [headers, ...rows]
+            .map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+            .join('\n');
+        const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `users_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
     const UserActionMenu = () => (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -102,7 +127,7 @@ const AdminUsers = () => {
                     </h2>
                     <p className="text-slate-500 mt-1 ml-1 text-sm">รายชื่อผู้ใช้งานทั้งหมดและสิทธิ์การเข้าถึง</p>
                 </div>
-                <Button variant="outline" className="gap-2 bg-white hover:bg-slate-50 border-slate-300 shadow-sm text-slate-700 font-medium w-full sm:w-auto">
+                <Button onClick={handleExport} variant="outline" className="gap-2 bg-white hover:bg-slate-50 border-slate-300 shadow-sm text-slate-700 font-medium w-full sm:w-auto">
                     <Download size={16} /> Export Users
                 </Button>
             </div>
