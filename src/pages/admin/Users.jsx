@@ -17,7 +17,7 @@ import {
     Download,
     UserCog,
     Ban,
-    Mail,
+    Trash2,
     Calendar,
     Users
 } from "lucide-react";
@@ -93,7 +93,26 @@ const AdminUsers = () => {
         URL.revokeObjectURL(url);
     };
 
-    const UserActionMenu = () => (
+    const handleSuspend = async (userId, isSuspended) => {
+        try {
+            await api.put(`/admin/users/${userId}`, { isSuspended: !isSuspended });
+            setUsers(prev => prev.map(u => u._id === userId ? { ...u, isSuspended: !isSuspended } : u));
+        } catch (err) {
+            console.error('Failed to update user status:', err);
+        }
+    };
+
+    const handleDelete = async (userId) => {
+        if (!window.confirm('ยืนยันการลบผู้ใช้งานนี้ถาวร? การกระทำนี้ไม่สามารถย้อนกลับได้')) return;
+        try {
+            await api.delete(`/admin/users/${userId}`);
+            setUsers(prev => prev.filter(u => u._id !== userId));
+        } catch (err) {
+            alert(err.response?.data?.message || 'ลบผู้ใช้งานไม่สำเร็จ');
+        }
+    };
+
+    const UserActionMenu = ({ user }) => (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-full">
@@ -101,15 +120,19 @@ const AdminUsers = () => {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48 shadow-xl border-slate-200">
-                <DropdownMenuItem className="cursor-pointer font-medium py-2">
-                    <UserCog className="mr-2 h-4 w-4 text-slate-500" /> แก้ไขข้อมูล
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer font-medium py-2">
-                    <Mail className="mr-2 h-4 w-4 text-slate-500" /> ส่งข้อความ
+                <DropdownMenuItem
+                    className="cursor-pointer font-medium py-2"
+                    onClick={() => handleSuspend(user._id, user.isSuspended)}
+                >
+                    <Ban className="mr-2 h-4 w-4 text-slate-500" />
+                    {user.isSuspended ? 'ยกเลิกการระงับ' : 'ระงับการใช้งาน'}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer font-medium py-2 text-rose-600 focus:text-rose-700 focus:bg-rose-50">
-                    <Ban className="mr-2 h-4 w-4" /> ระงับการใช้งาน
+                <DropdownMenuItem
+                    className="cursor-pointer font-medium py-2 text-rose-600 focus:text-rose-700 focus:bg-rose-50"
+                    onClick={() => handleDelete(user._id)}
+                >
+                    <Trash2 className="mr-2 h-4 w-4" /> ลบผู้ใช้งาน
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
@@ -177,7 +200,7 @@ const AdminUsers = () => {
                                             <p className="font-bold text-slate-800 text-sm truncate">{user.firstname} {user.lastname}</p>
                                             <p className="text-xs text-slate-500 truncate">{user.email}</p>
                                         </div>
-                                        <UserActionMenu />
+                                        <UserActionMenu user={user} />
                                     </div>
 
                                     <div className="flex items-center gap-2 flex-wrap">
@@ -229,7 +252,7 @@ const AdminUsers = () => {
                                             <TableCell className="text-sm text-slate-600">{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                                             <TableCell>{getStatusBadge(user.isSuspended)}</TableCell>
                                             <TableCell className="text-right">
-                                                <UserActionMenu />
+                                                <UserActionMenu user={user} />
                                             </TableCell>
                                         </TableRow>
                                     ))}

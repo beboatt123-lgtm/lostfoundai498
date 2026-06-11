@@ -64,6 +64,7 @@ const AdminStaff = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [addLoading, setAddLoading] = useState(false);
+    const [emailError, setEmailError] = useState('');
     const [formData, setFormData] = useState({
         firstname: '',
         lastname: '',
@@ -74,6 +75,11 @@ const AdminStaff = () => {
 
     const handleAddStaff = async (e) => {
         e.preventDefault();
+        if (!formData.email.toLowerCase().endsWith('@bu.ac.th')) {
+            setEmailError('อีเมลต้องเป็น @bu.ac.th เท่านั้น');
+            return;
+        }
+        setEmailError('');
         setAddLoading(true);
         try {
             await api.post('/admin/users', formData);
@@ -258,15 +264,17 @@ const AdminStaff = () => {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <FormLabel htmlFor="email">อีเมล</FormLabel>
+                                <FormLabel htmlFor="email">อีเมล <span className="text-slate-400 font-normal">(@bu.ac.th)</span></FormLabel>
                                 <Input
                                     id="email"
                                     type="email"
-                                    placeholder="email@example.com"
+                                    placeholder="name@bu.ac.th"
                                     value={formData.email}
-                                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                    onChange={(e) => { setFormData({...formData, email: e.target.value}); setEmailError(''); }}
                                     required
+                                    className={emailError ? 'border-rose-400 focus-visible:ring-rose-400/20' : ''}
                                 />
+                                {emailError && <p className="text-xs text-rose-600 font-medium">{emailError}</p>}
                             </div>
                             <div className="space-y-2">
                                 <FormLabel htmlFor="password">รหัสผ่านชั่วคราว</FormLabel>
