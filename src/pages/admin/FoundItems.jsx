@@ -156,9 +156,9 @@ const AdminFoundItems = () => {
 
     const getStatusBadge = (status) => {
         switch (status) {
-            case 'pending': return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-200 shadow-sm font-bold animate-pulse">รออนุมัติ</Badge>;
-            case 'rejected': return <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-200 border-rose-200 shadow-sm font-medium">ปฏิเสธการเผยแพร่</Badge>;
-            case 'open': return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200 shadow-sm">เผยแพร่แล้ว</Badge>;
+            case 'pending': return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-200 shadow-sm font-bold animate-pulse">รอตรวจสอบ</Badge>;
+            case 'rejected': return <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-200 border-rose-200 shadow-sm font-medium">ยกเลิกรายการ</Badge>;
+            case 'open': return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200 shadow-sm">รอส่งมอบ</Badge>;
             case 'resolved': return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200 shadow-sm">จับคู่แล้ว / คืนแล้ว</Badge>;
             case 'closed': return <Badge className="bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200 shadow-sm">ปิดประกาศ</Badge>;
             default: return <Badge variant="outline">{status}</Badge>;

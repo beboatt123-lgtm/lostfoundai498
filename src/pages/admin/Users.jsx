@@ -43,7 +43,7 @@ const AdminUsers = () => {
                 const res = await api.get('/admin/users', {
                     params: { search }
                 });
-                setUsers(res.data);
+                setUsers(res.data.filter(u => u.role !== 'admin' && u.role !== 'staff'));
             } catch (err) {
                 console.error('Failed to fetch users:', err);
             } finally {
