@@ -239,7 +239,7 @@ const ItemDetail = () => {
                             className="w-full h-15 rounded-2xl text-lg font-black bg-emerald-600 hover:bg-emerald-700 shadow-xl shadow-emerald-200 transition-all active:scale-95"
                             onClick={() => setShowContactModal(true)}
                         >
-                            <MessageCircle className="mr-3 h-6 w-6" /> ติดต่อพูดคุยกับผู้ประกาศ
+                            <MessageCircle className="mr-3 h-6 w-6" /> ติดต่อผู้ดูแล
                         </Button>
                     </div>
 
