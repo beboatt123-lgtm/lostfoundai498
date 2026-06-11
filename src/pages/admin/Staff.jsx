@@ -18,7 +18,6 @@ import {
     Shield,
     Search,
     UserPlus,
-    Mail,
     KeyRound,
     Trash2,
     Loader2,
@@ -165,9 +164,6 @@ const AdminStaff = () => {
                 <DropdownMenuSeparator className="bg-slate-100" />
                 <DropdownMenuItem className="cursor-pointer py-2.5 rounded-lg">
                     <KeyRound className="mr-3 h-4 w-4 text-slate-400" /> รีเซ็ตรหัสผ่าน
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer py-2.5 rounded-lg">
-                    <Mail className="mr-3 h-4 w-4 text-slate-400" /> ส่งข้อความด่วน
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-slate-100" />
                 <DropdownMenuItem
