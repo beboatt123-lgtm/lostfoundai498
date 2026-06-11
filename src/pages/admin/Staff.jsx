@@ -22,7 +22,8 @@ import {
     Trash2,
     Loader2,
     RefreshCw,
-    Calendar
+    Calendar,
+    Mail
 } from "lucide-react";
 import {
     DropdownMenu,
