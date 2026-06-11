@@ -75,10 +75,6 @@ const AdminStaff = () => {
 
     const handleAddStaff = async (e) => {
         e.preventDefault();
-        if (!formData.email.toLowerCase().endsWith('@bu.ac.th')) {
-            setEmailError('อีเมลต้องเป็น @bu.ac.th เท่านั้น');
-            return;
-        }
         setEmailError('');
         setAddLoading(true);
         try {
@@ -264,17 +260,15 @@ const AdminStaff = () => {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <FormLabel htmlFor="email">อีเมล <span className="text-slate-400 font-normal">(@bu.ac.th)</span></FormLabel>
+                                <FormLabel htmlFor="email">อีเมล</FormLabel>
                                 <Input
                                     id="email"
                                     type="email"
-                                    placeholder="name@bu.ac.th"
+                                    placeholder="email@example.com"
                                     value={formData.email}
-                                    onChange={(e) => { setFormData({...formData, email: e.target.value}); setEmailError(''); }}
+                                    onChange={(e) => setFormData({...formData, email: e.target.value})}
                                     required
-                                    className={emailError ? 'border-rose-400 focus-visible:ring-rose-400/20' : ''}
                                 />
-                                {emailError && <p className="text-xs text-rose-600 font-medium">{emailError}</p>}
                             </div>
                             <div className="space-y-2">
                                 <FormLabel htmlFor="password">รหัสผ่านชั่วคราว</FormLabel>
