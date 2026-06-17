@@ -1,18 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Package, CheckCircle2, AlertCircle, TrendingUp, Users, ArrowUpRight, ArrowDownRight, Clock, Loader2, Calendar } from 'lucide-react';
+import { Package, CheckCircle2, AlertCircle, Users, ArrowUpRight, ArrowDownRight, Clock, Loader2, Calendar } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import api from '@/lib/axios';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell } from 'recharts';
 
-const data = [
-    { name: 'จันทร์', lost: 40, found: 24, returned: 24 },
-    { name: 'อังคาร', lost: 30, found: 13, returned: 22 },
-    { name: 'พุธ', lost: 20, found: 58, returned: 22 },
-    { name: 'พฤหัส', lost: 27, found: 39, returned: 20 },
-    { name: 'ศุกร์', lost: 18, found: 48, returned: 21 },
-    { name: 'เสาร์', lost: 23, found: 38, returned: 25 },
-    { name: 'อาทิตย์', lost: 34, found: 43, returned: 21 },
-];
 
 const AdminDashboard = () => {
     const get7DaysAgo = () => {
@@ -133,36 +124,30 @@ const AdminDashboard = () => {
                         </div>
                     )}
                     <CardHeader className="border-b border-slate-50 bg-slate-50/50">
-                        <CardTitle className="text-lg font-bold text-slate-800">สถิติการแจ้งหายและเจอของคืน</CardTitle>
-                        <CardDescription className="text-slate-500">เปรียบเทียบจำนวนรายการตามช่วงเวลาที่กำหนด</CardDescription>
+                        <CardTitle className="text-lg font-bold text-slate-800">เปรียบเทียบสิ่งของที่คืนแล้ว vs ยังค้างอยู่</CardTitle>
+                        <CardDescription className="text-slate-500">จำนวนสิ่งของส่งคืนสำเร็จเทียบกับรายการที่ยังรอดำเนินการ</CardDescription>
                     </CardHeader>
                     <CardContent className="p-6">
                         <div style={{ width: '100%', height: 350, minWidth: 1, minHeight: 1 }}>
                             {chartData && chartData.length > 0 ? (
                                 <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-                                    <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                    <defs>
-                                        <linearGradient id="colorFound" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
-                                            <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                                        </linearGradient>
-                                        <linearGradient id="colorLost" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.2} />
-                                            <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickMargin={10} />
-                                    <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                    <Tooltip
-                                        contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }}
-                                        itemStyle={{ fontSize: '12px', fontWeight: 600 }}
-                                        labelStyle={{ color: '#64748b', marginBottom: '8px', fontSize: '13px' }}
-                                    />
-                                    <Area type="monotone" dataKey="found" name="เจอของคืนแล้ว" stackId="1" stroke="#10b981" fillOpacity={1} fill="url(#colorFound)" strokeWidth={3} />
-                                    <Area type="monotone" dataKey="lost" name="แจ้งหาย" stackId="1" stroke="#f43f5e" fillOpacity={1} fill="url(#colorLost)" strokeWidth={3} />
-                                </AreaChart>
-                            </ResponsiveContainer>
+                                    <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }} barCategoryGap="35%" barGap={4}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                        <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickMargin={10} />
+                                        <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }}
+                                            itemStyle={{ fontSize: '12px', fontWeight: 600 }}
+                                            labelStyle={{ color: '#64748b', marginBottom: '8px', fontSize: '13px' }}
+                                            cursor={{ fill: '#f1f5f9' }}
+                                        />
+                                        <Legend
+                                            wrapperStyle={{ fontSize: '12px', fontWeight: 700, paddingTop: '16px' }}
+                                        />
+                                        <Bar dataKey="resolved" name="ส่งคืนสำเร็จ" fill="#10b981" radius={[6, 6, 0, 0]} maxBarSize={48} />
+                                        <Bar dataKey="pending" name="ยังค้างอยู่" fill="#f59e0b" radius={[6, 6, 0, 0]} maxBarSize={48} />
+                                    </BarChart>
+                                </ResponsiveContainer>
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-slate-400">
                                     ไม่มีข้อมูลสถิติในช่วงเวลานี้

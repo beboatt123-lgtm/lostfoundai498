@@ -29,6 +29,7 @@ const createItem = asyncHandler(async (req, res) => {
 
     const item = await Item.create({
         user: req.user.id,
+        reporterName: `${req.user.firstname} ${req.user.lastname || ''}`.trim(),
         title,
         description,
         type,
@@ -454,14 +455,15 @@ const exportItems = asyncHandler(async (req, res) => {
         'ช่วงเวลา': item.timePeriod || '',
         'รายละเอียด': item.description || '',
         'หมายเหตุ': item.notes || '',
-        'ชื่อผู้แจ้ง': `${item.user?.firstname || ''} ${item.user?.lastname || ''}`.trim(),
+        'ชื่อผู้แจ้ง': item.reporterName || `${item.user?.firstname || ''} ${item.user?.lastname || ''}`.trim(),
         'อีเมลผู้แจ้ง': item.user?.email || '',
         'เลขบัตรประชาชน': item.reporterIdCard || '',
         'เบอร์โทรศัพท์': item.reporterPhone || '',
         'ชื่อผู้รับ': item.receiverName || '',
         'เลขบัตรผู้รับ': item.receiverIdCard || '',
         'เบอร์โทรผู้รับ': item.receiverPhone || '',
-        'วันที่แจ้ง': new Date(item.createdAt).toLocaleDateString('th-TH'),
+        'วันที่แจ้ง': new Date(item.createdAt).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' }),
+        'เวลาที่แจ้ง': new Date(item.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false }),
     }));
 
     const workbook = XLSX.utils.book_new();

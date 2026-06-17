@@ -64,10 +64,7 @@ const Login = () => {
                             <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-100">
                                 <MapPin size={22} fill="currentColor" />
                             </div>
-                            <div className="flex flex-col text-left">
-                                <span className="text-xl font-extrabold text-slate-800 tracking-tight leading-none">Lost&Found</span>
-                                <span className="text-[9px] text-slate-500 font-bold tracking-widest uppercase mt-0.5">AI System</span>
-                            </div>
+                            <span className="text-xl font-extrabold text-slate-800 tracking-tight leading-none">Lost&Found</span>
                         </div>
                     </div>
                     <CardTitle className="text-2xl font-bold text-slate-800">

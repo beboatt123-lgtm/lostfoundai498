@@ -56,6 +56,7 @@ const ReportItem = () => {
     const [showTermsModal, setShowTermsModal] = useState(false);
     const [showPrivacyModal, setShowPrivacyModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [idDocType, setIdDocType] = useState('idcard');
 
     const [formData, setFormData] = useState({
         title: '',
@@ -117,7 +118,7 @@ const ReportItem = () => {
 
     const theme = isLost ? {
         primary: 'rose',
-        button: 'bg-rose-600 hover:bg-rose-700',
+        button: 'bg-emerald-600 hover:bg-emerald-700',
         text: 'text-rose-600',
         bg: 'bg-rose-50',
         icon: AlertCircle,
@@ -215,12 +216,22 @@ const ReportItem = () => {
             return;
         }
 
-        // Validate Thai ID Card Number using Checksum algorithm
-        const cleanedIdCard = formData.reporterIdCard.replace(/-/g, "").trim();
-        if (!validateThaiIDCard(cleanedIdCard)) {
-            setError('เลขบัตรประชาชนไม่ถูกต้องตามหลักรูปแบบบัตรประชาชนไทย กรุณาตรวจสอบความถูกต้องและกรอกใหม่อีกครั้ง');
-            setLoading(false);
-            return;
+        // Validate ID document
+        let cleanedIdCard = '';
+        if (idDocType === 'idcard') {
+            cleanedIdCard = formData.reporterIdCard.replace(/-/g, "").trim();
+            if (!validateThaiIDCard(cleanedIdCard)) {
+                setError('เลขบัตรประชาชนไม่ถูกต้องตามหลักรูปแบบบัตรประชาชนไทย กรุณาตรวจสอบความถูกต้องและกรอกใหม่อีกครั้ง');
+                setLoading(false);
+                return;
+            }
+        } else {
+            cleanedIdCard = formData.reporterIdCard.trim();
+            if (!cleanedIdCard) {
+                setError('กรุณากรอกเลขพาสปอร์ต');
+                setLoading(false);
+                return;
+            }
         }
 
         // Validate Thai Phone Number
@@ -476,19 +487,44 @@ const ReportItem = () => {
                                         {/* Requirement 18: User Identity */}
                                         <div className="grid grid-cols-1 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
                                             <div className="space-y-2">
-                                                <Label htmlFor="reporterIdCard" className="text-sm font-bold text-slate-700">เลขบัตรประชาชน (เพื่อยืนยันตัวตน) <span className="text-rose-500">*</span></Label>
-                                                <Input
-                                                    id="reporterIdCard"
-                                                    placeholder="เลขบัตร 13 หลัก (เฉพาะตัวเลข)"
-                                                    value={formData.reporterIdCard}
-                                                    maxLength={13}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value.replace(/[^0-9]/g, ""); // Allow only digits
-                                                        setFormData(prev => ({ ...prev, reporterIdCard: val }));
-                                                    }}
-                                                    required
-                                                    className="h-11 border-slate-200 bg-white"
-                                                />
+                                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                    <Label htmlFor="reporterIdCard" className="text-sm font-bold text-slate-700">
+                                                        {idDocType === 'idcard' ? 'เลขบัตรประชาชน' : 'เลขพาสปอร์ต'} (เพื่อยืนยันตัวตน) <span className="text-rose-500">*</span>
+                                                    </Label>
+                                                    <div className="flex rounded-lg border border-slate-200 overflow-hidden text-xs font-bold shrink-0">
+                                                        <button type="button"
+                                                            onClick={() => { setIdDocType('idcard'); setFormData(prev => ({ ...prev, reporterIdCard: '' })); }}
+                                                            className={`px-3 py-1.5 transition-colors ${idDocType === 'idcard' ? 'bg-emerald-500 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+                                                        >บัตรประชาชน</button>
+                                                        <button type="button"
+                                                            onClick={() => { setIdDocType('passport'); setFormData(prev => ({ ...prev, reporterIdCard: '' })); }}
+                                                            className={`px-3 py-1.5 transition-colors border-l border-slate-200 ${idDocType === 'passport' ? 'bg-indigo-500 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+                                                        >พาสปอร์ต</button>
+                                                    </div>
+                                                </div>
+                                                {idDocType === 'idcard' ? (
+                                                    <Input
+                                                        id="reporterIdCard"
+                                                        placeholder="เลขบัตร 13 หลัก (เฉพาะตัวเลข)"
+                                                        value={formData.reporterIdCard}
+                                                        maxLength={13}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value.replace(/[^0-9]/g, "");
+                                                            setFormData(prev => ({ ...prev, reporterIdCard: val }));
+                                                        }}
+                                                        required
+                                                        className="h-11 border-slate-200 bg-white"
+                                                    />
+                                                ) : (
+                                                    <Input
+                                                        id="reporterIdCard"
+                                                        placeholder="เลขพาสปอร์ต (ตัวอักษรและตัวเลข)"
+                                                        value={formData.reporterIdCard}
+                                                        onChange={(e) => setFormData(prev => ({ ...prev, reporterIdCard: e.target.value.toUpperCase() }))}
+                                                        required
+                                                        className="h-11 border-slate-200 bg-white"
+                                                    />
+                                                )}
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="reporterPhone" className="text-sm font-bold text-slate-700">เบอร์โทรศัพท์ติดต่อ <span className="text-rose-500">*</span></Label>

@@ -57,6 +57,7 @@ const AdminAddItemModal = ({ open, onClose, type, onSuccess }) => {
     const [mainLocations, setMainLocations] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [idDocType, setIdDocType] = useState('idcard');
 
     useEffect(() => {
         if (!open) return;
@@ -87,6 +88,7 @@ const AdminAddItemModal = ({ open, onClose, type, onSuccess }) => {
         setImages([]);
         setImagePreviews([]);
         setError(null);
+        setIdDocType('idcard');
         onClose();
     };
 
@@ -126,9 +128,7 @@ const AdminAddItemModal = ({ open, onClose, type, onSuccess }) => {
     };
 
     const accent = isLost ? 'rose' : 'emerald';
-    const btnClass = isLost
-        ? 'bg-rose-600 hover:bg-rose-700 text-white'
-        : 'bg-emerald-600 hover:bg-emerald-700 text-white';
+    const btnClass = 'bg-emerald-600 hover:bg-emerald-700 text-white';
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
@@ -265,10 +265,30 @@ const AdminAddItemModal = ({ open, onClose, type, onSuccess }) => {
                         {/* Reporter Info */}
                         <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
                             <div className="space-y-1.5">
-                                <Label htmlFor="reporterIdCard" className="text-sm font-bold text-slate-700">เลขบัตรประชาชน</Label>
-                                <Input id="reporterIdCard" placeholder="13 หลัก (ถ้ามี)" value={formData.reporterIdCard} maxLength={13}
-                                    onChange={e => setFormData(p => ({ ...p, reporterIdCard: e.target.value.replace(/\D/g, '') }))}
-                                    className="h-10 border-slate-200 bg-white rounded-lg" />
+                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                    <Label htmlFor="reporterIdCard" className="text-sm font-bold text-slate-700">
+                                        {idDocType === 'idcard' ? 'เลขบัตรประชาชน' : 'เลขพาสปอร์ต'}
+                                    </Label>
+                                    <div className="flex rounded-lg border border-slate-200 overflow-hidden text-[11px] font-bold shrink-0">
+                                        <button type="button"
+                                            onClick={() => { setIdDocType('idcard'); setFormData(p => ({ ...p, reporterIdCard: '' })); }}
+                                            className={`px-2.5 py-1 transition-colors ${idDocType === 'idcard' ? 'bg-emerald-500 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+                                        >บัตรประชาชน</button>
+                                        <button type="button"
+                                            onClick={() => { setIdDocType('passport'); setFormData(p => ({ ...p, reporterIdCard: '' })); }}
+                                            className={`px-2.5 py-1 transition-colors border-l border-slate-200 ${idDocType === 'passport' ? 'bg-indigo-500 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+                                        >พาสปอร์ต</button>
+                                    </div>
+                                </div>
+                                {idDocType === 'idcard' ? (
+                                    <Input id="reporterIdCard" placeholder="13 หลัก (ถ้ามี)" value={formData.reporterIdCard} maxLength={13}
+                                        onChange={e => setFormData(p => ({ ...p, reporterIdCard: e.target.value.replace(/\D/g, '') }))}
+                                        className="h-10 border-slate-200 bg-white rounded-lg" />
+                                ) : (
+                                    <Input id="reporterIdCard" placeholder="เลขพาสปอร์ต (ตัวอักษรและตัวเลข)" value={formData.reporterIdCard}
+                                        onChange={e => setFormData(p => ({ ...p, reporterIdCard: e.target.value.toUpperCase() }))}
+                                        className="h-10 border-slate-200 bg-white rounded-lg" />
+                                )}
                             </div>
                             <div className="space-y-1.5">
                                 <Label htmlFor="reporterPhone" className="text-sm font-bold text-slate-700">เบอร์โทรศัพท์</Label>

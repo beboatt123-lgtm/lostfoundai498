@@ -117,7 +117,7 @@ const SearchItems = () => {
                         <div className="relative flex-1 group">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                             <Input
-                                placeholder="ค้นหาตามชื่อของ, สถานที่ หรือคีย์เวิร์ด..."
+                                placeholder="ค้นหาชื่อ, รหัส (L/F0000), สถานที่ หรือรายละเอียด..."
                                 className="pl-11 h-12 text-sm border-none bg-transparent focus-visible:ring-0 font-medium placeholder:text-slate-400"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
@@ -180,6 +180,11 @@ const SearchItems = () => {
                         </div>
                     </div>
                     
+                    {/* Search hint */}
+                    <p className="text-[11px] text-slate-400 font-medium mt-2 px-1">
+                        ค้นหาได้จาก: ชื่อสิ่งของ · รหัส (เช่น L0001, F0001) · สถานที่ · รายละเอียด — ทั้งของหาย &amp; พบสิ่งของ
+                    </p>
+
                     {/* Active Filters Display */}
                     {(search || type !== 'all' || category !== 'all') && (
                         <div className="mt-4 flex flex-wrap gap-2 animate-in fade-in duration-300">

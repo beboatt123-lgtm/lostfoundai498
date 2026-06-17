@@ -10,7 +10,6 @@ import {
     LogOut,
     Menu,
     MapPin,
-    Search,
     Bell,
     ChevronDown,
     MessageSquare,
@@ -20,7 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
+
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -101,7 +100,7 @@ const AdminLayout = ({ children }) => {
                         <MapPin size={22} fill="currentColor" />
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-lg font-bold text-white tracking-tight leading-tight">Lost&Found AI</span>
+                        <span className="text-lg font-bold text-white tracking-tight leading-tight">Lost&Found</span>
                         <span className="text-[10px] uppercase font-semibold text-slate-500 tracking-wider">แผงควบคุมหลัก</span>
                     </div>
                 </Link>
@@ -183,15 +182,6 @@ const AdminLayout = ({ children }) => {
                                 <SidebarContent />
                             </SheetContent>
                         </Sheet>
-
-                        {/* Search Bar */}
-                        <div className="hidden md:flex relative max-w-md w-96 group">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
-                            <Input
-                                placeholder="ค้นหาบันทึก, ผู้ใช้งาน, หรือเลขอ้างอิง..."
-                                className="pl-10 h-10 bg-slate-100/50 border-slate-200 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500/30 transition-all font-medium placeholder:text-slate-400"
-                            />
-                        </div>
 
                     </div>
 

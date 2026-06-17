@@ -38,7 +38,7 @@ const getStats = asyncHandler(async (req, res) => {
     const totalItems = await Item.countDocuments(itemQuery);
     const lostItems = await Item.countDocuments({ ...itemQuery, type: 'lost' });
     const foundItems = await Item.countDocuments({ ...itemQuery, type: 'found' });
-    const resolvedItems = await Item.countDocuments({ ...itemQuery, status: 'returned' });
+    const resolvedItems = await Item.countDocuments({ ...itemQuery, status: 'resolved' });
     const totalUsers = await User.countDocuments({ role: 'user' }); // Users count is lifetime
     
     // Generate Chart Data dynamically based on selected date range
@@ -52,43 +52,38 @@ const getStats = asyncHandler(async (req, res) => {
             const date = new Date(start);
             date.setDate(start.getDate() + d);
             date.setHours(0, 0, 0, 0);
-            
+
             const nextDate = new Date(date);
             nextDate.setDate(date.getDate() + 1);
-            
-            const lost = await Item.countDocuments({
-                type: 'lost',
-                createdAt: { $gte: date, $lt: nextDate }
-            });
-            const found = await Item.countDocuments({
-                type: 'found',
-                createdAt: { $gte: date, $lt: nextDate }
-            });
-            
+
+            const range = { createdAt: { $gte: date, $lt: nextDate } };
+
+            const [resolved, pending] = await Promise.all([
+                Item.countDocuments({ ...range, status: 'resolved' }),
+                Item.countDocuments({ ...range, status: 'open' }),
+            ]);
+
             const label = date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
-            chartData.push({ name: label, lost, found });
+            chartData.push({ name: label, resolved, pending });
         }
     } else {
-        // Group by months to keep charts beautiful and readable
+        // Group by months
         let current = new Date(start);
         while (current <= end) {
             const dateStart = new Date(current.getFullYear(), current.getMonth(), 1, 0, 0, 0, 0);
             const dateEnd = new Date(current.getFullYear(), current.getMonth() + 1, 1, 0, 0, 0, 0);
-            
-            const lost = await Item.countDocuments({
-                type: 'lost',
-                createdAt: { $gte: dateStart, $lt: dateEnd }
-            });
-            const found = await Item.countDocuments({
-                type: 'found',
-                createdAt: { $gte: dateStart, $lt: dateEnd }
-            });
-            
+
+            const range = { createdAt: { $gte: dateStart, $lt: dateEnd } };
+
+            const [resolved, pending] = await Promise.all([
+                Item.countDocuments({ ...range, status: 'resolved' }),
+                Item.countDocuments({ ...range, status: 'open' }),
+            ]);
+
             const monthsThai = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
             const label = `${monthsThai[current.getMonth()]} ${current.getFullYear() + 543}`;
-            chartData.push({ name: label, lost, found });
-            
-            // Move to next month
+            chartData.push({ name: label, resolved, pending });
+
             current.setMonth(current.getMonth() + 1);
         }
     }

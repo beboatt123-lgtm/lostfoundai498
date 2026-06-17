@@ -45,10 +45,7 @@ const Navbar = () => {
                     <div className="w-8 h-8 md:w-10 md:h-10 bg-emerald-600 rounded-lg md:rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-200 group-hover:shadow-emerald-300 transition-all">
                         <MapPin size={20} className="md:w-6 md:h-6" fill="currentColor" />
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-base md:text-xl font-extrabold text-slate-800 tracking-tight leading-none">Lost&Found</span>
-                        <span className="text-[8px] md:text-[10px] text-slate-500 font-bold tracking-widest uppercase">AI System</span>
-                    </div>
+                    <span className="text-base md:text-xl font-extrabold text-slate-800 tracking-tight leading-none">Lost&Found</span>
                 </Link>
 
                 <div className="hidden md:flex gap-8">

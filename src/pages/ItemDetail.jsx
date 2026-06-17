@@ -25,6 +25,17 @@ const ItemDetail = () => {
     const [loading, setLoading] = useState(true);
     const [showContactModal, setShowContactModal] = useState(false);
 
+    const getStatusBadge = (status) => {
+        switch (status) {
+            case 'pending': return <Badge className="bg-amber-100 text-amber-700 border-amber-200 font-bold animate-pulse">รอตรวจสอบ</Badge>;
+            case 'open': return <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 font-bold">รับแจ้งแล้ว</Badge>;
+            case 'resolved': return <Badge className="bg-blue-100 text-blue-700 border-blue-200 font-bold">ส่งคืนสำเร็จ</Badge>;
+            case 'rejected': return <Badge className="bg-rose-100 text-rose-700 border-rose-200 font-bold">ยกเลิกรายการ</Badge>;
+            case 'closed': return <Badge className="bg-slate-100 text-slate-700 border-slate-200 font-bold">ปิดประกาศ</Badge>;
+            default: return null;
+        }
+    };
+
     const categories = {
         'electronics': 'อุปกรณ์อิเล็กทรอนิกส์',
         'wallet': 'กระเป๋าสตางค์/บัตร',
@@ -103,6 +114,7 @@ const ItemDetail = () => {
                                 </Badge>
                             )}
                             <Badge variant="outline" className="text-slate-500">{categories[item.category] || item.category}</Badge>
+                            {getStatusBadge(item.status)}
                         </div>
                         <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">{item.title}</h1>
                         <p className="text-slate-500 text-lg leading-relaxed mb-6">{item.description}</p>

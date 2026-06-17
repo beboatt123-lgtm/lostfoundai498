@@ -19,7 +19,7 @@ import {
     DialogFooter
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Search, Filter, Calendar, AlertCircle, Loader2, Plus, MoreHorizontal, Eye, XCircle, FileText, QrCode, FileDown, Trash2 } from "lucide-react";
+import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Search, Filter, Calendar, AlertCircle, Loader2, Plus, MoreHorizontal, Eye, XCircle, FileText, QrCode, FileDown, Trash2, Clock } from "lucide-react";
 import QRPrintModal from '@/components/QRPrintModal';
 import AdminAddItemModal from '@/components/AdminAddItemModal';
 import AdminItemDetailModal from '@/components/AdminItemDetailModal';
@@ -58,6 +58,7 @@ const AdminLostItems = () => {
         receiverIdCard: '',
         receiverPhone: '',
     });
+    const [receiverDocType, setReceiverDocType] = useState('idcard');
     const [receiverImage, setReceiverImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
@@ -72,6 +73,18 @@ const AdminLostItems = () => {
     const [exporting, setExporting] = useState(false);
     const [deleteTargetItem, setDeleteTargetItem] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [selectedIds, setSelectedIds] = useState(new Set());
+
+    const toggleSelectAll = (filtered) => {
+        const allSel = filtered.length > 0 && filtered.every(i => selectedIds.has(i._id));
+        if (allSel) setSelectedIds(new Set());
+        else setSelectedIds(new Set(filtered.map(i => i._id)));
+    };
+    const toggleSelect = (id) => setSelectedIds(prev => {
+        const next = new Set(prev);
+        next.has(id) ? next.delete(id) : next.add(id);
+        return next;
+    });
 
     const handleExport = async () => {
         setExporting(true);
@@ -137,8 +150,13 @@ const AdminLostItems = () => {
     }, []);
 
     const filteredItems = items.filter(item => {
-        const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                              (item.location || item.locationMain || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const q = searchTerm.toLowerCase();
+        const matchesSearch = !q ||
+            item.title.toLowerCase().includes(q) ||
+            (item.location || item.locationMain || '').toLowerCase().includes(q) ||
+            (item.description || '').toLowerCase().includes(q) ||
+            (item.customId || '').toLowerCase().includes(q) ||
+            (item.notes || '').toLowerCase().includes(q);
 
         let matchesDate = true;
         if (filterDate) {
@@ -151,11 +169,14 @@ const AdminLostItems = () => {
         return matchesSearch && matchesDate && matchesCategory;
     });
 
+    const allSelected = filteredItems.length > 0 && filteredItems.every(i => selectedIds.has(i._id));
+    const someSelected = filteredItems.some(i => selectedIds.has(i._id)) && !allSelected;
+
     const getStatusBadge = (status) => {
         switch (status) {
             case 'pending': return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-200 shadow-sm font-bold animate-pulse">รอตรวจสอบ</Badge>;
             case 'rejected': return <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-200 border-rose-200 shadow-sm font-medium">ยกเลิกรายการ</Badge>;
-            case 'open': return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200 shadow-sm">รอส่งมอบ</Badge>;
+            case 'open': return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200 shadow-sm">รับแจ้งแล้ว</Badge>;
             case 'resolved': return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200 shadow-sm">ส่งคืนสำเร็จ</Badge>;
             case 'closed': return <Badge className="bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200 shadow-sm">ปิดประกาศ</Badge>;
             default: return <Badge variant="outline">{status}</Badge>;
@@ -230,6 +251,7 @@ const AdminLostItems = () => {
 
             setIsResolveModalOpen(false);
             setResolveData({ receiverName: '', receiverIdCard: '', receiverPhone: '' });
+            setReceiverDocType('idcard');
             setReceiverImage(null);
             setImagePreview(null);
             fetchLostItems();
@@ -257,9 +279,6 @@ const AdminLostItems = () => {
                 <DropdownMenuItem className="cursor-pointer py-2.5 text-amber-600 font-bold focus:text-amber-700 focus:bg-amber-50" onClick={() => handleNotesClick(item)}>
                     <FileText className="mr-2.5 h-4 w-4" /> กรอกหมายเหตุ
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer py-2.5 text-indigo-600 font-bold focus:text-indigo-700 focus:bg-indigo-50" onClick={() => { setQrItem(item); setIsQrModalOpen(true); }}>
-                    <QrCode className="mr-2.5 h-4 w-4" /> พิมพ์ QR Code
-                </DropdownMenuItem>
                 {item.status === 'pending' && (
                     <>
                         <DropdownMenuItem className="cursor-pointer py-2.5 text-emerald-600 font-bold focus:text-emerald-700 focus:bg-emerald-50" onClick={() => handleStatusUpdate(item._id, 'open')}>
@@ -270,6 +289,9 @@ const AdminLostItems = () => {
                         </DropdownMenuItem>
                     </>
                 )}
+                <DropdownMenuItem className="cursor-pointer py-2.5 text-indigo-600 font-bold focus:text-indigo-700 focus:bg-indigo-50" onClick={() => { setQrItem(item); setIsQrModalOpen(true); }}>
+                    <QrCode className="mr-2.5 h-4 w-4" /> สแกน QR Code
+                </DropdownMenuItem>
                 {item.status === 'open' && (
                     <DropdownMenuItem className="cursor-pointer py-2.5 text-emerald-600 font-bold focus:text-emerald-700 focus:bg-emerald-50" onClick={() => handleResolveClick(item._id)}>
                         <CheckCircle className="mr-2.5 h-4 w-4" /> ปิดรับ (ส่งคืนสำเร็จ)
@@ -308,7 +330,7 @@ const AdminLostItems = () => {
                         <div className="relative flex-1 group">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-rose-500 transition-colors" />
                             <Input
-                                placeholder="ค้นหาชื่อของหาย หรือ สถานที่..."
+                                placeholder="ค้นหาชื่อ, รหัส (L0000), สถานที่, รายละเอียด หรือหมายเหตุ..."
                                 className="pl-10 h-11 bg-white border-slate-200 focus-visible:ring-rose-500/20 shadow-sm rounded-xl font-medium w-full"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -345,6 +367,9 @@ const AdminLostItems = () => {
                             </Select>
                         </div>
                     </div>
+                    <p className="text-[11px] text-slate-400 font-medium px-1">
+                        ค้นหาได้จาก: ชื่อสิ่งของ · รหัส (เช่น L0001) · สถานที่ · รายละเอียด · หมายเหตุ
+                    </p>
                     <div className="flex items-center gap-2 sm:gap-3">
                         <Button
                             variant="outline"
@@ -373,6 +398,13 @@ const AdminLostItems = () => {
                     </div>
                 </div>
 
+                {selectedIds.size > 0 && (
+                    <div className="px-5 py-2.5 bg-rose-50 border-b border-rose-100 flex items-center gap-3">
+                        <span className="text-sm font-bold text-rose-700">เลือกแล้ว {selectedIds.size} รายการ</span>
+                        <button onClick={() => setSelectedIds(new Set())} className="text-xs text-rose-500 hover:text-rose-700 font-medium underline">ยกเลือก</button>
+                    </div>
+                )}
+
                 {loading ? (
                     <div className="p-20 flex flex-col items-center justify-center gap-4">
                         <Loader2 className="h-10 w-10 animate-spin text-rose-500" />
@@ -387,8 +419,14 @@ const AdminLostItems = () => {
                         {/* Mobile Card View */}
                         <div className="md:hidden divide-y divide-slate-100">
                             {filteredItems.map((item) => (
-                                <div key={item._id} className="p-4 space-y-3">
+                                <div key={item._id} className={`p-4 space-y-3 ${selectedIds.has(item._id) ? 'bg-rose-50/40' : ''}`}>
                                     <div className="flex items-start gap-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedIds.has(item._id)}
+                                            onChange={() => toggleSelect(item._id)}
+                                            className="h-4 w-4 mt-1 rounded border-slate-300 accent-rose-600 cursor-pointer shrink-0"
+                                        />
                                         <div
                                             className="h-14 w-14 rounded-xl overflow-hidden bg-slate-100 border border-slate-100 shrink-0 cursor-pointer"
                                             onClick={() => { setDetailItemId(item._id); setIsDetailModalOpen(true); }}
@@ -397,10 +435,23 @@ const AdminLostItems = () => {
                                         </div>
                                         <div className="flex-1 min-w-0 cursor-pointer" onClick={() => { setDetailItemId(item._id); setIsDetailModalOpen(true); }}>
                                             <p className="font-bold text-slate-900 text-sm leading-tight line-clamp-2">{item.title}</p>
-                                            <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
-                                                <Calendar size={11} />
-                                                {new Date(item.date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}
-                                            </p>
+                                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                                {item.customId && (
+                                                    <span className="text-[10px] font-black text-rose-600 bg-rose-50 border border-rose-100 rounded px-1.5 py-0.5 font-mono">
+                                                        {item.customId}
+                                                    </span>
+                                                )}
+                                                <span className="text-xs text-slate-400 flex items-center gap-1">
+                                                    <Calendar size={11} />
+                                                    {new Date(item.date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}
+                                                </span>
+                                            </div>
+                                            {item.createdAt && (
+                                                <span className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                                                    <Clock size={10} />
+                                                    แจ้งเมื่อ {new Date(item.createdAt).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })} {new Date(item.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false })} น.
+                                                </span>
+                                            )}
                                         </div>
                                         <ItemActionMenu item={item} />
                                     </div>
@@ -419,13 +470,13 @@ const AdminLostItems = () => {
                                         <Avatar className="h-6 w-6 border border-slate-100 shadow-sm shrink-0">
                                             <AvatarImage src={item.user && typeof item.user === 'object' ? item.user.avatar : ''} />
                                             <AvatarFallback className="text-[9px] bg-rose-50 text-rose-600 font-bold">
-                                                {item.user && typeof item.user === 'object' && item.user.firstname ? item.user.firstname.charAt(0) : 'U'}
+                                                {(item.reporterName || (item.user && typeof item.user === 'object' && item.user.firstname)) ? (item.reporterName || item.user.firstname).charAt(0) : 'U'}
                                             </AvatarFallback>
                                         </Avatar>
                                         <span className="text-xs font-bold text-slate-700">
-                                            {item.user && typeof item.user === 'object' && item.user.firstname
+                                            {item.reporterName || (item.user && typeof item.user === 'object' && item.user.firstname
                                                 ? `${item.user.firstname} ${item.user.lastname || ''}`.trim()
-                                                : 'ไม่ระบุชื่อ'}
+                                                : 'ไม่ระบุชื่อ')}
                                         </span>
                                         {item.reporterPhone && (
                                             <span className="text-[10px] text-slate-500 bg-slate-100 rounded-lg px-2 py-0.5 flex items-center gap-1">
@@ -455,7 +506,16 @@ const AdminLostItems = () => {
                             <Table>
                                 <TableHeader className="bg-slate-50/80 sticky top-0 z-10 backdrop-blur-md">
                                     <TableRow className="hover:bg-transparent border-slate-200 h-14">
-                                        <TableHead className="font-bold text-slate-800 px-6">รายการ</TableHead>
+                                        <TableHead className="w-12 pl-6 pr-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={allSelected}
+                                                ref={el => { if (el) el.indeterminate = someSelected; }}
+                                                onChange={() => toggleSelectAll(filteredItems)}
+                                                className="h-4 w-4 rounded border-slate-300 accent-rose-600 cursor-pointer"
+                                            />
+                                        </TableHead>
+                                        <TableHead className="font-bold text-slate-800">รายการ</TableHead>
                                         <TableHead className="font-bold text-slate-800">หมวดหมู่</TableHead>
                                         <TableHead className="font-bold text-slate-800">ผู้แจ้ง</TableHead>
                                         <TableHead className="font-bold text-slate-800">สถานที่</TableHead>
@@ -466,18 +526,40 @@ const AdminLostItems = () => {
                                 </TableHeader>
                                 <TableBody>
                                     {filteredItems.map((item) => (
-                                        <TableRow key={item._id} className="hover:bg-slate-50/50 transition-all border-b border-slate-100 last:border-0 h-20">
-                                            <TableCell className="px-6">
+                                        <TableRow key={item._id} className={`hover:bg-slate-50/50 transition-all border-b border-slate-100 last:border-0 h-20 ${selectedIds.has(item._id) ? 'bg-rose-50/40' : ''}`}>
+                                            <TableCell className="pl-6 pr-2 w-12">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedIds.has(item._id)}
+                                                    onChange={() => toggleSelect(item._id)}
+                                                    onClick={e => e.stopPropagation()}
+                                                    className="h-4 w-4 rounded border-slate-300 accent-rose-600 cursor-pointer"
+                                                />
+                                            </TableCell>
+                                            <TableCell>
                                                 <div className="flex items-center gap-4 cursor-pointer" onClick={() => { setDetailItemId(item._id); setIsDetailModalOpen(true); }}>
                                                     <div className="h-12 w-12 rounded-xl overflow-hidden bg-slate-100 border border-slate-100 shrink-0">
                                                         <img src={item.images?.[0] || 'https://via.placeholder.com/150'} alt="" className="w-full h-full object-cover" />
                                                     </div>
                                                     <div className="flex flex-col py-1 overflow-hidden">
                                                         <span className="font-bold text-slate-900 text-[15px] truncate max-w-[200px]">{item.title}</span>
-                                                        <span className="text-xs text-slate-400 mt-1 flex items-center gap-1.5 font-medium">
-                                                            <Calendar size={12} className="text-slate-300" />
-                                                            {new Date(item.date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}
-                                                        </span>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            {item.customId && (
+                                                                <span className="text-[10px] font-black text-rose-600 bg-rose-50 border border-rose-100 rounded px-1.5 py-0.5 font-mono tracking-wide">
+                                                                    {item.customId}
+                                                                </span>
+                                                            )}
+                                                            <span className="text-xs text-slate-400 flex items-center gap-1 font-medium">
+                                                                <Calendar size={12} className="text-slate-300" />
+                                                                {new Date(item.date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}
+                                                            </span>
+                                                        </div>
+                                                        {item.createdAt && (
+                                                            <span className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                                                                <Clock size={10} className="text-slate-300" />
+                                                                แจ้งเมื่อ {new Date(item.createdAt).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })} {new Date(item.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false })} น.
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </TableCell>
@@ -488,16 +570,14 @@ const AdminLostItems = () => {
                                                         <Avatar className="h-7 w-7 border border-slate-100 shadow-sm shrink-0">
                                                             <AvatarImage src={item.user && typeof item.user === 'object' ? item.user.avatar : ''} />
                                                             <AvatarFallback className="text-[10px] bg-rose-50 text-rose-600 font-bold">
-                                                                {item.user && typeof item.user === 'object' && item.user.firstname
-                                                                    ? item.user.firstname.charAt(0)
-                                                                    : 'U'}
+                                                                {(item.reporterName || (item.user && typeof item.user === 'object' && item.user.firstname)) ? (item.reporterName || item.user.firstname).charAt(0) : 'U'}
                                                             </AvatarFallback>
                                                         </Avatar>
                                                         <div className="flex flex-col">
                                                             <span className="text-sm font-bold text-slate-800 leading-none">
-                                                                {item.user && typeof item.user === 'object' && item.user.firstname
+                                                                {item.reporterName || (item.user && typeof item.user === 'object' && item.user.firstname
                                                                     ? `${item.user.firstname} ${item.user.lastname || ''}`.trim()
-                                                                    : 'ไม่ระบุชื่อ'}
+                                                                    : 'ไม่ระบุชื่อ')}
                                                             </span>
                                                             {item.user && typeof item.user === 'object' && item.user.email && (
                                                                 <span className="text-[11px] text-slate-400 mt-0.5">{item.user.email}</span>
@@ -575,17 +655,43 @@ const AdminLostItems = () => {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="receiverIdCard" className="text-xs font-black uppercase tracking-widest text-slate-500">เลขบัตรประชาชนผู้มารับ</Label>
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                                <Label className="text-xs font-black uppercase tracking-widest text-slate-500">
+                                    {receiverDocType === 'idcard' ? 'เลขบัตรประชาชนผู้มารับ' : 'เลขพาสปอร์ตผู้มารับ'}
+                                </Label>
+                                <div className="flex rounded-lg border border-slate-200 overflow-hidden text-[11px] font-bold shrink-0">
+                                    <button type="button"
+                                        onClick={() => { setReceiverDocType('idcard'); setResolveData(p => ({ ...p, receiverIdCard: '' })); }}
+                                        className={`px-2.5 py-1 transition-colors ${receiverDocType === 'idcard' ? 'bg-emerald-500 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+                                    >บัตรประชาชน</button>
+                                    <button type="button"
+                                        onClick={() => { setReceiverDocType('passport'); setResolveData(p => ({ ...p, receiverIdCard: '' })); }}
+                                        className={`px-2.5 py-1 transition-colors border-l border-slate-200 ${receiverDocType === 'passport' ? 'bg-indigo-500 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+                                    >พาสปอร์ต</button>
+                                </div>
+                            </div>
                             <div className="relative">
                                 <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                <Input
-                                    id="receiverIdCard"
-                                    placeholder="กรอกเลข 13 หลัก"
-                                    className="pl-10 h-10 bg-slate-50 border-slate-200 rounded-xl"
-                                    value={resolveData.receiverIdCard}
-                                    onChange={(e) => setResolveData({...resolveData, receiverIdCard: e.target.value})}
-                                    required
-                                />
+                                {receiverDocType === 'idcard' ? (
+                                    <Input
+                                        id="receiverIdCard"
+                                        placeholder="กรอกเลข 13 หลัก"
+                                        className="pl-10 h-10 bg-slate-50 border-slate-200 rounded-xl"
+                                        value={resolveData.receiverIdCard}
+                                        maxLength={13}
+                                        onChange={(e) => setResolveData({...resolveData, receiverIdCard: e.target.value.replace(/\D/g, '')})}
+                                        required
+                                    />
+                                ) : (
+                                    <Input
+                                        id="receiverIdCard"
+                                        placeholder="เลขพาสปอร์ต (ตัวอักษรและตัวเลข)"
+                                        className="pl-10 h-10 bg-slate-50 border-slate-200 rounded-xl"
+                                        value={resolveData.receiverIdCard}
+                                        onChange={(e) => setResolveData({...resolveData, receiverIdCard: e.target.value.toUpperCase()})}
+                                        required
+                                    />
+                                )}
                             </div>
                         </div>
 

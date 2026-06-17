@@ -9,7 +9,7 @@ const Footer = () => {
                         <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white">
                             <MapPin size={18} fill="currentColor" />
                         </div>
-                        <span className="text-xl font-bold text-white">Lost&Found AI</span>
+                        <span className="text-xl font-bold text-white">Lost&Found</span>
                     </div>
                     <p className="text-slate-400 text-sm leading-relaxed mb-6">
                         ระบบติดตามของหายอัจฉริยะด้วย AI ช่วยให้คุณค้นหาและส่งคืนสิ่งของได้อย่างรวดเร็วและปลอดภัย
@@ -62,7 +62,7 @@ const Footer = () => {
             </div>
 
             <div className="border-t border-slate-800 pt-8 text-center text-sm text-slate-500">
-                <p>&copy; 2024 Lost&Found AI System. All rights reserved.</p>
+                <p>&copy; 2024 Lost&Found. All rights reserved.</p>
             </div>
         </footer>
     );

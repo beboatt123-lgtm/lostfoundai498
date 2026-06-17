@@ -19,7 +19,7 @@ import {
     DialogFooter
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Search, Filter, Calendar, AlertCircle, ShieldCheck, Loader2, Plus, MoreHorizontal, Eye, XCircle, Clock, FileText, QrCode, Printer, FileDown, Trash2 } from "lucide-react";
+import { Phone, User as UserIcon, Camera, Image as ImageIcon, CheckCircle, Search, Filter, Calendar, AlertCircle, ShieldCheck, Loader2, Plus, MoreHorizontal, Eye, XCircle, Clock, FileText, QrCode, Printer, FileDown, Trash2, PackageX, ListFilter } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import QRPrintModal from '@/components/QRPrintModal';
 import AdminAddItemModal from '@/components/AdminAddItemModal';
@@ -65,6 +65,35 @@ const AdminFoundItems = () => {
     const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
     const [deleteTargetItem, setDeleteTargetItem] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [selectedIds, setSelectedIds] = useState(new Set());
+    const [viewMode, setViewMode] = useState('all'); // 'all' | 'expired'
+    const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
+    const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+
+    const toggleSelectAll = (list) => {
+        const allSel = list.length > 0 && list.every(i => selectedIds.has(i._id));
+        if (allSel) setSelectedIds(new Set());
+        else setSelectedIds(new Set(list.map(i => i._id)));
+    };
+    const toggleSelect = (id) => setSelectedIds(prev => {
+        const next = new Set(prev);
+        next.has(id) ? next.delete(id) : next.add(id);
+        return next;
+    });
+
+    const handleBulkDelete = async () => {
+        setBulkDeleteLoading(true);
+        try {
+            await Promise.all([...selectedIds].map(id => api.delete(`items/${id}`)));
+            setSelectedIds(new Set());
+            setShowBulkDeleteConfirm(false);
+            fetchFoundItems();
+        } catch (err) {
+            alert('เกิดข้อผิดพลาดในการลบรายการ');
+        } finally {
+            setBulkDeleteLoading(false);
+        }
+    };
 
     const handleExport = async () => {
         setExporting(true);
@@ -90,6 +119,7 @@ const AdminFoundItems = () => {
         receiverIdCard: '',
         receiverPhone: '',
     });
+    const [receiverDocType, setReceiverDocType] = useState('idcard');
     const [receiverImage, setReceiverImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
 
@@ -140,8 +170,13 @@ const AdminFoundItems = () => {
     }, []);
 
     const filteredItems = items.filter(item => {
-        const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                              (item.location || item.locationMain || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const q = searchTerm.toLowerCase();
+        const matchesSearch = !q ||
+            item.title.toLowerCase().includes(q) ||
+            (item.location || item.locationMain || '').toLowerCase().includes(q) ||
+            (item.description || '').toLowerCase().includes(q) ||
+            (item.customId || '').toLowerCase().includes(q) ||
+            (item.notes || '').toLowerCase().includes(q);
 
         let matchesDate = true;
         if (filterDate) {
@@ -154,6 +189,30 @@ const AdminFoundItems = () => {
         return matchesSearch && matchesDate && matchesCategory;
     });
 
+    const getItemExpiryDate = (item) => {
+        if (!item.createdAt) return null;
+        const d = new Date(item.createdAt);
+        d.setFullYear(d.getFullYear() + 1);
+        return d;
+    };
+    const isItemExpired = (item) => {
+        const exp = getItemExpiryDate(item);
+        return exp ? new Date() >= exp : false;
+    };
+    const daysUntilExpiry = (item) => {
+        const exp = getItemExpiryDate(item);
+        if (!exp) return null;
+        return Math.ceil((exp - new Date()) / (1000 * 60 * 60 * 24));
+    };
+
+    const expiredItems = items.filter(i =>
+        isItemExpired(i) && i.status !== 'resolved' && i.status !== 'closed'
+    );
+
+    const displayItems = viewMode === 'expired' ? expiredItems : filteredItems;
+    const allSelected = displayItems.length > 0 && displayItems.every(i => selectedIds.has(i._id));
+    const someSelected = displayItems.some(i => selectedIds.has(i._id)) && !allSelected;
+
     const getStatusBadge = (status) => {
         switch (status) {
             case 'pending': return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-200 shadow-sm font-bold animate-pulse">รอตรวจสอบ</Badge>;
@@ -163,6 +222,17 @@ const AdminFoundItems = () => {
             case 'closed': return <Badge className="bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200 shadow-sm">ปิดประกาศ</Badge>;
             default: return <Badge variant="outline">{status}</Badge>;
         }
+    };
+
+    const getExpiryBadge = (item) => {
+        if (item.status === 'resolved' || item.status === 'closed') return null;
+        const days = daysUntilExpiry(item);
+        if (days === null) return null;
+        if (days <= 0)
+            return <Badge className="bg-orange-100 text-orange-700 border-orange-200 font-bold text-[10px] mt-0.5">⏰ หมดอายุแล้ว</Badge>;
+        if (days <= 30)
+            return <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200 font-bold text-[10px] mt-0.5 animate-pulse">⚠ เหลือ {days} วัน</Badge>;
+        return null;
     };
 
     const handleResolveClick = (id) => {
@@ -200,6 +270,7 @@ const AdminFoundItems = () => {
 
             setIsResolveModalOpen(false);
             setResolveData({ receiverName: '', receiverIdCard: '', receiverPhone: '' });
+            setReceiverDocType('idcard');
             setReceiverImage(null);
             setImagePreview(null);
             fetchFoundItems();
@@ -286,9 +357,6 @@ const AdminFoundItems = () => {
                 <DropdownMenuItem className="cursor-pointer py-2.5 text-amber-600 font-bold focus:text-amber-700 focus:bg-amber-50" onClick={() => handleNotesClick(item)}>
                     <FileText className="mr-2.5 h-4 w-4" /> กรอกหมายเหตุ
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer py-2.5 text-indigo-600 font-bold focus:text-indigo-700 focus:bg-indigo-50" onClick={() => { setQrItem(item); setIsQrModalOpen(true); }}>
-                    <QrCode className="mr-2.5 h-4 w-4" /> พิมพ์ QR Code
-                </DropdownMenuItem>
                 {item.status === 'pending' && (
                     <>
                         <DropdownMenuItem className="cursor-pointer py-2.5 text-emerald-600 font-bold focus:text-emerald-700 focus:bg-emerald-50" onClick={() => handleStatusUpdate(item._id, 'open')}>
@@ -317,6 +385,10 @@ const AdminFoundItems = () => {
                         </DropdownMenuItem>
                     </>
                 )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="cursor-pointer py-2.5 text-indigo-600 font-bold focus:text-indigo-700 focus:bg-indigo-50" onClick={() => { setQrItem(item); setIsQrModalOpen(true); }}>
+                    <QrCode className="mr-2.5 h-4 w-4" /> สแกน QR Code
+                </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
     );
@@ -342,7 +414,7 @@ const AdminFoundItems = () => {
                         <div className="relative flex-1 group">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
                             <Input
-                                placeholder="ค้นหาชื่อของที่แจ้งพบ หรือ สถานที่..."
+                                placeholder="ค้นหาชื่อ, รหัส (F0000), สถานที่, รายละเอียด หรือหมายเหตุ..."
                                 className="pl-10 h-11 bg-white border-slate-200 focus-visible:ring-emerald-500/20 shadow-sm rounded-xl font-medium w-full"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -379,6 +451,9 @@ const AdminFoundItems = () => {
                             </Select>
                         </div>
                     </div>
+                    <p className="text-[11px] text-slate-400 font-medium px-1">
+                        ค้นหาได้จาก: ชื่อสิ่งของ · รหัส (เช่น F0001) · สถานที่ · รายละเอียด · หมายเหตุ
+                    </p>
                     <div className="flex items-center gap-2 sm:gap-3">
                         <Button
                             variant="outline"
@@ -407,22 +482,67 @@ const AdminFoundItems = () => {
                     </div>
                 </div>
 
+                {/* View mode tabs */}
+                <div className="px-5 pt-4 pb-0 flex items-center gap-2 border-b border-slate-100">
+                    <button
+                        onClick={() => { setViewMode('all'); setSelectedIds(new Set()); }}
+                        className={`px-4 py-2 text-sm font-bold rounded-t-xl transition-all border-b-2 ${viewMode === 'all' ? 'text-emerald-700 border-emerald-500 bg-emerald-50' : 'text-slate-500 border-transparent hover:text-slate-700'}`}
+                    >
+                        <ListFilter size={14} className="inline mr-1.5" />
+                        รายการทั้งหมด
+                    </button>
+                    <button
+                        onClick={() => { setViewMode('expired'); setSelectedIds(new Set()); }}
+                        className={`px-4 py-2 text-sm font-bold rounded-t-xl transition-all border-b-2 flex items-center gap-1.5 ${viewMode === 'expired' ? 'text-orange-700 border-orange-500 bg-orange-50' : 'text-slate-500 border-transparent hover:text-slate-700'}`}
+                    >
+                        <PackageX size={14} />
+                        ของหมดอายุ
+                        {expiredItems.length > 0 && (
+                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${viewMode === 'expired' ? 'bg-orange-200 text-orange-800' : 'bg-orange-100 text-orange-600'}`}>
+                                {expiredItems.length}
+                            </span>
+                        )}
+                    </button>
+                </div>
+
+                {selectedIds.size > 0 && (
+                    <div className="px-5 py-2.5 bg-orange-50 border-b border-orange-100 flex items-center gap-3">
+                        <span className="text-sm font-bold text-orange-700">เลือกแล้ว {selectedIds.size} รายการ</span>
+                        <button
+                            onClick={() => setShowBulkDeleteConfirm(true)}
+                            className="text-xs font-bold text-white bg-rose-500 hover:bg-rose-600 px-3 py-1 rounded-lg transition-all flex items-center gap-1"
+                        >
+                            <Trash2 size={12} /> ลบรายการที่เลือก
+                        </button>
+                        <button onClick={() => setSelectedIds(new Set())} className="text-xs text-slate-500 hover:text-slate-700 font-medium underline">ยกเลือก</button>
+                    </div>
+                )}
+
                 {loading ? (
                     <div className="p-20 flex flex-col items-center justify-center gap-4">
                         <Loader2 className="h-10 w-10 animate-spin text-emerald-500" />
                         <p className="text-slate-400 font-medium">กำลังโหลดข้อมูลจริง...</p>
                     </div>
-                ) : filteredItems.length === 0 ? (
-                    <div className="p-16 flex flex-col items-center justify-center text-slate-400 font-medium">
-                        ไม่มีรายการแจ้งเจอของในระบบ
+                ) : displayItems.length === 0 ? (
+                    <div className="p-16 flex flex-col items-center justify-center text-slate-400 font-medium gap-3">
+                        {viewMode === 'expired'
+                            ? <><PackageX size={40} className="text-slate-300" /><span>ไม่มีของที่หมดอายุแล้ว</span></>
+                            : 'ไม่มีรายการแจ้งเจอของในระบบ'
+                        }
                     </div>
                 ) : (
                     <>
                         {/* Mobile Card View */}
                         <div className="md:hidden divide-y divide-slate-100">
-                            {filteredItems.map((item) => (
-                                <div key={item._id} className="p-4 space-y-3">
+                            {displayItems.map((item) => (
+                                <div key={item._id} className={`p-4 space-y-3 ${selectedIds.has(item._id) ? 'bg-emerald-50/40' : ''}`}>
                                     <div className="flex items-start gap-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedIds.has(item._id)}
+                                            onChange={() => toggleSelect(item._id)}
+                                            className="h-4 w-4 mt-1 rounded border-slate-300 accent-emerald-600 cursor-pointer shrink-0"
+                                        />
                                         <div
                                             className="h-14 w-14 rounded-xl overflow-hidden bg-slate-100 border border-slate-100 shrink-0 cursor-pointer"
                                             onClick={() => { setDetailItemId(item._id); setIsDetailModalOpen(true); }}
@@ -432,6 +552,11 @@ const AdminFoundItems = () => {
                                         <div className="flex-1 min-w-0 cursor-pointer" onClick={() => { setDetailItemId(item._id); setIsDetailModalOpen(true); }}>
                                             <p className="font-bold text-slate-900 text-sm leading-tight line-clamp-2">{item.title}</p>
                                             <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                                {item.customId && (
+                                                    <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5 font-mono">
+                                                        {item.customId}
+                                                    </span>
+                                                )}
                                                 <span className="text-xs text-slate-400 flex items-center gap-1">
                                                     <Calendar size={11} />
                                                     {new Date(item.date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}
@@ -443,12 +568,19 @@ const AdminFoundItems = () => {
                                                     </span>
                                                 )}
                                             </div>
+                                            {item.createdAt && (
+                                                <span className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                                                    <Clock size={10} />
+                                                    แจ้งเมื่อ {new Date(item.createdAt).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })} {new Date(item.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false })} น.
+                                                </span>
+                                            )}
                                         </div>
                                         <ItemActionMenu item={item} />
                                     </div>
 
                                     <div className="flex items-center gap-2 flex-wrap">
                                         {getStatusBadge(item.status)}
+                                        {getExpiryBadge(item)}
                                         <Badge variant="outline" className="text-slate-500 bg-slate-50 border-slate-200 capitalize text-xs px-2 py-0.5">{item.category}</Badge>
                                     </div>
 
@@ -461,13 +593,13 @@ const AdminFoundItems = () => {
                                         <Avatar className="h-6 w-6 border border-slate-100 shadow-sm shrink-0">
                                             <AvatarImage src={item.user && typeof item.user === 'object' ? item.user.avatar : ''} />
                                             <AvatarFallback className="text-[9px] bg-emerald-50 text-emerald-600 font-bold">
-                                                {item.user && typeof item.user === 'object' && item.user.firstname ? item.user.firstname.charAt(0) : 'U'}
+                                                {(item.reporterName || (item.user && typeof item.user === 'object' && item.user.firstname)) ? (item.reporterName || item.user.firstname).charAt(0) : 'U'}
                                             </AvatarFallback>
                                         </Avatar>
                                         <span className="text-xs font-bold text-slate-700">
-                                            {item.user && typeof item.user === 'object' && item.user.firstname
+                                            {item.reporterName || (item.user && typeof item.user === 'object' && item.user.firstname
                                                 ? `${item.user.firstname} ${item.user.lastname || ''}`.trim()
-                                                : 'ไม่ระบุชื่อ'}
+                                                : 'ไม่ระบุชื่อ')}
                                         </span>
                                         {item.reporterPhone && (
                                             <span className="text-[10px] text-slate-500 bg-slate-100 rounded-lg px-2 py-0.5 flex items-center gap-1">
@@ -497,7 +629,16 @@ const AdminFoundItems = () => {
                             <Table>
                                 <TableHeader className="bg-slate-50/80 sticky top-0 z-10 backdrop-blur-md">
                                     <TableRow className="hover:bg-transparent border-slate-200 h-14">
-                                        <TableHead className="font-bold text-slate-800 px-6">รายการ</TableHead>
+                                        <TableHead className="w-12 pl-6 pr-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={allSelected}
+                                                ref={el => { if (el) el.indeterminate = someSelected; }}
+                                                onChange={() => toggleSelectAll(displayItems)}
+                                                className="h-4 w-4 rounded border-slate-300 accent-emerald-600 cursor-pointer"
+                                            />
+                                        </TableHead>
+                                        <TableHead className="font-bold text-slate-800">รายการ</TableHead>
                                         <TableHead className="font-bold text-slate-800">หมวดหมู่</TableHead>
                                         <TableHead className="font-bold text-slate-800">ผู้พบ</TableHead>
                                         <TableHead className="font-bold text-slate-800">สถานที่</TableHead>
@@ -507,16 +648,30 @@ const AdminFoundItems = () => {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {filteredItems.map((item) => (
-                                        <TableRow key={item._id} className="hover:bg-slate-50/50 transition-all border-b border-slate-100 last:border-0 h-20">
-                                            <TableCell className="px-6">
+                                    {displayItems.map((item) => (
+                                        <TableRow key={item._id} className={`hover:bg-slate-50/50 transition-all border-b border-slate-100 last:border-0 h-20 ${selectedIds.has(item._id) ? 'bg-emerald-50/40' : ''}`}>
+                                            <TableCell className="pl-6 pr-2 w-12">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedIds.has(item._id)}
+                                                    onChange={() => toggleSelect(item._id)}
+                                                    onClick={e => e.stopPropagation()}
+                                                    className="h-4 w-4 rounded border-slate-300 accent-emerald-600 cursor-pointer"
+                                                />
+                                            </TableCell>
+                                            <TableCell>
                                                 <div className="flex items-center gap-4 cursor-pointer" onClick={() => { setDetailItemId(item._id); setIsDetailModalOpen(true); }}>
                                                     <div className="h-12 w-12 rounded-xl overflow-hidden bg-slate-100 border border-slate-100 shrink-0">
                                                         <img src={item.images?.[0] || 'https://via.placeholder.com/150'} alt="" className="w-full h-full object-cover" />
                                                     </div>
                                                     <div className="flex flex-col py-1 overflow-hidden">
                                                         <span className="font-bold text-slate-900 text-[15px] truncate max-w-[200px]">{item.title}</span>
-                                                        <div className="flex items-center gap-2 mt-1">
+                                                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                                            {item.customId && (
+                                                                <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5 font-mono tracking-wide">
+                                                                    {item.customId}
+                                                                </span>
+                                                            )}
                                                             <span className="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
                                                                 <Calendar size={12} className="text-slate-300" />
                                                                 {new Date(item.date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}
@@ -528,6 +683,12 @@ const AdminFoundItems = () => {
                                                                 </span>
                                                             )}
                                                         </div>
+                                                        {item.createdAt && (
+                                                            <span className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                                                                <Clock size={10} className="text-slate-300" />
+                                                                แจ้งเมื่อ {new Date(item.createdAt).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })} {new Date(item.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false })} น.
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </TableCell>
@@ -538,16 +699,14 @@ const AdminFoundItems = () => {
                                                         <Avatar className="h-7 w-7 border border-slate-100 shadow-sm shrink-0">
                                                             <AvatarImage src={item.user && typeof item.user === 'object' ? item.user.avatar : ''} />
                                                             <AvatarFallback className="text-[10px] bg-emerald-50 text-emerald-600 font-bold">
-                                                                {item.user && typeof item.user === 'object' && item.user.firstname
-                                                                    ? item.user.firstname.charAt(0)
-                                                                    : 'U'}
+                                                                {(item.reporterName || (item.user && typeof item.user === 'object' && item.user.firstname)) ? (item.reporterName || item.user.firstname).charAt(0) : 'U'}
                                                             </AvatarFallback>
                                                         </Avatar>
                                                         <div className="flex flex-col">
                                                             <span className="text-sm font-bold text-slate-800 leading-none">
-                                                                {item.user && typeof item.user === 'object' && item.user.firstname
+                                                                {item.reporterName || (item.user && typeof item.user === 'object' && item.user.firstname
                                                                     ? `${item.user.firstname} ${item.user.lastname || ''}`.trim()
-                                                                    : 'ไม่ระบุชื่อ'}
+                                                                    : 'ไม่ระบุชื่อ')}
                                                             </span>
                                                             {item.user && typeof item.user === 'object' && item.user.email && (
                                                                 <span className="text-[11px] text-slate-400 mt-0.5">{item.user.email}</span>
@@ -581,7 +740,12 @@ const AdminFoundItems = () => {
                                                     </button>
                                                 )}
                                             </TableCell>
-                                            <TableCell>{getStatusBadge(item.status)}</TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col gap-1">
+                                                    {getStatusBadge(item.status)}
+                                                    {getExpiryBadge(item)}
+                                                </div>
+                                            </TableCell>
                                             <TableCell className="text-right pr-6">
                                                 <ItemActionMenu item={item} />
                                             </TableCell>
@@ -625,17 +789,43 @@ const AdminFoundItems = () => {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="receiverIdCard" className="text-xs font-black uppercase tracking-widest text-slate-500">เลขบัตรประชาชนผู้มารับ</Label>
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                                <Label className="text-xs font-black uppercase tracking-widest text-slate-500">
+                                    {receiverDocType === 'idcard' ? 'เลขบัตรประชาชนผู้มารับ' : 'เลขพาสปอร์ตผู้มารับ'}
+                                </Label>
+                                <div className="flex rounded-lg border border-slate-200 overflow-hidden text-[11px] font-bold shrink-0">
+                                    <button type="button"
+                                        onClick={() => { setReceiverDocType('idcard'); setResolveData(p => ({ ...p, receiverIdCard: '' })); }}
+                                        className={`px-2.5 py-1 transition-colors ${receiverDocType === 'idcard' ? 'bg-emerald-500 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+                                    >บัตรประชาชน</button>
+                                    <button type="button"
+                                        onClick={() => { setReceiverDocType('passport'); setResolveData(p => ({ ...p, receiverIdCard: '' })); }}
+                                        className={`px-2.5 py-1 transition-colors border-l border-slate-200 ${receiverDocType === 'passport' ? 'bg-indigo-500 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+                                    >พาสปอร์ต</button>
+                                </div>
+                            </div>
                             <div className="relative">
                                 <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                <Input
-                                    id="receiverIdCard"
-                                    placeholder="กรอกเลข 13 หลัก"
-                                    className="pl-10 h-10 bg-slate-50 border-slate-200 rounded-xl"
-                                    value={resolveData.receiverIdCard}
-                                    onChange={(e) => setResolveData({...resolveData, receiverIdCard: e.target.value})}
-                                    required
-                                />
+                                {receiverDocType === 'idcard' ? (
+                                    <Input
+                                        id="receiverIdCard"
+                                        placeholder="กรอกเลข 13 หลัก"
+                                        className="pl-10 h-10 bg-slate-50 border-slate-200 rounded-xl"
+                                        value={resolveData.receiverIdCard}
+                                        maxLength={13}
+                                        onChange={(e) => setResolveData({...resolveData, receiverIdCard: e.target.value.replace(/\D/g, '')})}
+                                        required
+                                    />
+                                ) : (
+                                    <Input
+                                        id="receiverIdCard"
+                                        placeholder="เลขพาสปอร์ต (ตัวอักษรและตัวเลข)"
+                                        className="pl-10 h-10 bg-slate-50 border-slate-200 rounded-xl"
+                                        value={resolveData.receiverIdCard}
+                                        onChange={(e) => setResolveData({...resolveData, receiverIdCard: e.target.value.toUpperCase()})}
+                                        required
+                                    />
+                                )}
                             </div>
                         </div>
 
@@ -819,6 +1009,37 @@ const AdminFoundItems = () => {
                                 className="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-lg shadow-rose-200"
                             >
                                 {deleteLoading ? <Loader2 className="animate-spin h-4 w-4" /> : 'ลบรายการ'}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+            {/* Bulk Delete Confirm Dialog */}
+            <Dialog open={showBulkDeleteConfirm} onOpenChange={setShowBulkDeleteConfirm}>
+                <DialogContent className="max-w-sm rounded-2xl border-none shadow-2xl p-0 overflow-hidden">
+                    <div className="bg-orange-600 p-6 text-center text-white">
+                        <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <PackageX size={28} />
+                        </div>
+                        <DialogTitle className="text-xl font-black">ยืนยันการลบ {selectedIds.size} รายการ</DialogTitle>
+                        <DialogDescription className="text-orange-200 text-sm mt-1">
+                            การลบไม่สามารถย้อนกลับได้
+                        </DialogDescription>
+                    </div>
+                    <div className="p-5 bg-white space-y-4">
+                        <p className="text-sm text-slate-500 text-center">
+                            คุณต้องการลบรายการที่เลือกทั้งหมด <span className="font-bold text-slate-800">{selectedIds.size} รายการ</span> ออกจากระบบ?
+                        </p>
+                        <div className="flex gap-3">
+                            <Button variant="outline" className="flex-1 font-bold rounded-xl" onClick={() => setShowBulkDeleteConfirm(false)}>
+                                ยกเลิก
+                            </Button>
+                            <Button
+                                onClick={handleBulkDelete}
+                                disabled={bulkDeleteLoading}
+                                className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl shadow-lg shadow-orange-200"
+                            >
+                                {bulkDeleteLoading ? <Loader2 className="animate-spin h-4 w-4" /> : `ลบ ${selectedIds.size} รายการ`}
                             </Button>
                         </div>
                     </div>

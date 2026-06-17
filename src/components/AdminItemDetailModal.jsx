@@ -115,7 +115,7 @@ const AdminItemDetailModal = ({ itemId, open, onClose }) => {
                             )}
 
                             {/* Badges overlay */}
-                            <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
+                            <div className="absolute top-4 left-4 flex flex-col items-start gap-2">
                                 <Badge className={`${statusMap[item.status]?.cls} border font-bold shadow-sm`}>
                                     {statusMap[item.status]?.label || item.status}
                                 </Badge>
@@ -174,7 +174,7 @@ const AdminItemDetailModal = ({ itemId, open, onClose }) => {
                                     <Chip icon={CreditCard} label="เลขบัตรประชาชน" value={item.reporterIdCard} color="indigo" />
                                     <Chip icon={Phone} label="เบอร์โทรศัพท์" value={item.reporterPhone} color="indigo" />
                                     <Chip icon={Warehouse} label="ตำแหน่งจัดเก็บ" value={item.storagePosition || 'ไม่ได้ระบุ'} color="indigo" />
-                                    <Chip icon={Calendar} label="วันที่แจ้ง" value={new Date(item.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })} color="indigo" />
+                                    <Chip icon={Calendar} label="วันที่/เวลาที่แจ้ง" value={`${new Date(item.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })} ${new Date(item.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false })} น.`} color="indigo" />
                                 </div>
                             </div>
 
@@ -183,12 +183,14 @@ const AdminItemDetailModal = ({ itemId, open, onClose }) => {
                                 <Avatar className="h-10 w-10 border-2 border-white shadow-sm shrink-0">
                                     <AvatarImage src={item.user?.avatar} />
                                     <AvatarFallback className="bg-slate-200 text-slate-600 font-bold">
-                                        {item.user?.firstname?.charAt(0)}
+                                        {(item.reporterName || item.user?.firstname)?.charAt(0) || 'U'}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div>
                                     <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">ผู้แจ้ง</p>
-                                    <p className="font-bold text-slate-800 text-sm">{item.user?.firstname} {item.user?.lastname}</p>
+                                    <p className="font-bold text-slate-800 text-sm">
+                                        {item.reporterName || (item.user?.firstname ? `${item.user.firstname} ${item.user.lastname || ''}`.trim() : 'ไม่ระบุชื่อ')}
+                                    </p>
                                     <p className="text-xs text-slate-400">{item.user?.email}</p>
                                 </div>
                             </div>

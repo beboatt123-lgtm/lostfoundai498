@@ -100,6 +100,10 @@ const itemSchema = mongoose.Schema({
     timePeriod: {
         type: String,
         default: ''
+    },
+    reporterName: {
+        type: String,
+        default: ''
     }
 }, {
     timestamps: true
