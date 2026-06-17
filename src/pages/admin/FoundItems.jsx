@@ -190,6 +190,8 @@ const AdminFoundItems = () => {
     });
 
     const getItemExpiryDate = (item) => {
+        // Use manually set expirationDate if available, otherwise createdAt + 1 year
+        if (item.expirationDate) return new Date(item.expirationDate);
         if (!item.createdAt) return null;
         const d = new Date(item.createdAt);
         d.setFullYear(d.getFullYear() + 1);
